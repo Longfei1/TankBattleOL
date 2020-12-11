@@ -1,0 +1,8 @@
+server/.vs/*
+server/bin/*
+server/obj/*
+client/local/*
+client/.vscode/*
+client/library/*
+client/temp/*
+client/build/*
