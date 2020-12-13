@@ -17,24 +17,14 @@ using namespace boost::asio;
 
 
 ConnectSession::ConnectSession(boost::asio::io_service& service
-) : session_id_(0), socket_(service), read_buffer_{}, is_writing_(false)
+) : session_id_(0), socket_(service), read_location(BUFFER), is_writing_(false)
 {
-    ClearReadBuffer();
-}
+    static_assert(sizeof(ProtocalHead) < sizeof(ConnectSession::read_buffer_));//协议头不能大于读缓冲区
 
-void ConnectSession::ClearReadBuffer()
-{
-    memset(read_buffer_, 0, sizeof(read_size_));
-    read_size_ = 0;
-    read_data_.size = 0;
+    memset(&read_data_.head, 0, sizeof(read_data_.head));
     read_data_.dataptr = nullptr;
-}
 
-void ConnectSession::ClearWriteBuffer()
-{
-    write_size_ = 0;
-    write_data_.size = 0;
-    write_data_.dataptr = nullptr;
+    write_data_ = nullptr;
 }
 
 AsioSockServer::AsioSockServer()
@@ -94,21 +84,23 @@ void AsioSockServer::OnSocketClose(SessionID id)
 
 void AsioSockServer::OnSocketMsg(SessionID id, DataPtr dataptr, std::size_t size)
 {
-    SendData(id, dataptr, size);//回写数据
+    LOG_INFO("session(%d) OnSocketMsg size(%d)", id, size);
+    SendData(id, dataptr.get(), size);//回写数据
 }
 
-void AsioSockServer::SendData(SessionID id, Byte* senddata, std::size_t size)
+void AsioSockServer::SendData(SessionID id, const Byte* senddata, std::size_t size)
 {
     ConSessionPtr session = GetConnectSession(id);
     if (session && senddata && size > 0)
     {
-        ConnectSession::DataPackage package;
-        package.size = size;
-        package.dataptr.reset(new Byte[size], [](Byte* p)
+        ProtocalHead head = { size };
+        DataPtr data = DataPtr(new Byte[size + sizeof(ProtocalHead)], [](Byte* p)
             {
                 delete[] p;
             });
-        memcpy(package.dataptr.get(), senddata, size);
+
+        memcpy(data.get(), &head, sizeof(ProtocalHead));
+        memcpy(data.get() + sizeof(ProtocalHead), senddata, size);
 
         bool can_write = false;
         {
@@ -118,47 +110,17 @@ void AsioSockServer::SendData(SessionID id, Byte* senddata, std::size_t size)
                 can_write = true;
                 session->is_writing_ = true;
 
-                session->write_data_ = package;
+                session->write_data_ = data;
             }
             else
             {
-                session->write_queue_.push(package);
+                session->write_queue_.push(data);
             }
         }
 
         if (can_write)
         {
-            DoWrite(session);
-        }
-    }
-}
-
-void AsioSockServer::SendData(SessionID id, DataPtr senddata_ptr, std::size_t size)
-{
-    ConSessionPtr session = GetConnectSession(id);
-    if (session && senddata_ptr && size > 0)
-    {
-        ConnectSession::DataPackage package = { size, senddata_ptr };
-
-        bool can_write = false;
-        {
-            std::lock_guard<std::mutex> lock(session->write_mtx_);
-            if (!session->is_writing_ && session->write_queue_.size() == 0)//队列为空且无正在发送的数据，可以直接发送
-            {
-                can_write = true;
-                session->is_writing_ = true;
-
-                session->write_data_ = package;
-            }
-            else
-            {
-                session->write_queue_.push(package);
-            }
-        }
-
-        if (can_write)
-        {
-            DoWrite(session);
+            DoWriteDataPackage(session);
         }
     }
 }
@@ -218,6 +180,8 @@ void AsioSockServer::OnAccept(ConSessionPtr session, const boost::system::error_
             OnSocketConnect(session->session_id_);//连接成功
             
             DoValidateHello(session);//等待验证客户端发送Hello信息
+
+            DoAccept();//继续监听连接
         }
         else
         {
@@ -256,8 +220,12 @@ void AsioSockServer::OnValidateHello(ConSessionPtr session, const boost::system:
                 //验证成功
                 OnSocketValidated(session->session_id_);
 
-                session->ClearReadBuffer();
-                DoReadProtocalHead(session);//继续读取数据
+#ifndef NO_CLEAR_BUFFER
+                memset(session->read_buffer_, 0, session->read_size_);
+#endif
+                session->read_size_ = 0;
+
+                DoReadDataPackage(session);//继续读取数据
             }
             else
             {
@@ -273,86 +241,114 @@ void AsioSockServer::OnValidateHello(ConSessionPtr session, const boost::system:
     }
 }
 
-void AsioSockServer::DoReadProtocalHead(ConSessionPtr session)
-{
-    static_assert(sizeof(ProtocalHead) < sizeof(ConnectSession::read_buffer_));//协议头不能大于读缓冲区
-
-    std::lock_guard<std::mutex> lock(session->sock_mtx_);
-    session->socket_.async_receive(
-        buffer(session->read_buffer_ + session->read_size_, sizeof(ProtocalHead) - session->read_size_),
-        MEM_CALL2(session, OnReadProtocalHead));
-}
-
-void AsioSockServer::OnReadProtocalHead(ConSessionPtr session, const boost::system::error_code& error, const std::size_t& size)
-{
-    if (CheckIOState(session, error))
-    {
-        session->read_size_ += size;
-        if (session->read_size_ < sizeof(ProtocalHead))
-        {
-            DoReadProtocalHead(session);//继续读取协议头
-        }
-        else if (session->read_size_ == sizeof(ProtocalHead))
-        {
-            auto head = reinterpret_cast<ProtocalHead*>(session->read_buffer_);
-            session->read_data_.dataptr.reset(new Byte[head->data_len], [](Byte* p)
-                {
-                    delete[] p;
-                });
-
-            DoReadDataPackage(session);//开始读取数据包
-        }
-        else
-        {
-            LOG_ERROR("OnReadProtocalHead error, readsize(%d) bigger than expected(%d)!", session->read_size_, sizeof(ProtocalHead));
-            CloseConnectSession(session);
-        }
-    }
-}
-
 void AsioSockServer::DoReadDataPackage(ConSessionPtr session)
 {
-    auto head = reinterpret_cast<ProtocalHead*>(session->read_buffer_);
-
-    std::lock_guard<std::mutex> lock(session->sock_mtx_);
-    session->socket_.async_receive(
-        buffer(session->read_data_.dataptr.get() + session->read_data_.size, head->data_len - session->read_data_.size),
-        MEM_CALL2(session, OnReadDataPackage));
+    if (session->read_location == ConnectSession::BUFFER)//
+    {
+        std::lock_guard<std::mutex> lock(session->sock_mtx_);
+        session->socket_.async_receive(
+            buffer(session->read_buffer_ + session->read_size_, sizeof(session->read_buffer_) - session->read_size_),
+            MEM_CALL2(session, OnReadDataPackage));
+    }
+    else if (session->read_location == ConnectSession::DATA)
+    {
+        std::lock_guard<std::mutex> lock(session->sock_mtx_);
+        session->socket_.async_receive(
+            buffer(session->read_data_.dataptr.get() + session->read_size_, session->read_data_.head.data_len - session->read_size_),
+            MEM_CALL2(session, OnReadDataPackage));
+    }
 }
 
 void AsioSockServer::OnReadDataPackage(ConSessionPtr session, const boost::system::error_code& error, const std::size_t& size)
 {
     if (CheckIOState(session, error))
     {
-        session->read_data_.size += size;
+        session->read_size_ += size;
+        if (session->read_location == ConnectSession::BUFFER)//
+        {
+            Byte* start_pos = session->read_buffer_;
+            auto left_size = session->read_size_;
 
-        auto head = reinterpret_cast<ProtocalHead*>(session->read_buffer_);
-        if (session->read_data_.size < head->data_len)
-        {
-            DoReadDataPackage(session);//继续读取数据包
-        }
-        else if (session->read_data_.size == head->data_len)
-        {
-            //分发数据包
-            OnSocketMsg(session->session_id_, session->read_data_.dataptr, session->read_data_.size);
+            auto create_and_copy_data = [&session, &start_pos, &left_size](std::size_t create_size, std::size_t copy_size)
+            {
+                session->read_data_.dataptr.reset(new Byte[create_size], [](Byte* p)
+                    {
+                        delete[] p;
+                    });
 
-            session->ClearReadBuffer();
-            DoReadProtocalHead(session);//读取下一个数据
+                memcpy(&session->read_data_.head, start_pos, sizeof(ProtocalHead));//拷贝ProtocalHead
+                memcpy(session->read_data_.dataptr.get(), start_pos + sizeof(ProtocalHead), copy_size);//拷贝dataptr
+                start_pos += sizeof(ProtocalHead) + copy_size;
+                left_size -= sizeof(ProtocalHead) + copy_size;
+            };
+
+            while (left_size >= sizeof(ProtocalHead))
+            {
+                auto head = reinterpret_cast<ProtocalHead*>(start_pos);
+                
+                if (left_size >= sizeof(ProtocalHead) + head->data_len)//已读取完整个数据包
+                {
+                    create_and_copy_data(head->data_len, head->data_len);
+                    session->read_size_ = left_size;
+
+                    OnSocketMsg(session->session_id_, session->read_data_.dataptr, head->data_len);//分发数据包
+                }
+                else
+                {
+                    if (sizeof(session->read_buffer_) >= sizeof(ProtocalHead) + head->data_len)//缓冲区足够容纳数据包
+                    {
+                        //整理缓冲区，继续读取数据包
+                        if (session->read_buffer_ != start_pos)
+                        {
+                            memcpy(session->read_buffer_, start_pos, left_size);
+#ifndef NO_CLEAR_BUFFER
+                            memset(session->read_buffer_ + left_size, 0, sizeof(session->read_buffer_) - left_size);
+#endif
+                        }
+                    }
+                    else
+                    {
+                        //缓冲区不够容纳数据包，采用动态数据区读取，以达到粘包目的。
+
+                        session->read_location = ConnectSession::DATA; //下一次从数据区读取
+                        session->read_size_ = left_size - sizeof(ProtocalHead);//已读数据区长度
+
+                        create_and_copy_data(head->data_len, left_size - sizeof(ProtocalHead));
+
+#ifndef NO_CLEAR_BUFFER
+                        memset(session->read_buffer_, 0, session->read_size_);
+#endif
+                    }
+                    break;
+                }
+            }
         }
-        else
+        else if (session->read_location == ConnectSession::DATA)
         {
-            LOG_ERROR("OnReadDataPackage error, readsize(%d) bigger than expected(%d)!", session->read_data_.size, head->data_len);
-            CloseConnectSession(session);
+            if (session->read_size_ == session->read_data_.head.data_len)
+            {
+                OnSocketMsg(session->session_id_, session->read_data_.dataptr, session->read_data_.head.data_len);//分发数据包
+
+                session->read_location = ConnectSession::BUFFER; //恢复为从缓冲区读取
+                session->read_size_ = 0;
+            }
+            else if (session->read_size_ > session->read_data_.head.data_len)
+            {
+                LOG_ERROR("OnReadDataPackage error, readsize(%d) bigger than expected(%d)!", session->read_size_, session->read_data_.head.data_len);
+                CloseConnectSession(session);
+                return;
+            }
         }
+        DoReadDataPackage(session);//继续读取数据包
     }
 }
 
-void AsioSockServer::TryWrite(ConSessionPtr session)
+void AsioSockServer::TryWriteDataPackage(ConSessionPtr session)
 {
     bool can_write = false;
     {
         std::lock_guard<std::mutex> lock(session->write_mtx_);
-        if (!session->is_writing_)//没有正在写的内容时
+        if (!session->is_writing_ && session->write_queue_.size() > 0)//没有正在写的内容时
         {
             can_write = true;
             session->is_writing_ = true;
@@ -363,43 +359,45 @@ void AsioSockServer::TryWrite(ConSessionPtr session)
 
     if (can_write)
     {
-        DoWrite(session);
+        DoWriteDataPackage(session);
     }
 }
 
-void AsioSockServer::DoWrite(ConSessionPtr session)
+void AsioSockServer::DoWriteDataPackage(ConSessionPtr session)
 {
     //只有一个线程能进入写函数，这里不用给写缓冲加锁了
     std::lock_guard<std::mutex> lock(session->sock_mtx_);
+    auto total_size = reinterpret_cast<ProtocalHead*>(session->write_data_.get())->data_len + sizeof(ProtocalHead);
     session->socket_.async_send(
-        buffer(session->write_data_.dataptr.get() + session->write_size_, session->write_data_.size - session->write_size_),
-        MEM_CALL2(session, OnWrite));
+        buffer(session->write_data_.get() + session->write_size_, total_size - session->write_size_),
+        MEM_CALL2(session, OnWriteDataPackage));
 }
 
-void AsioSockServer::OnWrite(ConSessionPtr session, const boost::system::error_code& error, const std::size_t& size)
+void AsioSockServer::OnWriteDataPackage(ConSessionPtr session, const boost::system::error_code& error, const std::size_t& size)
 {
     if (CheckIOState(session, error))
     {
         session->write_size_ += size;
 
-        if (session->write_size_ < session->write_data_.size)
+        auto total_size = reinterpret_cast<ProtocalHead*>(session->write_data_.get())->data_len + sizeof(ProtocalHead);
+        if (session->write_size_ < total_size)
         {
-            DoWrite(session);//继续写数据包
+            DoWriteDataPackage(session);//继续写数据包
         }
-        else if (session->write_size_ < session->write_data_.size)
+        else if (session->write_size_ == total_size)
         {
-            session->ClearWriteBuffer();
+            session->write_size_ = 0;
 
             {
                 std::lock_guard<std::mutex> lock(session->write_mtx_);
                 session->is_writing_ = false;
             }
 
-            TryWrite(session);//尝试写下一个数据
+            TryWriteDataPackage(session);//尝试写下一个数据
         }
         else
         {
-            LOG_ERROR("OnWrite error, writesize(%d) bigger than expected(%d)!", session->write_size_, session->write_data_.size);
+            LOG_ERROR("OnWriteDataPackage error, writesize(%d) bigger than expected(%d)!", session->write_size_, total_size);
             CloseConnectSession(session);
         }
     }
@@ -415,6 +413,7 @@ bool AsioSockServer::CheckIOState(ConSessionPtr session, const boost::system::er
         }
         LOG_DEBUG("socket io error(%d)", error);
         CloseConnectSession(session);
+        return false;
     }
     else
     {

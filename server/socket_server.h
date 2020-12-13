@@ -14,7 +14,7 @@
 
 #include "utils.h"
 
-#define SOCK_BUFFER_LEN 512 //socket缓冲区长度（必须大于协议头长度和hello data长度）
+#define SOCK_BUFFER_LEN 4096 //socket缓冲区长度（必须大于协议头长度和hello data长度）
 #define SOCK_IO_THREAD_NUM 2
 #define SOCK_DEFAULT_PORT 8888
 #define SOCK_HELLO_DATA "hello longfei!"
@@ -26,22 +26,30 @@ using SessionID = uint;
 using Byte = char;
 using DataPtr = std::shared_ptr<Byte>;
 
+struct ProtocalHead//协议头部
+{
+    uint data_len;//数据长度
+};
+
+struct DataPackage
+{
+    ProtocalHead head;
+    DataPtr dataptr;
+};
+
 class AsioSockServer;
 class ConnectSession : boost::noncopyable
 {
 public:
-    struct DataPackage
+    enum ReadLocation
     {
-        std::size_t size;
-        DataPtr dataptr;
+        BUFFER,//缓冲区
+        DATA,//数据区
     };
 
     using Socket = boost::asio::ip::tcp::socket;
 public:
     ConnectSession(boost::asio::io_service& service);
-
-    void ClearReadBuffer();
-    void ClearWriteBuffer();
 
     SessionID session_id_;
 
@@ -49,27 +57,24 @@ public:
     std::mutex sock_mtx_;//套接字访问互斥量
 
     //确保只有一个线程访问读取区，所以不用互斥锁
-    char read_buffer_[SOCK_BUFFER_LEN];//读缓冲区
+    ReadLocation read_location;//读入位置
+    Byte read_buffer_[SOCK_BUFFER_LEN];//读缓冲区
     std::size_t read_size_;
-    DataPackage read_data_;//读数据存储区
+    DataPackage read_data_;//读数据存储区，用于粘包
 
     //需要互斥操作保护is_writing_和write_queue_
     bool is_writing_;
-    std::queue<DataPackage> write_queue_;//写入缓冲队列
+    std::queue<DataPtr> write_queue_;//写入缓冲队列
     std::mutex write_mtx_;
 
     //确保只有一个线程访问写入区，所以不用互斥锁
     std::size_t write_size_;
-    DataPackage write_data_;//写数据存储区
+    DataPtr write_data_;//写数据存储区（head + dataptr）
 };
 
 class AsioSockServer : public boost::noncopyable
 {
 public:
-    struct ProtocalHead//协议头部
-    {
-        uint data_len;//数据长度
-    };
 
     using SocketPtr = std::unique_ptr<boost::asio::ip::tcp::socket>;
     using AcceptorPtr = std::unique_ptr<boost::asio::ip::tcp::acceptor>;
@@ -89,9 +94,8 @@ public:
     virtual void OnSocketClose(SessionID id);//socket连接断开
     virtual void OnSocketMsg(SessionID id, DataPtr dataptr, std::size_t size);//socket消息接收，通过接收DataPtr延长数据存活时间。
 
-    ////发送数据包，多线程安全
-    void SendData(SessionID id, Byte* senddata, std::size_t size);
-    void SendData(SessionID id, DataPtr senddata_ptr, std::size_t size);
+    //发送数据包，多线程安全
+    void SendData(SessionID id, const Byte* senddata, std::size_t size);
 private:
     void InitSocket();
     void UnInitSocket();
@@ -103,13 +107,11 @@ private:
     void OnAccept(ConSessionPtr session, const boost::system::error_code& error);
     void DoValidateHello(ConSessionPtr session);
     void OnValidateHello(ConSessionPtr session, const boost::system::error_code& error, const std::size_t& size);
-    void DoReadProtocalHead(ConSessionPtr session);
-    void OnReadProtocalHead(ConSessionPtr session, const boost::system::error_code& error, const std::size_t& size);
     void DoReadDataPackage(ConSessionPtr session);
     void OnReadDataPackage(ConSessionPtr session, const boost::system::error_code& error, const std::size_t& size);
-    void TryWrite(ConSessionPtr session);
-    void DoWrite(ConSessionPtr session);
-    void OnWrite(ConSessionPtr session, const boost::system::error_code& error, const std::size_t& size);
+    void TryWriteDataPackage(ConSessionPtr session);
+    void DoWriteDataPackage(ConSessionPtr session);
+    void OnWriteDataPackage(ConSessionPtr session, const boost::system::error_code& error, const std::size_t& size);
     bool CheckIOState(ConSessionPtr session, const boost::system::error_code& error);
 
     SessionID GernerateSessionID();
