@@ -34,7 +34,10 @@ namespace myutils
         void ReturnOneID(T id)
         {
             use_set_.erase(id);
-            NextID();
+            if (use_set_.find(now_) != use_set_.end())
+            {
+                NextID();
+            }
         }
 
         void Reset(T start, T end)

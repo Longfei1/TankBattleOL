@@ -76,25 +76,30 @@
   <ImportGroup Label="PropertySheets" />
   <PropertyGroup Label="UserMacros" />
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
-    <IncludePath>/root/program/boost/boost_1_74_0/include;$(IncludePath)</IncludePath>
-    <LibraryPath>/root/program/boost/boost_1_74_0/lib;$(LibraryPath)</LibraryPath>
+    <IncludePath>/root/program/boost/boost_1_74_0/include;/root/program/protobuf/include;$(IncludePath)</IncludePath>
+    <LibraryPath>/root/program/boost/boost_1_74_0/lib;/root/program/protobuf/lib;$(LibraryPath)</LibraryPath>
   </PropertyGroup>
   <ItemGroup>
-    <ClCompile Include="log.cpp" />
+    <ClCompile Include="log\log.cpp" />
     <ClCompile Include="main.cpp" />
+    <ClCompile Include="proto\test.pb.cc" />
     <ClCompile Include="socket_server.cpp" />
     <ClCompile Include="utils.cpp" />
     <ClCompile Include="work_server.cpp" />
   </ItemGroup>
   <ItemGroup>
-    <ClInclude Include="log.h" />
+    <ClInclude Include="log\log.h" />
+    <ClInclude Include="proto\test.pb.h" />
     <ClInclude Include="socket_server.h" />
     <ClInclude Include="utils.h" />
     <ClInclude Include="work_server.h" />
   </ItemGroup>
+  <ItemGroup>
+    <None Include="proto\test.proto" />
+  </ItemGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
     <Link>
-      <LibraryDependencies>pthread</LibraryDependencies>
+      <LibraryDependencies>pthread;protobuf</LibraryDependencies>
     </Link>
   </ItemDefinitionGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />

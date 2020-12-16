@@ -13,6 +13,7 @@
 #include <unordered_map>
 
 #include "utils.h"
+#include "log/log.h"
 
 #define SOCK_BUFFER_LEN 4096 //socket缓冲区长度（必须大于协议头长度和hello data长度）
 #define SOCK_IO_THREAD_NUM 2

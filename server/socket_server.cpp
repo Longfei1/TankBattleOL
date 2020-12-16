@@ -1,5 +1,4 @@
 #include "socket_server.h"
-#include "log.h"
 
 using namespace boost::asio;
 
@@ -50,7 +49,7 @@ bool AsioSockServer::Initialize(int io_threads, int port, std::string hello_data
     hello_data_ = std::move(hello_data);
 
     min_session_ = min_session;
-    max_session = max_session;
+    max_session_ = max_session;
     session_generator_.Reset(min_session, max_session);
 
     //初始化套接字
@@ -181,12 +180,13 @@ void AsioSockServer::OnAccept(ConSessionPtr session, const boost::system::error_
             
             DoValidateHello(session);//等待验证客户端发送Hello信息
 
-            DoAccept();//继续监听连接
+            //DoAccept();//继续监听连接
         }
         else
         {
             LOG_ERROR("OnAccept error, not have enough sessionid!");
         }
+        DoAccept();//继续监听连接
     }
     else
     {

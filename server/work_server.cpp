@@ -1,5 +1,5 @@
 #include "work_server.h"
-
+#include "proto/test.pb.h"
 WorkServer::WorkServer()
 {
 
@@ -17,6 +17,9 @@ bool WorkServer::Initialize(int io_threads, int work_threads, int port, std::str
 void WorkServer::OnSocketMsg(SessionID id, DataPtr dataptr, std::size_t size)
 {
     //²âÊÔ£¬»ØÐ´×Ö·û´®
-    //SendData(id, dataptr, size);
-    Super::OnSocketMsg(id, dataptr, size);
+    test::TestString t;
+    t.ParseFromString({ dataptr.get(), size });
+    LOG_INFO("client input:%s", t.msg().c_str());
+    
+    SendData(id, dataptr.get(), size);
 }
