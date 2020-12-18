@@ -1,10 +1,10 @@
-#include "work_server.h"
+#include "work_server/work_server.h"
 
 int main(int argc, char* argv[])
 {
-    WorkServer server;
+    WorkServer server("127.0.0.1", 8888, 1, 2);//服务器为单核
 
-    server.Initialize(1, 2, 8888, "longfei\n");//服务器为单核
+    server.Initialize();
 
     while (getchar() != 'q')
     {

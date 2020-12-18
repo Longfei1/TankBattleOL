@@ -8,6 +8,7 @@ std::printf("\n")                                    \
 
 
 //日志为单例
+#define LOG_TRACE(...) LOG_FORMAT("", "Trace", __VA_ARGS__)
 #define LOG_DEBUG(...) LOG_FORMAT("", "Debug", __VA_ARGS__)
 #define LOG_INFO(...) LOG_FORMAT("", "Info", __VA_ARGS__)
 #define LOG_WARN(...) LOG_FORMAT("", "Warn", __VA_ARGS__)

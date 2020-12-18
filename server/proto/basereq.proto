@@ -1,0 +1,14 @@
+syntax = "proto3";
+
+import "google/protobuf/any.proto";
+
+package basereq;
+
+message Request
+{
+	uint32 request = 1;//消息号
+	bool need_echo = 2;//是否需要响应
+	uint64 squence = 3;//消息序列号（可用于实现客户端的响应请求）
+	google.protobuf.Any data = 4;//消息数据(内容与消息号相关)
+}
+

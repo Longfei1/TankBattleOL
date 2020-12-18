@@ -1,42 +1,15 @@
 #pragma once
 
+#include "base_library.h"
+
 #include <boost/asio/io_service.hpp>
 #include <boost/asio/ip/tcp.hpp>
 #include <boost/noncopyable.hpp>
+#include <atomic>
 
-#include <memory>
-#include <vector>
-#include <thread>
-#include <string>
-#include <mutex>
-#include <queue>
-#include <unordered_map>
+#include "utils/utils.h"
 
-#include "utils.h"
-#include "log/log.h"
-
-#define SOCK_BUFFER_LEN 4096 //socket缓冲区长度（必须大于协议头长度和hello data长度）
-#define SOCK_IO_THREAD_NUM 2
-#define SOCK_DEFAULT_PORT 8888
-#define SOCK_HELLO_DATA "hello longfei!"
-
-#define SESSION_MAX_ID 100000
-
-//公共类型定义
-using SessionID = uint;
-using Byte = char;
-using DataPtr = std::shared_ptr<Byte>;
-
-struct ProtocalHead//协议头部
-{
-    uint data_len;//数据长度
-};
-
-struct DataPackage
-{
-    ProtocalHead head;
-    DataPtr dataptr;
-};
+#include "socket_def.h"
 
 class AsioSockServer;
 class ConnectSession : boost::noncopyable
@@ -73,35 +46,37 @@ public:
     DataPtr write_data_;//写数据存储区（head + dataptr）
 };
 
+//asio实现socket服务，线程安全。
 class AsioSockServer : public boost::noncopyable
 {
 public:
-
+    
     using SocketPtr = std::unique_ptr<boost::asio::ip::tcp::socket>;
     using AcceptorPtr = std::unique_ptr<boost::asio::ip::tcp::acceptor>;
     using ConSessionPtr = std::shared_ptr<ConnectSession>;
-
+    using SocketStatusCallback = std::function<void(SocketStatus, SessionID)>;
+    using SocketMsgCallback = std::function<void(SessionID, DataPtr, std::size_t)>;
 public:
-    AsioSockServer();
-    virtual ~AsioSockServer();
-   
-    bool Initialize(int io_threads = SOCK_IO_THREAD_NUM, int port = SOCK_DEFAULT_PORT, std::string hello_data = SOCK_HELLO_DATA,
+    AsioSockServer(SocketStatusCallback status_callback, SocketMsgCallback msg_callback,
+        std::string ip = SOCK_DEFAULT_IP, int port = SOCK_DEFAULT_PORT, 
+        int io_threads = SOCK_IO_THREAD_NUM, std::string hello_data = SOCK_HELLO_DATA,
         SessionID min_session = 1, SessionID max_session = SESSION_MAX_ID);
+    ~AsioSockServer();
+   
+    bool Initialize();
+    void ShutDown();
+    
+    //为避免使用互斥量保护回调函数，回调函数设置在构造函数处，不提供设置回调接口。
+    //void SetSocketStatusCallback(SocketStatusCallback callback);//设置状态回调
+    //void SetSocketMsgCallback(SocketMsgCallback callback);//设置消息回调
 
-    virtual void ShutDown();
-
-    virtual void OnSocketConnect(SessionID id);//socket连接建立
-    virtual void OnSocketValidated(SessionID id);//socket连接验证成功
-    virtual void OnSocketClose(SessionID id);//socket连接断开
-    virtual void OnSocketMsg(SessionID id, DataPtr dataptr, std::size_t size);//socket消息接收，通过接收DataPtr延长数据存活时间。
-
-    //发送数据包，多线程安全
-    void SendData(SessionID id, const Byte* senddata, std::size_t size);
+    void SendData(SessionID id, const Byte* senddata, std::size_t size);//发送数据包，多线程安全
+    void CloseConnect(SessionID id);//关闭连接
 private:
-    void InitSocket();
-    void UnInitSocket();
-    void StartIOService();
-    void StopIOService();
+    bool InitSocket();
+    bool UnInitSocket();
+    bool StartIOService();
+    bool StopIOService();
 
     //Socket IO处理
     void DoAccept();
@@ -122,9 +97,15 @@ private:
     void AddConnectSession(ConSessionPtr session);
     void RemoveConnectSession(ConSessionPtr session);
     void CloseConnectSession(ConSessionPtr session);
+
+    void OnSocketConnect(SessionID id);//socket连接建立
+    void OnSocketValidated(SessionID id);//socket连接验证成功
+    void OnSocketClose(SessionID id);//socket连接断开
+    void OnSocketMsg(SessionID id, DataPtr dataptr, std::size_t size);//socket消息接收
 private:
-    int io_thread_num_;//io线程数
+    std::string ip_;
     int port_;
+    int io_thread_num_;//io线程数
 
     std::string hello_data_;
     SessionID min_session_;
@@ -140,6 +121,12 @@ private:
 
     std::mutex session_gernerator_mtx_;
     myutils::IDGenerator<SessionID> session_generator_;//sessionid生成器
+
+    //回调函数
+    SocketStatusCallback status_callback_;
+    SocketMsgCallback msg_callback_;
+
+    std::atomic_bool running_;
 };
 
 inline SessionID AsioSockServer::GernerateSessionID()

@@ -1,4 +1,5 @@
 #include "socket_server.h"
+#include "log/log.h"
 
 using namespace boost::asio;
 
@@ -26,66 +27,68 @@ ConnectSession::ConnectSession(boost::asio::io_service& service
     write_data_ = nullptr;
 }
 
-AsioSockServer::AsioSockServer()
+AsioSockServer::AsioSockServer(SocketStatusCallback status_callback, SocketMsgCallback msg_callback,
+    std::string ip, int port, int io_threads, std::string hello_data, SessionID min_session, SessionID max_session) 
+    : ip_(std::move(ip)), port_(port), io_thread_num_(0), hello_data_(std::move(hello_data_)), 
+    min_session_(min_session), max_session_(max_session), socket_(nullptr), acceptor_(nullptr), 
+    session_generator_(min_session, max_session), status_callback_(status_callback), msg_callback_(msg_callback),
+    running_(false)
 {
-    io_thread_num_ = 0;
-    socket_ = nullptr;
-    acceptor_ = nullptr;
-
-   //session_generator_.Reset(1, SESSION_MAX_ID);
 }
 
 AsioSockServer::~AsioSockServer()
 {
-
+    if (running_)
+    {
+        ShutDown();
+    }
 }
 
-bool AsioSockServer::Initialize(int io_threads, int port, std::string hello_data, 
-    SessionID min_session, SessionID max_session)
+bool AsioSockServer::Initialize()
 {
-    io_thread_num_ = io_threads;
-    port_ = port;
-
-    hello_data_ = std::move(hello_data);
-
-    min_session_ = min_session;
-    max_session_ = max_session;
-    session_generator_.Reset(min_session, max_session);
+    bool expect = false;
+    if (!running_.compare_exchange_strong(expect, true))
+    {
+        return false;
+    }
 
     //初始化套接字
-    InitSocket();
+    if (!InitSocket())
+    {
+        return false;
+    }
 
     //运行io服务
-    StartIOService();
+    if (!StartIOService())
+    {
+        return false;
+    }
 
     return true;
 }
 
 void AsioSockServer::ShutDown()
 {
+    bool expect = true;
+    if (!running_.compare_exchange_strong(expect, false))
+    {
+        return;
+    }
+
     StopIOService();
+
+    UnInitSocket();
 }
 
-void AsioSockServer::OnSocketConnect(SessionID id)
-{
-    LOG_INFO("session(%d) OnSocketConnect", id);
-}
-
-void AsioSockServer::OnSocketValidated(SessionID id)
-{
-    LOG_INFO("session(%d) OnSocketValidated", id);
-}
-
-void AsioSockServer::OnSocketClose(SessionID id)
-{
-    LOG_INFO("session(%d) OnSocketClose", id);
-}
-
-void AsioSockServer::OnSocketMsg(SessionID id, DataPtr dataptr, std::size_t size)
-{
-    LOG_INFO("session(%d) OnSocketMsg size(%d)", id, size);
-    SendData(id, dataptr.get(), size);//回写数据
-}
+//void AsioSockServer::SetSocketStatusCallback(SocketStatusCallback callback)
+//{
+//    status_callback_ = std::move(callback);
+//}
+//
+//void AsioSockServer::SetSocketMsgCallback(SocketMsgCallback callback)
+//{
+//    msg_callback_ = std::move(callback);
+//}
 
 void AsioSockServer::SendData(SessionID id, const Byte* senddata, std::size_t size)
 {
@@ -124,22 +127,33 @@ void AsioSockServer::SendData(SessionID id, const Byte* senddata, std::size_t si
     }
 }
 
-void AsioSockServer::InitSocket()
+void AsioSockServer::CloseConnect(SessionID id)
+{
+    auto session = GetConnectSession(id);
+    if (session)
+    {
+        CloseConnectSession(session);
+    }
+}
+
+bool AsioSockServer::InitSocket()
 {
     socket_.reset(new ip::tcp::socket(io_service_));
 
-    ip::tcp::endpoint ep(ip::tcp::v4(), port_);//使用默认IP
+    ip::tcp::endpoint ep(ip::address::from_string(ip_), port_);
     acceptor_.reset(new ip::tcp::acceptor(io_service_, ep));
 
     DoAccept();//开始接收连接
+    return true;
 }
 
-void AsioSockServer::UnInitSocket()
+bool AsioSockServer::UnInitSocket()
 {
     socket_->close();
+    return true;
 }
 
-void AsioSockServer::StartIOService()
+bool AsioSockServer::StartIOService()
 {
     for (int i = 0; i < io_thread_num_; i++)
     {
@@ -148,9 +162,10 @@ void AsioSockServer::StartIOService()
                 io_service_.run();
             });
     }
+    return true;
 }
 
-void AsioSockServer::StopIOService()
+bool AsioSockServer::StopIOService()
 {
     io_service_.stop();//停止服务
     for (auto& th : io_threads_)
@@ -158,6 +173,7 @@ void AsioSockServer::StopIOService()
         th.join();//等待IO线程结束
     }
     io_threads_.clear();
+    return true;
 }
 
 void AsioSockServer::DoAccept()
@@ -421,8 +437,43 @@ bool AsioSockServer::CheckIOState(ConSessionPtr session, const boost::system::er
     }
 }
 
-void AsioSockServer::AsioSockServer::CloseConnectSession(ConSessionPtr session)
+void AsioSockServer::CloseConnectSession(ConSessionPtr session)
 {
-    session->socket_.close();
+    {
+        std::lock_guard<std::mutex> lock(session->sock_mtx_);
+        session->socket_.close();
+    }
     RemoveConnectSession(session);
+}
+
+void AsioSockServer::OnSocketConnect(SessionID id)
+{
+    if (status_callback_)
+    {
+        status_callback_(SocketStatus::CONNECTED, id);
+    }
+}
+
+void AsioSockServer::OnSocketValidated(SessionID id)
+{
+    if (status_callback_)
+    {
+        status_callback_(SocketStatus::VALIDATED, id);
+    }
+}
+
+void AsioSockServer::OnSocketClose(SessionID id)
+{
+    if (status_callback_)
+    {
+        status_callback_(SocketStatus::CONNECTED, id);
+    }
+}
+
+void AsioSockServer::OnSocketMsg(SessionID id, DataPtr dataptr, std::size_t size)
+{
+    if (msg_callback_)
+    {
+        msg_callback_(id, dataptr, size);
+    }
 }
