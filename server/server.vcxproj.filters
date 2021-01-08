@@ -2,9 +2,6 @@
 <Project ToolsVersion="4.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
   <ItemGroup>
     <ClCompile Include="main.cpp" />
-    <ClCompile Include="log\log.cpp">
-      <Filter>log</Filter>
-    </ClCompile>
     <ClCompile Include="proto\test.pb.cc">
       <Filter>proto</Filter>
     </ClCompile>
@@ -17,22 +14,19 @@
     <ClCompile Include="work_server\work_server.cpp">
       <Filter>work_server</Filter>
     </ClCompile>
-    <ClCompile Include="utils\utils.cpp">
-      <Filter>utils</Filter>
+    <ClCompile Include="..\common\utils\utils.cpp">
+      <Filter>common\utils</Filter>
+    </ClCompile>
+    <ClCompile Include="..\common\log\log.cpp">
+      <Filter>common\log</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
-    <ClInclude Include="log\log.h">
-      <Filter>log</Filter>
-    </ClInclude>
     <ClInclude Include="proto\test.pb.h">
       <Filter>proto</Filter>
     </ClInclude>
     <ClInclude Include="proto\basereq.pb.h">
       <Filter>proto</Filter>
-    </ClInclude>
-    <ClInclude Include="socket_server\socket_def.h">
-      <Filter>socket_server</Filter>
     </ClInclude>
     <ClInclude Include="socket_server\socket_server.h">
       <Filter>socket_server</Filter>
@@ -40,18 +34,21 @@
     <ClInclude Include="work_server\work_server.h">
       <Filter>work_server</Filter>
     </ClInclude>
-    <ClInclude Include="utils\utils.h">
-      <Filter>utils</Filter>
-    </ClInclude>
     <ClInclude Include="base_library.h" />
+    <ClInclude Include="..\common\utils\utils.h">
+      <Filter>common\utils</Filter>
+    </ClInclude>
+    <ClInclude Include="..\common\log\log.h">
+      <Filter>common\log</Filter>
+    </ClInclude>
     <ClInclude Include="work_server\work_def.h">
       <Filter>work_server</Filter>
     </ClInclude>
+    <ClInclude Include="..\common\define\socket_def.h">
+      <Filter>common\define</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
-    <Filter Include="log">
-      <UniqueIdentifier>{7b0fa570-18d9-468d-ae1a-33bd613e37c7}</UniqueIdentifier>
-    </Filter>
     <Filter Include="proto">
       <UniqueIdentifier>{34acb656-7945-4e3e-a9b7-db0b8f0e2363}</UniqueIdentifier>
     </Filter>
@@ -61,8 +58,17 @@
     <Filter Include="work_server">
       <UniqueIdentifier>{693d7411-68b0-4e88-87f1-c0beb85955fb}</UniqueIdentifier>
     </Filter>
-    <Filter Include="utils">
-      <UniqueIdentifier>{cfd02068-afd7-4d3c-8ceb-bb17cba92a18}</UniqueIdentifier>
+    <Filter Include="common">
+      <UniqueIdentifier>{accc0929-f526-42f3-bdbf-b7bfa7734025}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="common\utils">
+      <UniqueIdentifier>{cb327c50-b715-4f3e-8115-ee5c7e583aa4}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="common\log">
+      <UniqueIdentifier>{478f7b9b-6455-4c9e-8e20-77eda32f533c}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="common\define">
+      <UniqueIdentifier>{2e0a3b02-32b0-4adb-b2cd-d00b0caeb618}</UniqueIdentifier>
     </Filter>
   </ItemGroup>
   <ItemGroup>

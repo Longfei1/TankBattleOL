@@ -1,6 +1,6 @@
 #include "work_server.h"
 #include "socket_server/socket_server.h"
-#include "log/log.h"
+#include "common/log/log.h"
 #include "proto/test.pb.h"
 
 WorkServer::WorkServer(std::string ip, int port, int io_threads, int work_threads, std::string hello_data,
@@ -20,7 +20,7 @@ WorkServer::WorkServer(std::string ip, int port, int io_threads, int work_thread
 
 bool WorkServer::Initialize()
 {
-    if (!socket_server_->Initialize())
+    if (!socket_server_ || !socket_server_->Initialize())
     {
         return false;
     }
@@ -137,7 +137,7 @@ void WorkServer::OnSocketMsg(SessionID id, DataPtr dataptr, std::size_t size)
     context->session = id;
 
     RequestPtr request = std::make_shared<Request>();
-    request->ParseFromString(std::string(dataptr.get(), size));
+    request->ParseFromArray(dataptr.get(), size);
 
     PutRequestToServer(context, request);
 }

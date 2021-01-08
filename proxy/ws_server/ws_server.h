@@ -3,29 +3,26 @@
 #include "base_library.h"
 #include "common/define/socket_def.h"
 
-#include <boost/asio/io_service.hpp>
-#include <boost/asio/ip/tcp.hpp>
-#include <boost/noncopyable.hpp>
 #include <atomic>
 
 #include "common/utils/utils.h"
 
-//asio实现socket服务，线程安全。
-class AsioSockServer : public boost::noncopyable
+//asio实现websocket服务，线程安全。
+class AsioWSServer : public boost::noncopyable
 {
 public:
     
     using SocketPtr = std::unique_ptr<boost::asio::ip::tcp::socket>;
     using AcceptorPtr = std::unique_ptr<boost::asio::ip::tcp::acceptor>;
-    using ConSessionPtr = std::shared_ptr<ConnectSession>;
+    using ConSessionPtr = std::shared_ptr<WSConnectSession>;
     using SocketStatusCallback = std::function<void(SocketStatus, SessionID)>;
     using SocketMsgCallback = std::function<void(SessionID, DataPtr, std::size_t)>;
 public:
-    AsioSockServer(SocketStatusCallback status_callback, SocketMsgCallback msg_callback,
+    AsioWSServer(SocketStatusCallback status_callback, SocketMsgCallback msg_callback,
         std::string ip = SOCK_DEFAULT_IP, int port = SOCK_DEFAULT_PORT, 
-        int io_threads = SOCK_IO_THREAD_NUM, std::string hello_data = SOCK_HELLO_DATA,
-        SessionID min_session = 1, SessionID max_session = SESSION_MAX_ID);
-    ~AsioSockServer();
+        int io_threads = SOCK_IO_THREAD_NUM, SessionID min_session = 1,
+        SessionID max_session = SESSION_MAX_ID);
+    ~AsioWSServer();
    
     bool Initialize();
     void ShutDown();
@@ -35,6 +32,7 @@ public:
     //void SetSocketMsgCallback(SocketMsgCallback callback);//设置消息回调
 
     void SendData(SessionID id, const Byte* senddata, std::size_t size);//发送数据包，多线程安全
+    void SendData(SessionID id, DataPtr dataptr, std::size_t size);//发送数据包，多线程安全
     void CloseConnection(SessionID id);//关闭连接
 private:
     bool InitSocket();
@@ -45,8 +43,8 @@ private:
     //Socket IO处理
     void DoAccept();
     void OnAccept(const boost::system::error_code& error, boost::asio::ip::tcp::socket socket);
-    void DoValidateHello(ConSessionPtr session);
-    void OnValidateHello(ConSessionPtr session, const boost::system::error_code& error, const std::size_t& size);
+    void DoShakeHand(ConSessionPtr session);
+    void OnShakeHand(ConSessionPtr session, const boost::system::error_code& error);
     void DoReadDataPackage(ConSessionPtr session);
     void OnReadDataPackage(ConSessionPtr session, const boost::system::error_code& error, const std::size_t& size);
     void TryWriteDataPackage(ConSessionPtr session);
@@ -92,25 +90,25 @@ private:
     std::atomic_bool running_;
 };
 
-inline SessionID AsioSockServer::GenerateSessionID()
+inline SessionID AsioWSServer::GenerateSessionID()
 {
     std::lock_guard<std::mutex> lock(session_gernerator_mtx_);
     return session_generator_.GenerateOneID();
 }
 
-inline void AsioSockServer::ReturnSessionID(SessionID id)
+inline void AsioWSServer::ReturnSessionID(SessionID id)
 {
     std::lock_guard<std::mutex> lock(session_gernerator_mtx_);
     session_generator_.ReturnOneID(id);
 }
 
-inline bool AsioSockServer::IsSessionIDValid(SessionID id)
+inline bool AsioWSServer::IsSessionIDValid(SessionID id)
 {
     //std::lock_guard<std::mutex> lock(session_gernerator_mtx_);
     return session_generator_.IsValidID(id);
 }
 
-inline AsioSockServer::ConSessionPtr AsioSockServer::GetConnectSession(SessionID id)
+inline AsioWSServer::ConSessionPtr AsioWSServer::GetConnectSession(SessionID id)
 {
     std::lock_guard<std::mutex> lock(session_map_mtx_);
     if (session_map_.find(id) != session_map_.end())
@@ -120,19 +118,19 @@ inline AsioSockServer::ConSessionPtr AsioSockServer::GetConnectSession(SessionID
     return nullptr;
 }
 
-inline void AsioSockServer::AddConnectSession(ConSessionPtr session)
+inline void AsioWSServer::AddConnectSession(ConSessionPtr session)
 {
     std::lock_guard<std::mutex> lock(session_map_mtx_);
     session_map_[*session->session_id_] = session;
 }
 
-inline void AsioSockServer::RemoveConnectSession(ConSessionPtr session)
+inline void AsioWSServer::RemoveConnectSession(ConSessionPtr session)
 {
     std::lock_guard<std::mutex> lock(session_map_mtx_);
     session_map_.erase(*session->session_id_);
 }
 
-inline void AsioSockServer::ClearConnectSessionMap()
+inline void AsioWSServer::ClearConnectSessionMap()
 {
     std::lock_guard<std::mutex> lock(session_map_mtx_);
     session_map_.clear();

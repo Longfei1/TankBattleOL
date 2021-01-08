@@ -1,6 +1,13 @@
 server/.vs/*
 server/bin/*
 server/obj/*
+server/*.user
+
+proxy/.vs/*
+proxy/bin/*
+proxy/obj/*
+proxy/*.user
+
 client/local/*
 client/.vscode/*
 client/library/*

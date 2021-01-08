@@ -35,14 +35,14 @@
     </ProjectConfiguration>
   </ItemGroup>
   <PropertyGroup Label="Globals">
-    <ProjectGuid>{db61e7a6-912d-44ff-a3c0-8eb36836c229}</ProjectGuid>
+    <ProjectGuid>{d66f5155-5c6b-4582-9b8f-33b24e04ce84}</ProjectGuid>
     <Keyword>Linux</Keyword>
-    <RootNamespace>server</RootNamespace>
+    <RootNamespace>proxy</RootNamespace>
     <MinimumVisualStudioVersion>15.0</MinimumVisualStudioVersion>
     <ApplicationType>Linux</ApplicationType>
     <ApplicationTypeRevision>1.0</ApplicationTypeRevision>
     <TargetLinuxPlatform>Generic</TargetLinuxPlatform>
-    <LinuxProjectType>{2238F9CD-F817-4ECC-BD14-2524D2669B35}</LinuxProjectType>
+    <LinuxProjectType>{D51BCBC9-82E9-4017-911E-C93873C4EA2B}</LinuxProjectType>
   </PropertyGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.Default.props" />
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|ARM'" Label="Configuration">
@@ -77,51 +77,46 @@
   <ImportGroup Label="PropertySheets" />
   <PropertyGroup Label="UserMacros" />
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
-    <IncludePath>/root/code/projects/server;/root/program/boost/boost_1_74_0/include;/root/program/protobuf/include;$(IncludePath)</IncludePath>
-    <LibraryPath>/root/program/boost/boost_1_74_0/lib;/root/program/protobuf/lib;$(LibraryPath)</LibraryPath>
+    <IncludePath>/root/code/projects/proxy;/root/program/boost/boost_1_74_0/include;$(IncludePath)</IncludePath>
+    <LibraryPath>/root/program/boost/boost_1_74_0/lib;$(LibraryPath)</LibraryPath>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
-    <IncludePath>/root/code/projects/server;/root/program/boost/boost_1_74_0/include;/root/program/protobuf/include;$(IncludePath)</IncludePath>
-    <LibraryPath>/root/program/boost/boost_1_74_0/lib;/root/program/protobuf/lib;$(LibraryPath)</LibraryPath>
+    <IncludePath>/root/code/projects/proxy;/root/program/boost/boost_1_74_0/include;$(IncludePath)</IncludePath>
+    <LibraryPath>/root/program/boost/boost_1_74_0/lib;$(LibraryPath)</LibraryPath>
   </PropertyGroup>
   <ItemGroup>
     <ClCompile Include="..\common\log\log.cpp" />
     <ClCompile Include="..\common\utils\utils.cpp" />
     <ClCompile Include="main.cpp" />
-    <ClCompile Include="proto\basereq.pb.cc" />
-    <ClCompile Include="proto\test.pb.cc" />
-    <ClCompile Include="socket_server\socket_server.cpp" />
-    <ClCompile Include="work_server\work_server.cpp" />
+    <ClCompile Include="proxy_server\clients_manager.cpp" />
+    <ClCompile Include="proxy_server\proxy_server.cpp" />
+    <ClCompile Include="socket_client\socket_client.cpp" />
+    <ClCompile Include="ws_server\ws_server.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="..\common\define\socket_def.h" />
     <ClInclude Include="..\common\log\log.h" />
     <ClInclude Include="..\common\utils\utils.h" />
     <ClInclude Include="base_library.h" />
-    <ClInclude Include="proto\basereq.pb.h" />
-    <ClInclude Include="proto\test.pb.h" />
-    <ClInclude Include="socket_server\socket_server.h" />
-    <ClInclude Include="work_server\work_def.h" />
-    <ClInclude Include="work_server\work_server.h" />
-  </ItemGroup>
-  <ItemGroup>
-    <None Include="proto\basereq.proto" />
-    <None Include="proto\test.proto" />
+    <ClInclude Include="proxy_server\clients_manager.h" />
+    <ClInclude Include="proxy_server\proxy_server.h" />
+    <ClInclude Include="socket_client\socket_client.h" />
+    <ClInclude Include="ws_server\ws_server.h" />
   </ItemGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
     <Link>
-      <LibraryDependencies>pthread;protobuf</LibraryDependencies>
+      <LibraryDependencies>pthread</LibraryDependencies>
     </Link>
     <ClCompile>
-      <AdditionalIncludeDirectories>./;../;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>./;../;%(ClCompile.AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
     </ClCompile>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
     <Link>
-      <LibraryDependencies>pthread;protobuf</LibraryDependencies>
+      <LibraryDependencies>pthread</LibraryDependencies>
     </Link>
     <ClCompile>
-      <AdditionalIncludeDirectories>./;../;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>./;../;%(ClCompile.AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
     </ClCompile>
   </ItemDefinitionGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />

@@ -1,0 +1,71 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Project ToolsVersion="4.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <ItemGroup>
+    <ClCompile Include="main.cpp" />
+    <ClCompile Include="proxy_server\proxy_server.cpp">
+      <Filter>proxy_server</Filter>
+    </ClCompile>
+    <ClCompile Include="ws_server\ws_server.cpp">
+      <Filter>ws_server</Filter>
+    </ClCompile>
+    <ClCompile Include="..\common\log\log.cpp">
+      <Filter>common\log</Filter>
+    </ClCompile>
+    <ClCompile Include="..\common\utils\utils.cpp">
+      <Filter>common\utils</Filter>
+    </ClCompile>
+    <ClCompile Include="socket_client\socket_client.cpp">
+      <Filter>socket_client</Filter>
+    </ClCompile>
+    <ClCompile Include="proxy_server\clients_manager.cpp">
+      <Filter>proxy_server</Filter>
+    </ClCompile>
+  </ItemGroup>
+  <ItemGroup>
+    <Filter Include="common">
+      <UniqueIdentifier>{3c68f19f-a0ac-4346-bf31-2e89937ae951}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="proxy_server">
+      <UniqueIdentifier>{912f9b20-dcfa-428d-8be7-4f590aa59979}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="ws_server">
+      <UniqueIdentifier>{71c8f5ec-dec3-4040-9863-41d6be4839f9}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="common\utils">
+      <UniqueIdentifier>{9d7f614a-3059-4a4d-9bc7-25e0a95c4de5}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="common\log">
+      <UniqueIdentifier>{ee433436-6dae-437c-aca7-e88993d3c265}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="socket_client">
+      <UniqueIdentifier>{519a9798-ad04-40fd-bfa7-66049cea068d}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="common\define">
+      <UniqueIdentifier>{a045ec2e-669d-426d-8722-7cc3c0d2f014}</UniqueIdentifier>
+    </Filter>
+  </ItemGroup>
+  <ItemGroup>
+    <ClInclude Include="proxy_server\proxy_server.h">
+      <Filter>proxy_server</Filter>
+    </ClInclude>
+    <ClInclude Include="ws_server\ws_server.h">
+      <Filter>ws_server</Filter>
+    </ClInclude>
+    <ClInclude Include="..\common\log\log.h">
+      <Filter>common\log</Filter>
+    </ClInclude>
+    <ClInclude Include="..\common\utils\utils.h">
+      <Filter>common\utils</Filter>
+    </ClInclude>
+    <ClInclude Include="socket_client\socket_client.h">
+      <Filter>socket_client</Filter>
+    </ClInclude>
+    <ClInclude Include="base_library.h" />
+    <ClInclude Include="..\common\define\socket_def.h">
+      <Filter>common\define</Filter>
+    </ClInclude>
+    <ClInclude Include="proxy_server\clients_manager.h">
+      <Filter>proxy_server</Filter>
+    </ClInclude>
+  </ItemGroup>
+</Project>

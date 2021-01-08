@@ -1,21 +1,15 @@
 #pragma once
 
 #include "base_library.h"
-
-#include <boost/asio/io_service.hpp>
-#include <boost/asio/ip/tcp.hpp>
-#include <boost/noncopyable.hpp>
-
-#include "socket_server/socket_def.h"
+#include "common/define/socket_def.h"
 #include "work_def.h"
 
 #include "proto/basereq.pb.h"
 
-
 using namespace basereq;
 
 class AsioSockServer;
-class WorkServer
+class WorkServer : public boost::noncopyable
 {
 public:
     struct ContextHead
@@ -31,6 +25,7 @@ public:
     WorkServer(std::string ip = SOCK_DEFAULT_IP, int port = SOCK_DEFAULT_PORT, int io_threads = SOCK_IO_THREAD_NUM, 
         int work_threads = SOCK_WORK_THREAD_NUM, std::string hello_data = SOCK_HELLO_DATA,
         SessionID min_session = 1, SessionID max_session = SESSION_MAX_ID);
+    virtual ~WorkServer() {}
 
     virtual bool Initialize();
     virtual void ShutDown();

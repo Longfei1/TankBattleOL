@@ -28,7 +28,7 @@ namespace myutils
                 NextID();
                 return ret;
             }
-            return end_;
+            return GetOneInvalidID();
         }
 
         void ReturnOneID(T id)
@@ -46,6 +46,16 @@ namespace myutils
             end_ = end;
             now_ = start;
             use_set_.clear();
+        }
+
+        bool IsValidID(T id)
+        {
+            return id >= start_ && id < end_;
+        }
+
+        T GetOneInvalidID()
+        {
+            return end_;
         }
     private:
         void NextID()
