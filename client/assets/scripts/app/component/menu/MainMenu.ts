@@ -5,7 +5,7 @@ import AudioModel from "../../model/AudioModel";
 import ModelManager from "../../manager/ModelManager";
 import GameInputModel from "../../model/GameInputModel";
 import CommonFunc from "../../common/CommonFunc";
-import GameConfigModel from "../../model/GameConfigModel";
+import GameConnectModel from "../../model/GameConnectModel";
 
 const {ccclass, property} = cc._decorator;
 
@@ -53,6 +53,8 @@ export default class MainMenu extends cc.Component {
         this._bSelect = false;
 
         this.updateHighScore();
+
+        this.onTest();
     }
 
     initListener() {
@@ -142,5 +144,20 @@ export default class MainMenu extends cc.Component {
     updateHighScore() {
         let score = GameDataModel.getHighScore();
         this.textHighScore.string = score.toString();
+    }
+
+    onTest() {
+        GameConnectModel.connect((ret) => {
+            if (ret) {
+                console.log("connect server ok!");
+            }
+            else {
+                console.log("connect server failed!");
+            }
+        })
+
+        if (GameConnectModel.isConnected()) {
+
+        }
     }
 }

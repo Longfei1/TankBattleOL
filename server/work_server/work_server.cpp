@@ -3,7 +3,9 @@
 #include "common/log/log.h"
 #include "proto/test.pb.h"
 
-WorkServer::WorkServer(std::string ip, int port, int io_threads, int work_threads, std::string hello_data,
+using namespace boost::asio;
+
+WorkServer::WorkServer(int port, int io_threads, int work_threads, std::string hello_data,
     SessionID min_session, SessionID max_session) : work_thread_num_(work_threads)
 {
     socket_server_ = std::make_shared<AsioSockServer>(
@@ -15,7 +17,7 @@ WorkServer::WorkServer(std::string ip, int port, int io_threads, int work_thread
         {
             OnSocketMsg(id, dataptr, size);
         },
-        std::move(ip), port, io_threads, std::move(hello_data), min_session, max_session);
+        port, io_threads, std::move(hello_data), min_session, max_session);
 }
 
 bool WorkServer::Initialize()
@@ -79,6 +81,8 @@ void WorkServer::OnSocketClose(ContextHeadPtr context_head, RequestPtr request)
 
 bool WorkServer::StartWorkService()
 {
+    work_ = std::make_shared<io_service::work>(work_service_);//添加永久任务
+
     for (int i = 0; i < work_thread_num_; i++)
     {
         work_threads_.emplace_back([this]()
@@ -86,11 +90,13 @@ bool WorkServer::StartWorkService()
                 work_service_.run();
             });
     }
+
     return true;
 }
 
 bool WorkServer::StopWorkService()
 {
+    work_ = nullptr;
     work_service_.stop();//停止服务
     for (auto& th : work_threads_)
     {

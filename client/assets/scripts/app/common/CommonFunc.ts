@@ -1,4 +1,5 @@
 import AudioModel from "../model/AudioModel";
+import protobuf = require("../../packages/protobufjs/pb_minimal");
 
 export default class CommonFunc {
     static copyObject(object): any {
@@ -165,5 +166,16 @@ export default class CommonFunc {
 
     static getTimeStamp(): number {
         return new Date().getTime();
+    }
+
+    static pbEncode(pbHandler: any, obj: any): ArrayBuffer {
+        let msg = pbHandler.create(obj);
+        let dataEncode = pbHandler.encode(msg).finish();
+        return dataEncode;
+    }
+
+    static pbDecode(pbHandler: any, buf: ArrayBuffer): any {
+        let dataDecode = pbHandler.decode(buf);
+        return dataDecode;
     }
 }

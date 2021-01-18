@@ -3,6 +3,7 @@
 #include "base_library.h"
 #include "common/define/socket_def.h"
 #include "work_def.h"
+#include "common/log/log.h"
 
 #include "proto/basereq.pb.h"
 
@@ -22,7 +23,7 @@ public:
     using ContextHeadPtr = std::shared_ptr<ContextHead>;
     using RequestPtr = std::shared_ptr<Request>;
 public:
-    WorkServer(std::string ip = SOCK_DEFAULT_IP, int port = SOCK_DEFAULT_PORT, int io_threads = SOCK_IO_THREAD_NUM, 
+    WorkServer(int port = SOCK_DEFAULT_PORT, int io_threads = SOCK_IO_THREAD_NUM, 
         int work_threads = SOCK_WORK_THREAD_NUM, std::string hello_data = SOCK_HELLO_DATA,
         SessionID min_session = 1, SessionID max_session = SESSION_MAX_ID);
     virtual ~WorkServer() {}
@@ -51,6 +52,7 @@ private:
     int work_thread_num_;//工作线程数
     std::vector<std::thread> work_threads_;//工作线程
     boost::asio::io_service work_service_;//工作服务（充当线程池）
+    std::shared_ptr<boost::asio::io_service::work> work_;//控制工作线程不退出
 };
 
 inline void WorkServer::PostWork(WorkContent work)

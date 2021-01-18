@@ -2,7 +2,7 @@
 
 int main(int argc, char* argv[])
 {
-    WorkServer server("127.0.0.1", 8888, 1, 2);//服务器为单核
+    WorkServer server(8888, 1, 2);//服务器为单核
 
     server.Initialize();
 

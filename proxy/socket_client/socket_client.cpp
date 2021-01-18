@@ -182,7 +182,6 @@ void AsioSockClient::OnReadDataPackage(const boost::system::error_code& error, c
                 if (left_size >= sizeof(ProtocalHead) + head->data_len)//已读取完整个数据包
                 {
                     create_and_copy_data(head->data_len, head->data_len);
-                    session_->read_size_ = left_size;
 
                     OnSocketMsg(session_->read_data_.dataptr, head->data_len);//分发数据包
                 }
@@ -190,14 +189,6 @@ void AsioSockClient::OnReadDataPackage(const boost::system::error_code& error, c
                 {
                     if (sizeof(session_->read_buffer_) >= sizeof(ProtocalHead) + head->data_len)//缓冲区足够容纳数据包
                     {
-                        //整理缓冲区，继续读取数据包
-                        if (session_->read_buffer_ != start_pos)
-                        {
-                            memcpy(session_->read_buffer_, start_pos, left_size);
-#ifndef NO_CLEAR_BUFFER
-                            memset(session_->read_buffer_ + left_size, 0, sizeof(session_->read_buffer_) - left_size);
-#endif
-                        }
                     }
                     else
                     {
@@ -214,6 +205,16 @@ void AsioSockClient::OnReadDataPackage(const boost::system::error_code& error, c
                     }
                     break;
                 }
+            }
+
+            //整理缓冲区，继续读取数据包
+            if (session_->read_location == ConnectSession::BUFFER && session_->read_buffer_ != start_pos)
+            {
+                memcpy(session_->read_buffer_, start_pos, left_size);
+#ifndef NO_CLEAR_BUFFER
+                memset(session_->read_buffer_ + left_size, 0, sizeof(session_->read_buffer_) - left_size);
+#endif
+                session_->read_size_ = left_size;
             }
         }
         else if (session_->read_location == ConnectSession::DATA)
@@ -285,9 +286,9 @@ bool AsioSockClient::CheckIOState(const boost::system::error_code& error)
 
         if (error == error::eof || error == error::connection_reset)
         {
-            LOG_DEBUG("socket close by client, sessionid:%d", *session_->session_id_);
+            LOG_DEBUG("AsioSockClient::CheckIOState socket close by client, sessionid:%d", *session_->session_id_);
         }
-        LOG_DEBUG("socket io error(%d)", error);
+        LOG_DEBUG("AsioSockClient::CheckIOState socket io error(%d)", error);
         CloseConnectSession();
 
         return false;

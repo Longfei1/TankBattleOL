@@ -1,11 +1,12 @@
 #include "proxy_server.h"
 #include "ws_server/ws_server.h"
 #include "clients_manager.h"
+#include "common/log/log.h"
 
-ProxyServer::ProxyServer(std::string server_ip, int server_port, std::string proxy_ip, int proxy_port,
+ProxyServer::ProxyServer(std::string server_ip, int server_port, int proxy_port,
     int io_threads, std::string client_hello_data, SessionID min_session, SessionID max_session)
-    : server_ip_(std::move(server_ip)), server_port_(server_port), proxy_ip_(std::move(proxy_ip)),
-    proxy_port_(proxy_port), io_thread_num_(io_threads), server_hello_data_(client_hello_data)
+    : server_ip_(std::move(server_ip)), server_port_(server_port), proxy_port_(proxy_port), 
+    io_thread_num_(io_threads), server_hello_data_(client_hello_data)
 {
     ws_server_ = std::make_shared<AsioWSServer>(
         [this](SocketStatus status, SessionID id)
@@ -16,7 +17,7 @@ ProxyServer::ProxyServer(std::string server_ip, int server_port, std::string pro
         {
             OnProxySocketMsg(id, dataptr, size);
         },
-        proxy_ip_, proxy_port_, io_thread_num_, min_session, max_session);
+        proxy_port_, io_thread_num_, min_session, max_session);
 
     clients_manager_ = std::make_shared<ClientsManager>(
         [this](SocketStatus status, SessionID id)
@@ -63,6 +64,7 @@ void ProxyServer::ShutDown()
 
 void ProxyServer::OnProxySocketStatus(SocketStatus status, SessionID id)
 {
+    LOG_TRACE("OnProxySocketStatus session(%d) status(%d)", id, status);
     switch (status)
     {
     case SocketStatus::CONNECTED:

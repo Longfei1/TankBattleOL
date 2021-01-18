@@ -17,8 +17,8 @@ using namespace boost::beast;
 }                                                                                   \
 
 AsioWSServer::AsioWSServer(SocketStatusCallback status_callback, SocketMsgCallback msg_callback,
-    std::string ip, int port, int io_threads, SessionID min_session, SessionID max_session) 
-    : ip_(std::move(ip)), port_(port), io_thread_num_(0), socket_(nullptr),
+    int port, int io_threads, SessionID min_session, SessionID max_session) 
+    :port_(port), io_thread_num_(io_threads), socket_(nullptr),
     acceptor_(nullptr), session_generator_(min_session, max_session), 
     status_callback_(status_callback), msg_callback_(msg_callback),
     running_(false)
@@ -132,7 +132,7 @@ bool AsioWSServer::InitSocket()
 {
     socket_.reset(new ip::tcp::socket(io_service_));
 
-    ip::tcp::endpoint ep(ip::address::from_string(ip_), port_);
+    ip::tcp::endpoint ep(ip::tcp::v4(), port_);
     acceptor_.reset(new ip::tcp::acceptor(io_service_, ep));
 
     DoAccept();//开始接收连接
@@ -312,16 +312,18 @@ bool AsioWSServer::CheckIOState(ConSessionPtr session, const boost::system::erro
 {
     if (error)
     {
-        if (error == boost::asio::error::operation_aborted || error == websocket::error::closed)
+        if (error == boost::asio::error::operation_aborted)
         {
             return false;
         }
 
-        if (error == boost::asio::error::eof || error == boost::asio::error::connection_reset)
+        if (error == websocket::error::closed 
+            || error == boost::asio::error::eof 
+            || error == boost::asio::error::connection_reset)
         {
-            LOG_DEBUG("socket close by client, sessionid:%d", *session->session_id_);
+            LOG_DEBUG("AsioWSServer::CheckIOState socket close by client, sessionid:%d", *session->session_id_);
         }
-        LOG_DEBUG("socket io error(%d)", error);
+        LOG_DEBUG(" AsioWSServer::CheckIOState socket io error(%d)", error);
         CloseConnectSession(session);
 
         return false;
@@ -340,7 +342,10 @@ void AsioWSServer::CloseConnectSession(ConSessionPtr session, bool dispatch_even
     }
 
     session->status_ = SocketStatus::CLOSED;
-    session->socket_.close(websocket::close_reason());
+    if (session->socket_.is_open())
+    {
+        session->socket_.close(websocket::close_reason());
+    }
     RemoveConnectSession(session);
 
     if (dispatch_event)

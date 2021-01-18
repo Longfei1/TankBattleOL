@@ -16,8 +16,8 @@ using namespace boost::asio;
 }                                                                                   \
 
 AsioSockServer::AsioSockServer(SocketStatusCallback status_callback, SocketMsgCallback msg_callback,
-    std::string ip, int port, int io_threads, std::string hello_data, SessionID min_session, SessionID max_session) 
-    : ip_(std::move(ip)), port_(port), io_thread_num_(0), hello_data_(std::move(hello_data_)), 
+    int port, int io_threads, std::string hello_data, SessionID min_session, SessionID max_session) 
+    : port_(port), io_thread_num_(io_threads), hello_data_(std::move(hello_data)),
     socket_(nullptr), acceptor_(nullptr), session_generator_(min_session, max_session),
     status_callback_(status_callback), msg_callback_(msg_callback),
     running_(false)
@@ -124,7 +124,7 @@ bool AsioSockServer::InitSocket()
 {
     socket_.reset(new ip::tcp::socket(io_service_));
 
-    ip::tcp::endpoint ep(ip::address::from_string(ip_), port_);
+    ip::tcp::endpoint ep(ip::tcp::v4(), port_);
     acceptor_.reset(new ip::tcp::acceptor(io_service_, ep));
     acceptor_->set_option(socket_base::reuse_address(true));
 
@@ -296,7 +296,6 @@ void AsioSockServer::OnReadDataPackage(ConSessionPtr session, const boost::syste
                 if (left_size >= sizeof(ProtocalHead) + head->data_len)//已读取完整个数据包
                 {
                     create_and_copy_data(head->data_len, head->data_len);
-                    session->read_size_ = left_size;
 
                     OnSocketMsg(*session->session_id_, session->read_data_.dataptr, head->data_len);//分发数据包
                 }
@@ -304,14 +303,6 @@ void AsioSockServer::OnReadDataPackage(ConSessionPtr session, const boost::syste
                 {
                     if (sizeof(session->read_buffer_) >= sizeof(ProtocalHead) + head->data_len)//缓冲区足够容纳数据包
                     {
-                        //整理缓冲区，继续读取数据包
-                        if (session->read_buffer_ != start_pos)
-                        {
-                            memcpy(session->read_buffer_, start_pos, left_size);
-#ifndef NO_CLEAR_BUFFER
-                            memset(session->read_buffer_ + left_size, 0, sizeof(session->read_buffer_) - left_size);
-#endif
-                        }
                     }
                     else
                     {
@@ -328,6 +319,16 @@ void AsioSockServer::OnReadDataPackage(ConSessionPtr session, const boost::syste
                     }
                     break;
                 }
+            }
+
+            //整理缓冲区，继续读取数据包
+            if (session->read_location == ConnectSession::BUFFER && session->read_buffer_ != start_pos)
+            {
+                memcpy(session->read_buffer_, start_pos, left_size);
+#ifndef NO_CLEAR_BUFFER
+                memset(session->read_buffer_ + left_size, 0, sizeof(session->read_buffer_) - left_size);
+#endif
+                session->read_size_ = left_size;
             }
         }
         else if (session->read_location == ConnectSession::DATA)
@@ -398,9 +399,9 @@ bool AsioSockServer::CheckIOState(ConSessionPtr session, const boost::system::er
 
         if (error == error::eof || error == error::connection_reset)
         {
-            LOG_DEBUG("socket close by client, sessionid:%d", *session->session_id_);
+            LOG_DEBUG("AsioSockServer::CheckIOState socket close by client, sessionid:%d", *session->session_id_);
         }
-        LOG_DEBUG("socket io error(%d)", error);
+        LOG_DEBUG("AsioSockServer::CheckIOState socket io error(%d)", error);
         CloseConnectSession(session);
 	    
         return false;
@@ -447,7 +448,7 @@ void AsioSockServer::OnSocketClose(SessionID id)
     LOG_TRACE("AsioSockServer::OnSocketClose sessionid(%d)", id);
     if (status_callback_)
     {
-        status_callback_(SocketStatus::CONNECTED, id);
+        status_callback_(SocketStatus::CLOSED, id);
     }
 }
 

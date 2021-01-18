@@ -9,9 +9,9 @@ public:
     using WSServerPtr = std::shared_ptr<AsioWSServer>;
     using ClientsManagerPtr = std::shared_ptr<ClientsManager>;
 public:
-    ProxyServer(std::string server_ip, int server_port, std::string proxy_ip = SOCK_DEFAULT_IP,
-        int proxy_port = SOCK_DEFAULT_PORT + 1, int io_threads = SOCK_IO_THREAD_NUM,
-        std::string server_hello_data = SOCK_HELLO_DATA, SessionID min_session = 1, SessionID max_session = SESSION_MAX_ID);
+    ProxyServer(std::string server_ip, int server_port, int proxy_port = SOCK_DEFAULT_PORT + 1, 
+        int io_threads = SOCK_IO_THREAD_NUM, std::string server_hello_data = SOCK_HELLO_DATA, 
+        SessionID min_session = 1, SessionID max_session = SESSION_MAX_ID);
     ~ProxyServer() {}
 
     bool Initialize();
@@ -31,7 +31,6 @@ private:
     std::string server_ip_;//连接服务ip
     int server_port_;//连接服务端口
 
-    std::string proxy_ip_;//代理服务ip
     int proxy_port_;//代理服务监听端口
 
     int io_thread_num_;//io线程数

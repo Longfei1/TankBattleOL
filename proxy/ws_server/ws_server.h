@@ -19,9 +19,8 @@ public:
     using SocketMsgCallback = std::function<void(SessionID, DataPtr, std::size_t)>;
 public:
     AsioWSServer(SocketStatusCallback status_callback, SocketMsgCallback msg_callback,
-        std::string ip = SOCK_DEFAULT_IP, int port = SOCK_DEFAULT_PORT, 
-        int io_threads = SOCK_IO_THREAD_NUM, SessionID min_session = 1,
-        SessionID max_session = SESSION_MAX_ID);
+        int port = SOCK_DEFAULT_PORT, int io_threads = SOCK_IO_THREAD_NUM, 
+        SessionID min_session = 1, SessionID max_session = SESSION_MAX_ID);
     ~AsioWSServer();
    
     bool Initialize();
@@ -66,7 +65,6 @@ private:
     void OnSocketClose(SessionID id);//socket连接断开
     void OnSocketMsg(SessionID id, DataPtr dataptr, std::size_t size);//socket消息接收
 private:
-    std::string ip_;
     int port_;
     int io_thread_num_;//io线程数
 
