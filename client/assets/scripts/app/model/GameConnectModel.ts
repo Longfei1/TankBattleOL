@@ -3,6 +3,7 @@ import { WSConnect } from "../network/NetWork";
 import BaseReq = require("../network/proto/basereq");
 import CommonFunc from "../common/CommonFunc";
 import { GameConfig } from "../GameConfig";
+import { GameReq } from "../network/GameReq";
 
 class RequestMsg {
     requestID: number = 0;
@@ -10,6 +11,8 @@ class RequestMsg {
     data: any = null;
     handler: Function = null;
 }
+
+const PLUSE_INTERVAL = 30;//心跳发送间隔时长
 
 class GameConnectModel extends BaseModel {
     private _socket: WSConnect = null;
@@ -21,6 +24,8 @@ class GameConnectModel extends BaseModel {
     private _responseHandler: Function = null;//响应回调函数
 
     private _notifyHandler: { [requestid: number]: Function } = {};//通知处理函数
+
+    private _pluseTimer = null;//心跳定时器
 
     EVENT_SOCKET_ERROR = "EVENT_SOCKET_ERROR";
 
@@ -62,6 +67,7 @@ class GameConnectModel extends BaseModel {
                     fnRet(true);
                     fnRet = null;
                 }
+                this.startPluseTimer();
             }, () => {
                 if (fnRet) {
                     fnRet(false);
@@ -69,6 +75,7 @@ class GameConnectModel extends BaseModel {
 
                     this.emit(this.EVENT_SOCKET_ERROR);//分发error事件
                 }
+                this.stopPluseTimer();
             })
         }
     }
@@ -144,6 +151,24 @@ class GameConnectModel extends BaseModel {
             this._requestQueue.splice(0, 1);
 
             this.sendRequest(request.requestID, request.data, request.needEcho, request.handler);
+        }
+    }
+
+    private sendPluse() {
+        this.sendRequest(GameReq.GR_CONNECT_PLUSE, null);
+    }
+
+    private startPluseTimer() {
+        this.stopPluseTimer();
+        this._pluseTimer = setInterval(() => {
+            this.sendPluse();
+        }, PLUSE_INTERVAL);
+    }
+
+    private stopPluseTimer() {
+        if (this._pluseTimer) {
+            clearInterval(this._pluseTimer);
+            this._pluseTimer = null;
         }
     }
 }

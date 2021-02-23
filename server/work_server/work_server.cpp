@@ -2,6 +2,8 @@
 #include "socket_server/socket_server.h"
 #include "common/log/log.h"
 #include "proto/test.pb.h"
+#include "boost/date_time/posix_time/posix_time.hpp"
+#include "boost/asio/deadline_timer.hpp"
 
 using namespace boost::asio;
 
@@ -33,6 +35,8 @@ bool WorkServer::Initialize()
         return false;
     }
 
+    StartPluseDetection();
+
     return true;
 }
 
@@ -44,6 +48,33 @@ void WorkServer::ShutDown()
     }
 
     StopWorkService();
+}
+
+void WorkServer::SendRequest(const ContextHead& context_head, const Request& request)
+{
+    if (socket_server_)
+    {
+        auto data = request.SerializeAsString();
+        socket_server_->SendData(context_head.session, data.data(), data.size());
+    }
+}
+
+void WorkServer::SendRequest(ContextHeadPtr context_head, RequestPtr request)
+{
+    if (socket_server_)
+    {
+        SendRequest(*context_head, *request);
+    }
+}
+
+void WorkServer::CloseConnection(SessionID id)
+{
+    if (socket_server_)
+    {
+        socket_server_->CloseConnection(id);
+    }
+
+    RemoveSessionPluse(id);
 }
 
 void WorkServer::OnRequest(ContextHeadPtr context_head, RequestPtr request)
@@ -67,6 +98,8 @@ void WorkServer::OnRequest(ContextHeadPtr context_head, RequestPtr request)
 void WorkServer::OnSocketConnect(ContextHeadPtr context_head, RequestPtr request)
 {
     LOG_TRACE("session(%d) OnSocketConnect", context_head->session);
+
+    UpdateSessionPluse(context_head->session, time(nullptr));//连接成功能后，更新心跳时间
 }
 
 void WorkServer::OnSocketValidated(ContextHeadPtr context_head, RequestPtr request)
@@ -77,6 +110,8 @@ void WorkServer::OnSocketValidated(ContextHeadPtr context_head, RequestPtr reque
 void WorkServer::OnSocketClose(ContextHeadPtr context_head, RequestPtr request)
 {
     LOG_TRACE("session(%d) OnSocketClose", context_head->session);
+
+    RemoveSessionPluse(context_head->session);
 }
 
 bool WorkServer::StartWorkService()
@@ -146,4 +181,52 @@ void WorkServer::OnSocketMsg(SessionID id, DataPtr dataptr, std::size_t size)
     request->ParseFromArray(dataptr.get(), size);
 
     PutRequestToServer(context, request);
+}
+
+bool WorkServer::StartPluseDetection()
+{
+    auto timer = std::make_shared<deadline_timer>(work_service_, boost::posix_time::seconds(PLUSE_TIMER_INTERVAL));
+    
+    static std::function<void(boost::system::error_code)> timer_func = nullptr;
+
+    timer_func = [this, timer](boost::system::error_code error)
+    {
+        if (!error)
+        {
+            DetectPluse();
+
+            timer->expires_from_now(boost::posix_time::seconds(PLUSE_TIMER_INTERVAL));
+            timer->async_wait(timer_func);//递归调用，继续计时
+        }
+    };
+
+    timer->async_wait(timer_func);
+}
+
+void WorkServer::DetectPluse()
+{
+    std::vector<SessionID> invalid_sessions;
+    {
+        auto time_now = time(nullptr);
+        std::lock_guard<std::mutex> lock(pluse_mutex_);
+        for (auto& it : pluse_map_)
+        {
+            if (time_now - it.second > PLUSE_OVERDUE_TIME)
+            {
+                invalid_sessions.push_back(it.first);
+            }
+        }
+    }
+
+    for (auto s : invalid_sessions)
+    {
+        CloseConnection(s);//断开心跳超时的连接
+        RemoveSessionPluse(s);
+    }
+}
+
+void WorkServer::OnConnectPluse(ContextHeadPtr context_head, RequestPtr request)
+{
+    LOG_TRACE("session(%d) OnConnectPluse", context_head->session);
+    UpdateSessionPluse(context_head->session, time(nullptr));
 }

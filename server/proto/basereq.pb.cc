@@ -47,7 +47,7 @@ const ::PROTOBUF_NAMESPACE_ID::uint32 TableStruct_basereq_2eproto::offsets[] PRO
   ~0u,  // no _weak_field_map_
   PROTOBUF_FIELD_OFFSET(::basereq::Request, request_),
   PROTOBUF_FIELD_OFFSET(::basereq::Request, need_echo_),
-  PROTOBUF_FIELD_OFFSET(::basereq::Request, squence_),
+  PROTOBUF_FIELD_OFFSET(::basereq::Request, sequence_),
   PROTOBUF_FIELD_OFFSET(::basereq::Request, data_),
 };
 static const ::PROTOBUF_NAMESPACE_ID::internal::MigrationSchema schemas[] PROTOBUF_SECTION_VARIABLE(protodesc_cold) = {
@@ -60,9 +60,9 @@ static ::PROTOBUF_NAMESPACE_ID::Message const * const file_default_instances[] =
 
 const char descriptor_table_protodef_basereq_2eproto[] PROTOBUF_SECTION_VARIABLE(protodesc_cold) =
   "\n\rbasereq.proto\022\007basereq\032\031google/protobu"
-  "f/any.proto\"b\n\007Request\022\017\n\007request\030\001 \001(\r\022"
-  "\021\n\tneed_echo\030\002 \001(\010\022\017\n\007squence\030\003 \001(\004\022\"\n\004d"
-  "ata\030\004 \001(\0132\024.google.protobuf.Anyb\006proto3"
+  "f/any.proto\"c\n\007Request\022\017\n\007request\030\001 \001(\r\022"
+  "\021\n\tneed_echo\030\002 \001(\010\022\020\n\010sequence\030\003 \001(\004\022\"\n\004"
+  "data\030\004 \001(\0132\024.google.protobuf.Anyb\006proto3"
   ;
 static const ::PROTOBUF_NAMESPACE_ID::internal::DescriptorTable*const descriptor_table_basereq_2eproto_deps[1] = {
   &::descriptor_table_google_2fprotobuf_2fany_2eproto,
@@ -72,7 +72,7 @@ static ::PROTOBUF_NAMESPACE_ID::internal::SCCInfoBase*const descriptor_table_bas
 };
 static ::PROTOBUF_NAMESPACE_ID::internal::once_flag descriptor_table_basereq_2eproto_once;
 const ::PROTOBUF_NAMESPACE_ID::internal::DescriptorTable descriptor_table_basereq_2eproto = {
-  false, false, descriptor_table_protodef_basereq_2eproto, "basereq.proto", 159,
+  false, false, descriptor_table_protodef_basereq_2eproto, "basereq.proto", 160,
   &descriptor_table_basereq_2eproto_once, descriptor_table_basereq_2eproto_sccs, descriptor_table_basereq_2eproto_deps, 1, 1,
   schemas, file_default_instances, TableStruct_basereq_2eproto::offsets,
   file_level_metadata_basereq_2eproto, 1, file_level_enum_descriptors_basereq_2eproto, file_level_service_descriptors_basereq_2eproto,
@@ -114,8 +114,8 @@ Request::Request(const Request& from)
     data_ = nullptr;
   }
   ::memcpy(&request_, &from.request_,
-    static_cast<size_t>(reinterpret_cast<char*>(&squence_) -
-    reinterpret_cast<char*>(&request_)) + sizeof(squence_));
+    static_cast<size_t>(reinterpret_cast<char*>(&sequence_) -
+    reinterpret_cast<char*>(&request_)) + sizeof(sequence_));
   // @@protoc_insertion_point(copy_constructor:basereq.Request)
 }
 
@@ -123,8 +123,8 @@ void Request::SharedCtor() {
   ::PROTOBUF_NAMESPACE_ID::internal::InitSCC(&scc_info_Request_basereq_2eproto.base);
   ::memset(reinterpret_cast<char*>(this) + static_cast<size_t>(
       reinterpret_cast<char*>(&data_) - reinterpret_cast<char*>(this)),
-      0, static_cast<size_t>(reinterpret_cast<char*>(&squence_) -
-      reinterpret_cast<char*>(&data_)) + sizeof(squence_));
+      0, static_cast<size_t>(reinterpret_cast<char*>(&sequence_) -
+      reinterpret_cast<char*>(&data_)) + sizeof(sequence_));
 }
 
 Request::~Request() {
@@ -164,8 +164,8 @@ void Request::Clear() {
   }
   data_ = nullptr;
   ::memset(&request_, 0, static_cast<size_t>(
-      reinterpret_cast<char*>(&squence_) -
-      reinterpret_cast<char*>(&request_)) + sizeof(squence_));
+      reinterpret_cast<char*>(&sequence_) -
+      reinterpret_cast<char*>(&request_)) + sizeof(sequence_));
   _internal_metadata_.Clear<::PROTOBUF_NAMESPACE_ID::UnknownFieldSet>();
 }
 
@@ -190,10 +190,10 @@ const char* Request::_InternalParse(const char* ptr, ::PROTOBUF_NAMESPACE_ID::in
           CHK_(ptr);
         } else goto handle_unusual;
         continue;
-      // uint64 squence = 3;
+      // uint64 sequence = 3;
       case 3:
         if (PROTOBUF_PREDICT_TRUE(static_cast<::PROTOBUF_NAMESPACE_ID::uint8>(tag) == 24)) {
-          squence_ = ::PROTOBUF_NAMESPACE_ID::internal::ReadVarint64(&ptr);
+          sequence_ = ::PROTOBUF_NAMESPACE_ID::internal::ReadVarint64(&ptr);
           CHK_(ptr);
         } else goto handle_unusual;
         continue;
@@ -244,10 +244,10 @@ failure:
     target = ::PROTOBUF_NAMESPACE_ID::internal::WireFormatLite::WriteBoolToArray(2, this->_internal_need_echo(), target);
   }
 
-  // uint64 squence = 3;
-  if (this->squence() != 0) {
+  // uint64 sequence = 3;
+  if (this->sequence() != 0) {
     target = stream->EnsureSpace(target);
-    target = ::PROTOBUF_NAMESPACE_ID::internal::WireFormatLite::WriteUInt64ToArray(3, this->_internal_squence(), target);
+    target = ::PROTOBUF_NAMESPACE_ID::internal::WireFormatLite::WriteUInt64ToArray(3, this->_internal_sequence(), target);
   }
 
   // .google.protobuf.Any data = 4;
@@ -293,11 +293,11 @@ size_t Request::ByteSizeLong() const {
     total_size += 1 + 1;
   }
 
-  // uint64 squence = 3;
-  if (this->squence() != 0) {
+  // uint64 sequence = 3;
+  if (this->sequence() != 0) {
     total_size += 1 +
       ::PROTOBUF_NAMESPACE_ID::internal::WireFormatLite::UInt64Size(
-        this->_internal_squence());
+        this->_internal_sequence());
   }
 
   if (PROTOBUF_PREDICT_FALSE(_internal_metadata_.have_unknown_fields())) {
@@ -340,8 +340,8 @@ void Request::MergeFrom(const Request& from) {
   if (from.need_echo() != 0) {
     _internal_set_need_echo(from._internal_need_echo());
   }
-  if (from.squence() != 0) {
-    _internal_set_squence(from._internal_squence());
+  if (from.sequence() != 0) {
+    _internal_set_sequence(from._internal_sequence());
   }
 }
 
@@ -367,8 +367,8 @@ void Request::InternalSwap(Request* other) {
   using std::swap;
   _internal_metadata_.Swap<::PROTOBUF_NAMESPACE_ID::UnknownFieldSet>(&other->_internal_metadata_);
   ::PROTOBUF_NAMESPACE_ID::internal::memswap<
-      PROTOBUF_FIELD_OFFSET(Request, squence_)
-      + sizeof(Request::squence_)
+      PROTOBUF_FIELD_OFFSET(Request, sequence_)
+      + sizeof(Request::sequence_)
       - PROTOBUF_FIELD_OFFSET(Request, data_)>(
           reinterpret_cast<char*>(&data_),
           reinterpret_cast<char*>(&other->data_));

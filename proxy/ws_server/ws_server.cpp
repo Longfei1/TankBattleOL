@@ -123,7 +123,7 @@ void AsioWSServer::CloseConnection(SessionID id)
     {
         boost::asio::post(session->socket_.get_executor(), [this, session]()
             {
-                CloseConnectSession(session);
+                CloseConnectSession(session, false);
             });
     }
 }

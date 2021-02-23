@@ -181,7 +181,7 @@ class Request PROTOBUF_FINAL :
     kDataFieldNumber = 4,
     kRequestFieldNumber = 1,
     kNeedEchoFieldNumber = 2,
-    kSquenceFieldNumber = 3,
+    kSequenceFieldNumber = 3,
   };
   // .google.protobuf.Any data = 4;
   bool has_data() const;
@@ -219,13 +219,13 @@ class Request PROTOBUF_FINAL :
   void _internal_set_need_echo(bool value);
   public:
 
-  // uint64 squence = 3;
-  void clear_squence();
-  ::PROTOBUF_NAMESPACE_ID::uint64 squence() const;
-  void set_squence(::PROTOBUF_NAMESPACE_ID::uint64 value);
+  // uint64 sequence = 3;
+  void clear_sequence();
+  ::PROTOBUF_NAMESPACE_ID::uint64 sequence() const;
+  void set_sequence(::PROTOBUF_NAMESPACE_ID::uint64 value);
   private:
-  ::PROTOBUF_NAMESPACE_ID::uint64 _internal_squence() const;
-  void _internal_set_squence(::PROTOBUF_NAMESPACE_ID::uint64 value);
+  ::PROTOBUF_NAMESPACE_ID::uint64 _internal_sequence() const;
+  void _internal_set_sequence(::PROTOBUF_NAMESPACE_ID::uint64 value);
   public:
 
   // @@protoc_insertion_point(class_scope:basereq.Request)
@@ -238,7 +238,7 @@ class Request PROTOBUF_FINAL :
   PROTOBUF_NAMESPACE_ID::Any* data_;
   ::PROTOBUF_NAMESPACE_ID::uint32 request_;
   bool need_echo_;
-  ::PROTOBUF_NAMESPACE_ID::uint64 squence_;
+  ::PROTOBUF_NAMESPACE_ID::uint64 sequence_;
   mutable ::PROTOBUF_NAMESPACE_ID::internal::CachedSize _cached_size_;
   friend struct ::TableStruct_basereq_2eproto;
 };
@@ -293,24 +293,24 @@ inline void Request::set_need_echo(bool value) {
   // @@protoc_insertion_point(field_set:basereq.Request.need_echo)
 }
 
-// uint64 squence = 3;
-inline void Request::clear_squence() {
-  squence_ = PROTOBUF_ULONGLONG(0);
+// uint64 sequence = 3;
+inline void Request::clear_sequence() {
+  sequence_ = PROTOBUF_ULONGLONG(0);
 }
-inline ::PROTOBUF_NAMESPACE_ID::uint64 Request::_internal_squence() const {
-  return squence_;
+inline ::PROTOBUF_NAMESPACE_ID::uint64 Request::_internal_sequence() const {
+  return sequence_;
 }
-inline ::PROTOBUF_NAMESPACE_ID::uint64 Request::squence() const {
-  // @@protoc_insertion_point(field_get:basereq.Request.squence)
-  return _internal_squence();
+inline ::PROTOBUF_NAMESPACE_ID::uint64 Request::sequence() const {
+  // @@protoc_insertion_point(field_get:basereq.Request.sequence)
+  return _internal_sequence();
 }
-inline void Request::_internal_set_squence(::PROTOBUF_NAMESPACE_ID::uint64 value) {
+inline void Request::_internal_set_sequence(::PROTOBUF_NAMESPACE_ID::uint64 value) {
   
-  squence_ = value;
+  sequence_ = value;
 }
-inline void Request::set_squence(::PROTOBUF_NAMESPACE_ID::uint64 value) {
-  _internal_set_squence(value);
-  // @@protoc_insertion_point(field_set:basereq.Request.squence)
+inline void Request::set_sequence(::PROTOBUF_NAMESPACE_ID::uint64 value) {
+  _internal_set_sequence(value);
+  // @@protoc_insertion_point(field_set:basereq.Request.sequence)
 }
 
 // .google.protobuf.Any data = 4;

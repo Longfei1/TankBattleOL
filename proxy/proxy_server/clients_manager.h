@@ -1,3 +1,4 @@
+#pragma once
 #include "base_library.h"
 #include "common/define/socket_def.h"
 
@@ -42,6 +43,7 @@ private:
     int io_thread_num_;//socketclient io线程数
     std::vector<std::thread> io_threads_;//socketclient io线程
     boost::asio::io_service io_service_;//socketclient ioservice
+    std::shared_ptr<boost::asio::io_service::work> work_;//控制io线程不退出
 
     std::mutex session_gernerator_mtx_;
     myutils::IDGenerator<SessionID> session_generator_;//sessionid生成器

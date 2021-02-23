@@ -1,0 +1,58 @@
+syntax = "proto3";
+ 
+package gamereq;
+ 
+//登录
+message LoginInfo 
+{
+    int32 userid = 1;
+    int64 timestamp = 2;
+}
+
+//用户信息
+message UserInfo
+{
+    int32 userid = 1;
+}
+
+//房间玩家信息
+message RoomPlayerInfo
+{
+    int32 roomid = 1;
+    int32 playerno = 2;
+    int32 userid = 3;
+}
+
+//房间操作
+message RoomOperation
+{
+    RoomPlayerInfo where = 1;
+    bool success = 2;
+}
+
+//游戏操作
+message GameOperation
+{
+    int32 key = 1;//操作按键
+    int32 event = 2;//按键事件
+}
+
+//玩家操作
+message UserOperation
+{
+    RoomPlayerInfo where = 1;//操作源 
+    GameOperation ope = 2;//游戏操作
+}
+
+//游戏帧（逻辑帧）
+message GameFrame
+{
+    int32 frame = 1;//帧号
+    repeated UserOperation useropes = 2;
+}
+
+//游戏关键帧，包含多个逻辑帧
+message MainGameFrame
+{
+    repeated GameFrame frames= 1;
+}

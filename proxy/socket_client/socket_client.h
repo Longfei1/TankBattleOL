@@ -1,3 +1,4 @@
+#pragma once
 #include "base_library.h"
 
 #include <common/define/socket_def.h>

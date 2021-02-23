@@ -2,7 +2,5 @@
 
 #define SOCK_WORK_THREAD_NUM                4
 
-#define WR_SOCKET_CONNECT                   1
-#define WR_SOCKET_VALIDATE                  2
-#define WR_SOCKET_CLOSE                     3
-//#define WR_SOCKET_ERROR                     4
+#define PLUSE_TIMER_INTERVAL                10//心跳定时器间隔
+#define PLUSE_OVERDUE_TIME                  100//心跳超时时间

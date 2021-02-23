@@ -1,6 +1,7 @@
 #pragma once
 #include <unordered_set>
 #include <boost/noncopyable.hpp>
+#include <mutex>
 
 namespace myutils
 {

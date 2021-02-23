@@ -1,15 +1,16 @@
-#include "work_server/work_server.h"
+#include "game_server/game_server.h"
 
 int main(int argc, char* argv[])
 {
-    WorkServer server(8888, 1, 2);//服务器为单核
+    GameServer server(8888, 1, 2);//服务器为单核
 
-    server.Initialize();
-
-    while (getchar() != 'q')
+    if (server.Initialize())
     {
-        
+        while (getchar() != 'q')
+        {
+
+        }
+        server.ShutDown();
     }
-    server.ShutDown();
     return 0;
 }

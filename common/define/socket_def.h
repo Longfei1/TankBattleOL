@@ -14,13 +14,15 @@
 
 #include <boost/noncopyable.hpp>
 
+#include <limits.h>
+
 #define SOCK_BUFFER_LEN 4096 //socket缓冲区长度（必须大于协议头长度和hello data长度）
 #define SOCK_IO_THREAD_NUM 2
 #define SOCK_DEFAULT_IP "127.0.0.1"
 #define SOCK_DEFAULT_PORT 8888
 #define SOCK_HELLO_DATA "hello longfei!"
 
-#define SESSION_MAX_ID 100000
+#define SESSION_MAX_ID UINT_MAX
 
 //公共类型定义
 using SessionID = uint;

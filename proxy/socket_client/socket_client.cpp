@@ -110,21 +110,13 @@ void AsioSockClient::OnValidateHello(const boost::system::error_code& error, con
     {
         if (size == hello_data_.size())
         {
-            if (0 == strncmp(session_->read_buffer_, hello_data_.c_str(), hello_data_.size()))
-            {
-                //验证成功
-                session_->status_ = SocketStatus::VALIDATED;
-                OnSocketValidated();
+            //验证成功
+            session_->status_ = SocketStatus::VALIDATED;
+            OnSocketValidated();
 
-                DoReadDataPackage();//开始接收数据包
+            DoReadDataPackage();//开始接收数据包
 
-                TryWriteDataPackage();//尝试是否有数据需要发送
-            }
-            else
-            {
-                LOG_WARN("OnValidateHello failed");
-                CloseConnectSession();
-            }
+            TryWriteDataPackage();//尝试是否有数据需要发送
         }
         else
         {
@@ -286,7 +278,7 @@ bool AsioSockClient::CheckIOState(const boost::system::error_code& error)
 
         if (error == error::eof || error == error::connection_reset)
         {
-            LOG_DEBUG("AsioSockClient::CheckIOState socket close by client, sessionid:%d", *session_->session_id_);
+            LOG_DEBUG("AsioSockClient::CheckIOState socket close by server, sessionid:%d", *session_->session_id_);
         }
         LOG_DEBUG("AsioSockClient::CheckIOState socket io error(%d)", error);
         CloseConnectSession();

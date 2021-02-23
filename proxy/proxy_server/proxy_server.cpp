@@ -6,7 +6,7 @@
 ProxyServer::ProxyServer(std::string server_ip, int server_port, int proxy_port,
     int io_threads, std::string client_hello_data, SessionID min_session, SessionID max_session)
     : server_ip_(std::move(server_ip)), server_port_(server_port), proxy_port_(proxy_port), 
-    io_thread_num_(io_threads), server_hello_data_(client_hello_data)
+    io_thread_num_(io_threads), server_hello_data_(std::move(client_hello_data))
 {
     ws_server_ = std::make_shared<AsioWSServer>(
         [this](SocketStatus status, SessionID id)

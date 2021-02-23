@@ -2,6 +2,8 @@
 #include "socket_client/socket_client.h"
 #include "common/log/log.h"
 
+using namespace boost::asio;
+
 ClientsManager::ClientsManager(SocketStatusCallback status_callback, SocketMsgCallback msg_callback, 
     int io_threads, SessionID min_session, SessionID max_session)
     : io_thread_num_(io_threads), session_generator_(min_session, max_session),
@@ -84,6 +86,8 @@ void ClientsManager::SendData(SessionID session_id, const Byte* senddata, std::s
 
 bool ClientsManager::StartIOService()
 {
+    work_ = std::make_shared<io_service::work>(io_service_);//添加永久任务
+
     for (int i = 0; i < io_thread_num_; i++)
     {
         io_threads_.emplace_back([this]()
@@ -96,6 +100,7 @@ bool ClientsManager::StartIOService()
 
 bool ClientsManager::StopIOService()
 {
+    work_ = nullptr;
     io_service_.stop();//停止服务
     for (auto& th : io_threads_)
     {
