@@ -59,7 +59,7 @@
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'" Label="Configuration">
     <UseDebugLibraries>true</UseDebugLibraries>
-    <RemoteRootDir>~/code/projects</RemoteRootDir>
+    <RemoteRootDir>/usr/code/projects</RemoteRootDir>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'" Label="Configuration">
     <UseDebugLibraries>false</UseDebugLibraries>
@@ -77,8 +77,8 @@
   <ImportGroup Label="PropertySheets" />
   <PropertyGroup Label="UserMacros" />
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
-    <IncludePath>/root/code/projects/server;/root/program/boost/boost_1_74_0/include;/root/program/protobuf/include;$(IncludePath)</IncludePath>
-    <LibraryPath>/root/program/boost/boost_1_74_0/lib;/root/program/protobuf/lib;$(LibraryPath)</LibraryPath>
+    <IncludePath>/usr/code/projects/server;/usr/program/boost_1_74_0/include;/usr/program/protobuf-3.14.0/include;$(IncludePath)</IncludePath>
+    <LibraryPath>/usr/program/boost_1_74_0/lib;/usr/program/protobuf/lib;$(LibraryPath)</LibraryPath>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
     <IncludePath>/root/code/projects/server;/root/program/boost/boost_1_74_0/include;/root/program/protobuf/include;$(IncludePath)</IncludePath>

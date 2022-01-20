@@ -62,7 +62,7 @@ private:
     void OnSocketMsg(SessionID id, DataPtr dataptr, std::size_t size);//socket消息回调
 
     //心跳处理
-    bool StartPluseDetection();
+    void StartPluseDetection();
     void DetectPluse();
     void OnConnectPluse(ContextHeadPtr context_head, RequestPtr request);
     void UpdateSessionPluse(SessionID id, time_t tm);

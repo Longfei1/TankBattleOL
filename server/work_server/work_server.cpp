@@ -183,7 +183,7 @@ void WorkServer::OnSocketMsg(SessionID id, DataPtr dataptr, std::size_t size)
     PutRequestToServer(context, request);
 }
 
-bool WorkServer::StartPluseDetection()
+void WorkServer::StartPluseDetection()
 {
     auto timer = std::make_shared<deadline_timer>(work_service_, boost::posix_time::seconds(PLUSE_TIMER_INTERVAL));
     
