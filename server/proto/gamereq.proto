@@ -2,11 +2,26 @@ syntax = "proto3";
  
 package gamereq;
  
-//登录
-message LoginInfo 
+//登录请求
+message LoginInReq 
 {
     int32 userid = 1;
     int64 timestamp = 2;
+}
+
+//登录回应
+message LoginInRsp
+{
+    int32 userid = 1;
+    int64 timestamp = 2;
+    bool success = 3;
+    string description = 4;
+}
+
+//登出请求
+message LoginOutReq
+{
+	int32 userid = 1;
 }
 
 //用户信息

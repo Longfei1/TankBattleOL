@@ -10,6 +10,7 @@ import Bullet from "./Bullet";
 import { GameStruct } from "../../define/GameStruct";
 import { AniDef } from "../../define/AniDef";
 import GameConfigModel from "../../model/GameConfigModel";
+import GameConnectModel from "../../model/GameConnectModel";
 
 const {ccclass, property} = cc._decorator;
 
@@ -73,6 +74,11 @@ export default class Game extends cc.Component {
         }
         else {
             this.textDebug.node.active = false;
+        }
+
+        //单机模式下，断开网络连接。
+        if (GameDataModel._playMode == GameDef.GAMEMODE_SINGLE_PLAYER || GameDataModel._playMode == GameDef.GAMEMODE_DOUBLE_PLAYER) {
+            GameConnectModel.disconnect();
         }
     }
 

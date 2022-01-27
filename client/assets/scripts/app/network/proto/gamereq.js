@@ -1,7 +1,7 @@
 /*eslint-disable block-scoped-var, id-length, no-control-regex, no-magic-numbers, no-prototype-builtins, no-redeclare, no-shadow, no-var, sort-vars*/
 "use strict";
 
-var $protobuf = require("../../../package/protobufjs/pb_minimal");
+var $protobuf = require("../../../packages/protobufjs/pb_minimal");
 
 // Common aliases
 var $Reader = $protobuf.Reader, $Writer = $protobuf.Writer, $util = $protobuf.util;
@@ -18,25 +18,25 @@ $root.gamereq = (function() {
      */
     var gamereq = {};
 
-    gamereq.LoginInfo = (function() {
+    gamereq.LoginInReq = (function() {
 
         /**
-         * Properties of a LoginInfo.
+         * Properties of a LoginInReq.
          * @memberof gamereq
-         * @interface ILoginInfo
-         * @property {number|null} [userid] LoginInfo userid
-         * @property {number|Long|null} [timestamp] LoginInfo timestamp
+         * @interface ILoginInReq
+         * @property {number|null} [userid] LoginInReq userid
+         * @property {number|Long|null} [timestamp] LoginInReq timestamp
          */
 
         /**
-         * Constructs a new LoginInfo.
+         * Constructs a new LoginInReq.
          * @memberof gamereq
-         * @classdesc Represents a LoginInfo.
-         * @implements ILoginInfo
+         * @classdesc Represents a LoginInReq.
+         * @implements ILoginInReq
          * @constructor
-         * @param {gamereq.ILoginInfo=} [properties] Properties to set
+         * @param {gamereq.ILoginInReq=} [properties] Properties to set
          */
-        function LoginInfo(properties) {
+        function LoginInReq(properties) {
             if (properties)
                 for (var keys = Object.keys(properties), i = 0; i < keys.length; ++i)
                     if (properties[keys[i]] != null)
@@ -44,43 +44,43 @@ $root.gamereq = (function() {
         }
 
         /**
-         * LoginInfo userid.
+         * LoginInReq userid.
          * @member {number} userid
-         * @memberof gamereq.LoginInfo
+         * @memberof gamereq.LoginInReq
          * @instance
          */
-        LoginInfo.prototype.userid = 0;
+        LoginInReq.prototype.userid = 0;
 
         /**
-         * LoginInfo timestamp.
+         * LoginInReq timestamp.
          * @member {number|Long} timestamp
-         * @memberof gamereq.LoginInfo
+         * @memberof gamereq.LoginInReq
          * @instance
          */
-        LoginInfo.prototype.timestamp = $util.Long ? $util.Long.fromBits(0,0,false) : 0;
+        LoginInReq.prototype.timestamp = $util.Long ? $util.Long.fromBits(0,0,false) : 0;
 
         /**
-         * Creates a new LoginInfo instance using the specified properties.
+         * Creates a new LoginInReq instance using the specified properties.
          * @function create
-         * @memberof gamereq.LoginInfo
+         * @memberof gamereq.LoginInReq
          * @static
-         * @param {gamereq.ILoginInfo=} [properties] Properties to set
-         * @returns {gamereq.LoginInfo} LoginInfo instance
+         * @param {gamereq.ILoginInReq=} [properties] Properties to set
+         * @returns {gamereq.LoginInReq} LoginInReq instance
          */
-        LoginInfo.create = function create(properties) {
-            return new LoginInfo(properties);
+        LoginInReq.create = function create(properties) {
+            return new LoginInReq(properties);
         };
 
         /**
-         * Encodes the specified LoginInfo message. Does not implicitly {@link gamereq.LoginInfo.verify|verify} messages.
+         * Encodes the specified LoginInReq message. Does not implicitly {@link gamereq.LoginInReq.verify|verify} messages.
          * @function encode
-         * @memberof gamereq.LoginInfo
+         * @memberof gamereq.LoginInReq
          * @static
-         * @param {gamereq.ILoginInfo} message LoginInfo message or plain object to encode
+         * @param {gamereq.ILoginInReq} message LoginInReq message or plain object to encode
          * @param {$protobuf.Writer} [writer] Writer to encode to
          * @returns {$protobuf.Writer} Writer
          */
-        LoginInfo.encode = function encode(message, writer) {
+        LoginInReq.encode = function encode(message, writer) {
             if (!writer)
                 writer = $Writer.create();
             if (message.userid != null && Object.hasOwnProperty.call(message, "userid"))
@@ -91,33 +91,33 @@ $root.gamereq = (function() {
         };
 
         /**
-         * Encodes the specified LoginInfo message, length delimited. Does not implicitly {@link gamereq.LoginInfo.verify|verify} messages.
+         * Encodes the specified LoginInReq message, length delimited. Does not implicitly {@link gamereq.LoginInReq.verify|verify} messages.
          * @function encodeDelimited
-         * @memberof gamereq.LoginInfo
+         * @memberof gamereq.LoginInReq
          * @static
-         * @param {gamereq.ILoginInfo} message LoginInfo message or plain object to encode
+         * @param {gamereq.ILoginInReq} message LoginInReq message or plain object to encode
          * @param {$protobuf.Writer} [writer] Writer to encode to
          * @returns {$protobuf.Writer} Writer
          */
-        LoginInfo.encodeDelimited = function encodeDelimited(message, writer) {
+        LoginInReq.encodeDelimited = function encodeDelimited(message, writer) {
             return this.encode(message, writer).ldelim();
         };
 
         /**
-         * Decodes a LoginInfo message from the specified reader or buffer.
+         * Decodes a LoginInReq message from the specified reader or buffer.
          * @function decode
-         * @memberof gamereq.LoginInfo
+         * @memberof gamereq.LoginInReq
          * @static
          * @param {$protobuf.Reader|Uint8Array} reader Reader or buffer to decode from
          * @param {number} [length] Message length if known beforehand
-         * @returns {gamereq.LoginInfo} LoginInfo
+         * @returns {gamereq.LoginInReq} LoginInReq
          * @throws {Error} If the payload is not a reader or valid buffer
          * @throws {$protobuf.util.ProtocolError} If required fields are missing
          */
-        LoginInfo.decode = function decode(reader, length) {
+        LoginInReq.decode = function decode(reader, length) {
             if (!(reader instanceof $Reader))
                 reader = $Reader.create(reader);
-            var end = length === undefined ? reader.len : reader.pos + length, message = new $root.gamereq.LoginInfo();
+            var end = length === undefined ? reader.len : reader.pos + length, message = new $root.gamereq.LoginInReq();
             while (reader.pos < end) {
                 var tag = reader.uint32();
                 switch (tag >>> 3) {
@@ -136,30 +136,30 @@ $root.gamereq = (function() {
         };
 
         /**
-         * Decodes a LoginInfo message from the specified reader or buffer, length delimited.
+         * Decodes a LoginInReq message from the specified reader or buffer, length delimited.
          * @function decodeDelimited
-         * @memberof gamereq.LoginInfo
+         * @memberof gamereq.LoginInReq
          * @static
          * @param {$protobuf.Reader|Uint8Array} reader Reader or buffer to decode from
-         * @returns {gamereq.LoginInfo} LoginInfo
+         * @returns {gamereq.LoginInReq} LoginInReq
          * @throws {Error} If the payload is not a reader or valid buffer
          * @throws {$protobuf.util.ProtocolError} If required fields are missing
          */
-        LoginInfo.decodeDelimited = function decodeDelimited(reader) {
+        LoginInReq.decodeDelimited = function decodeDelimited(reader) {
             if (!(reader instanceof $Reader))
                 reader = new $Reader(reader);
             return this.decode(reader, reader.uint32());
         };
 
         /**
-         * Verifies a LoginInfo message.
+         * Verifies a LoginInReq message.
          * @function verify
-         * @memberof gamereq.LoginInfo
+         * @memberof gamereq.LoginInReq
          * @static
          * @param {Object.<string,*>} message Plain object to verify
          * @returns {string|null} `null` if valid, otherwise the reason why it is not
          */
-        LoginInfo.verify = function verify(message) {
+        LoginInReq.verify = function verify(message) {
             if (typeof message !== "object" || message === null)
                 return "object expected";
             if (message.userid != null && message.hasOwnProperty("userid"))
@@ -172,17 +172,17 @@ $root.gamereq = (function() {
         };
 
         /**
-         * Creates a LoginInfo message from a plain object. Also converts values to their respective internal types.
+         * Creates a LoginInReq message from a plain object. Also converts values to their respective internal types.
          * @function fromObject
-         * @memberof gamereq.LoginInfo
+         * @memberof gamereq.LoginInReq
          * @static
          * @param {Object.<string,*>} object Plain object
-         * @returns {gamereq.LoginInfo} LoginInfo
+         * @returns {gamereq.LoginInReq} LoginInReq
          */
-        LoginInfo.fromObject = function fromObject(object) {
-            if (object instanceof $root.gamereq.LoginInfo)
+        LoginInReq.fromObject = function fromObject(object) {
+            if (object instanceof $root.gamereq.LoginInReq)
                 return object;
-            var message = new $root.gamereq.LoginInfo();
+            var message = new $root.gamereq.LoginInReq();
             if (object.userid != null)
                 message.userid = object.userid | 0;
             if (object.timestamp != null)
@@ -198,15 +198,15 @@ $root.gamereq = (function() {
         };
 
         /**
-         * Creates a plain object from a LoginInfo message. Also converts values to other types if specified.
+         * Creates a plain object from a LoginInReq message. Also converts values to other types if specified.
          * @function toObject
-         * @memberof gamereq.LoginInfo
+         * @memberof gamereq.LoginInReq
          * @static
-         * @param {gamereq.LoginInfo} message LoginInfo
+         * @param {gamereq.LoginInReq} message LoginInReq
          * @param {$protobuf.IConversionOptions} [options] Conversion options
          * @returns {Object.<string,*>} Plain object
          */
-        LoginInfo.toObject = function toObject(message, options) {
+        LoginInReq.toObject = function toObject(message, options) {
             if (!options)
                 options = {};
             var object = {};
@@ -229,17 +229,472 @@ $root.gamereq = (function() {
         };
 
         /**
-         * Converts this LoginInfo to JSON.
+         * Converts this LoginInReq to JSON.
          * @function toJSON
-         * @memberof gamereq.LoginInfo
+         * @memberof gamereq.LoginInReq
          * @instance
          * @returns {Object.<string,*>} JSON object
          */
-        LoginInfo.prototype.toJSON = function toJSON() {
+        LoginInReq.prototype.toJSON = function toJSON() {
             return this.constructor.toObject(this, $protobuf.util.toJSONOptions);
         };
 
-        return LoginInfo;
+        return LoginInReq;
+    })();
+
+    gamereq.LoginInRsp = (function() {
+
+        /**
+         * Properties of a LoginInRsp.
+         * @memberof gamereq
+         * @interface ILoginInRsp
+         * @property {number|null} [userid] LoginInRsp userid
+         * @property {number|Long|null} [timestamp] LoginInRsp timestamp
+         * @property {boolean|null} [success] LoginInRsp success
+         * @property {string|null} [description] LoginInRsp description
+         */
+
+        /**
+         * Constructs a new LoginInRsp.
+         * @memberof gamereq
+         * @classdesc Represents a LoginInRsp.
+         * @implements ILoginInRsp
+         * @constructor
+         * @param {gamereq.ILoginInRsp=} [properties] Properties to set
+         */
+        function LoginInRsp(properties) {
+            if (properties)
+                for (var keys = Object.keys(properties), i = 0; i < keys.length; ++i)
+                    if (properties[keys[i]] != null)
+                        this[keys[i]] = properties[keys[i]];
+        }
+
+        /**
+         * LoginInRsp userid.
+         * @member {number} userid
+         * @memberof gamereq.LoginInRsp
+         * @instance
+         */
+        LoginInRsp.prototype.userid = 0;
+
+        /**
+         * LoginInRsp timestamp.
+         * @member {number|Long} timestamp
+         * @memberof gamereq.LoginInRsp
+         * @instance
+         */
+        LoginInRsp.prototype.timestamp = $util.Long ? $util.Long.fromBits(0,0,false) : 0;
+
+        /**
+         * LoginInRsp success.
+         * @member {boolean} success
+         * @memberof gamereq.LoginInRsp
+         * @instance
+         */
+        LoginInRsp.prototype.success = false;
+
+        /**
+         * LoginInRsp description.
+         * @member {string} description
+         * @memberof gamereq.LoginInRsp
+         * @instance
+         */
+        LoginInRsp.prototype.description = "";
+
+        /**
+         * Creates a new LoginInRsp instance using the specified properties.
+         * @function create
+         * @memberof gamereq.LoginInRsp
+         * @static
+         * @param {gamereq.ILoginInRsp=} [properties] Properties to set
+         * @returns {gamereq.LoginInRsp} LoginInRsp instance
+         */
+        LoginInRsp.create = function create(properties) {
+            return new LoginInRsp(properties);
+        };
+
+        /**
+         * Encodes the specified LoginInRsp message. Does not implicitly {@link gamereq.LoginInRsp.verify|verify} messages.
+         * @function encode
+         * @memberof gamereq.LoginInRsp
+         * @static
+         * @param {gamereq.ILoginInRsp} message LoginInRsp message or plain object to encode
+         * @param {$protobuf.Writer} [writer] Writer to encode to
+         * @returns {$protobuf.Writer} Writer
+         */
+        LoginInRsp.encode = function encode(message, writer) {
+            if (!writer)
+                writer = $Writer.create();
+            if (message.userid != null && Object.hasOwnProperty.call(message, "userid"))
+                writer.uint32(/* id 1, wireType 0 =*/8).int32(message.userid);
+            if (message.timestamp != null && Object.hasOwnProperty.call(message, "timestamp"))
+                writer.uint32(/* id 2, wireType 0 =*/16).int64(message.timestamp);
+            if (message.success != null && Object.hasOwnProperty.call(message, "success"))
+                writer.uint32(/* id 3, wireType 0 =*/24).bool(message.success);
+            if (message.description != null && Object.hasOwnProperty.call(message, "description"))
+                writer.uint32(/* id 4, wireType 2 =*/34).string(message.description);
+            return writer;
+        };
+
+        /**
+         * Encodes the specified LoginInRsp message, length delimited. Does not implicitly {@link gamereq.LoginInRsp.verify|verify} messages.
+         * @function encodeDelimited
+         * @memberof gamereq.LoginInRsp
+         * @static
+         * @param {gamereq.ILoginInRsp} message LoginInRsp message or plain object to encode
+         * @param {$protobuf.Writer} [writer] Writer to encode to
+         * @returns {$protobuf.Writer} Writer
+         */
+        LoginInRsp.encodeDelimited = function encodeDelimited(message, writer) {
+            return this.encode(message, writer).ldelim();
+        };
+
+        /**
+         * Decodes a LoginInRsp message from the specified reader or buffer.
+         * @function decode
+         * @memberof gamereq.LoginInRsp
+         * @static
+         * @param {$protobuf.Reader|Uint8Array} reader Reader or buffer to decode from
+         * @param {number} [length] Message length if known beforehand
+         * @returns {gamereq.LoginInRsp} LoginInRsp
+         * @throws {Error} If the payload is not a reader or valid buffer
+         * @throws {$protobuf.util.ProtocolError} If required fields are missing
+         */
+        LoginInRsp.decode = function decode(reader, length) {
+            if (!(reader instanceof $Reader))
+                reader = $Reader.create(reader);
+            var end = length === undefined ? reader.len : reader.pos + length, message = new $root.gamereq.LoginInRsp();
+            while (reader.pos < end) {
+                var tag = reader.uint32();
+                switch (tag >>> 3) {
+                case 1:
+                    message.userid = reader.int32();
+                    break;
+                case 2:
+                    message.timestamp = reader.int64();
+                    break;
+                case 3:
+                    message.success = reader.bool();
+                    break;
+                case 4:
+                    message.description = reader.string();
+                    break;
+                default:
+                    reader.skipType(tag & 7);
+                    break;
+                }
+            }
+            return message;
+        };
+
+        /**
+         * Decodes a LoginInRsp message from the specified reader or buffer, length delimited.
+         * @function decodeDelimited
+         * @memberof gamereq.LoginInRsp
+         * @static
+         * @param {$protobuf.Reader|Uint8Array} reader Reader or buffer to decode from
+         * @returns {gamereq.LoginInRsp} LoginInRsp
+         * @throws {Error} If the payload is not a reader or valid buffer
+         * @throws {$protobuf.util.ProtocolError} If required fields are missing
+         */
+        LoginInRsp.decodeDelimited = function decodeDelimited(reader) {
+            if (!(reader instanceof $Reader))
+                reader = new $Reader(reader);
+            return this.decode(reader, reader.uint32());
+        };
+
+        /**
+         * Verifies a LoginInRsp message.
+         * @function verify
+         * @memberof gamereq.LoginInRsp
+         * @static
+         * @param {Object.<string,*>} message Plain object to verify
+         * @returns {string|null} `null` if valid, otherwise the reason why it is not
+         */
+        LoginInRsp.verify = function verify(message) {
+            if (typeof message !== "object" || message === null)
+                return "object expected";
+            if (message.userid != null && message.hasOwnProperty("userid"))
+                if (!$util.isInteger(message.userid))
+                    return "userid: integer expected";
+            if (message.timestamp != null && message.hasOwnProperty("timestamp"))
+                if (!$util.isInteger(message.timestamp) && !(message.timestamp && $util.isInteger(message.timestamp.low) && $util.isInteger(message.timestamp.high)))
+                    return "timestamp: integer|Long expected";
+            if (message.success != null && message.hasOwnProperty("success"))
+                if (typeof message.success !== "boolean")
+                    return "success: boolean expected";
+            if (message.description != null && message.hasOwnProperty("description"))
+                if (!$util.isString(message.description))
+                    return "description: string expected";
+            return null;
+        };
+
+        /**
+         * Creates a LoginInRsp message from a plain object. Also converts values to their respective internal types.
+         * @function fromObject
+         * @memberof gamereq.LoginInRsp
+         * @static
+         * @param {Object.<string,*>} object Plain object
+         * @returns {gamereq.LoginInRsp} LoginInRsp
+         */
+        LoginInRsp.fromObject = function fromObject(object) {
+            if (object instanceof $root.gamereq.LoginInRsp)
+                return object;
+            var message = new $root.gamereq.LoginInRsp();
+            if (object.userid != null)
+                message.userid = object.userid | 0;
+            if (object.timestamp != null)
+                if ($util.Long)
+                    (message.timestamp = $util.Long.fromValue(object.timestamp)).unsigned = false;
+                else if (typeof object.timestamp === "string")
+                    message.timestamp = parseInt(object.timestamp, 10);
+                else if (typeof object.timestamp === "number")
+                    message.timestamp = object.timestamp;
+                else if (typeof object.timestamp === "object")
+                    message.timestamp = new $util.LongBits(object.timestamp.low >>> 0, object.timestamp.high >>> 0).toNumber();
+            if (object.success != null)
+                message.success = Boolean(object.success);
+            if (object.description != null)
+                message.description = String(object.description);
+            return message;
+        };
+
+        /**
+         * Creates a plain object from a LoginInRsp message. Also converts values to other types if specified.
+         * @function toObject
+         * @memberof gamereq.LoginInRsp
+         * @static
+         * @param {gamereq.LoginInRsp} message LoginInRsp
+         * @param {$protobuf.IConversionOptions} [options] Conversion options
+         * @returns {Object.<string,*>} Plain object
+         */
+        LoginInRsp.toObject = function toObject(message, options) {
+            if (!options)
+                options = {};
+            var object = {};
+            if (options.defaults) {
+                object.userid = 0;
+                if ($util.Long) {
+                    var long = new $util.Long(0, 0, false);
+                    object.timestamp = options.longs === String ? long.toString() : options.longs === Number ? long.toNumber() : long;
+                } else
+                    object.timestamp = options.longs === String ? "0" : 0;
+                object.success = false;
+                object.description = "";
+            }
+            if (message.userid != null && message.hasOwnProperty("userid"))
+                object.userid = message.userid;
+            if (message.timestamp != null && message.hasOwnProperty("timestamp"))
+                if (typeof message.timestamp === "number")
+                    object.timestamp = options.longs === String ? String(message.timestamp) : message.timestamp;
+                else
+                    object.timestamp = options.longs === String ? $util.Long.prototype.toString.call(message.timestamp) : options.longs === Number ? new $util.LongBits(message.timestamp.low >>> 0, message.timestamp.high >>> 0).toNumber() : message.timestamp;
+            if (message.success != null && message.hasOwnProperty("success"))
+                object.success = message.success;
+            if (message.description != null && message.hasOwnProperty("description"))
+                object.description = message.description;
+            return object;
+        };
+
+        /**
+         * Converts this LoginInRsp to JSON.
+         * @function toJSON
+         * @memberof gamereq.LoginInRsp
+         * @instance
+         * @returns {Object.<string,*>} JSON object
+         */
+        LoginInRsp.prototype.toJSON = function toJSON() {
+            return this.constructor.toObject(this, $protobuf.util.toJSONOptions);
+        };
+
+        return LoginInRsp;
+    })();
+
+    gamereq.LoginOutReq = (function() {
+
+        /**
+         * Properties of a LoginOutReq.
+         * @memberof gamereq
+         * @interface ILoginOutReq
+         * @property {number|null} [userid] LoginOutReq userid
+         */
+
+        /**
+         * Constructs a new LoginOutReq.
+         * @memberof gamereq
+         * @classdesc Represents a LoginOutReq.
+         * @implements ILoginOutReq
+         * @constructor
+         * @param {gamereq.ILoginOutReq=} [properties] Properties to set
+         */
+        function LoginOutReq(properties) {
+            if (properties)
+                for (var keys = Object.keys(properties), i = 0; i < keys.length; ++i)
+                    if (properties[keys[i]] != null)
+                        this[keys[i]] = properties[keys[i]];
+        }
+
+        /**
+         * LoginOutReq userid.
+         * @member {number} userid
+         * @memberof gamereq.LoginOutReq
+         * @instance
+         */
+        LoginOutReq.prototype.userid = 0;
+
+        /**
+         * Creates a new LoginOutReq instance using the specified properties.
+         * @function create
+         * @memberof gamereq.LoginOutReq
+         * @static
+         * @param {gamereq.ILoginOutReq=} [properties] Properties to set
+         * @returns {gamereq.LoginOutReq} LoginOutReq instance
+         */
+        LoginOutReq.create = function create(properties) {
+            return new LoginOutReq(properties);
+        };
+
+        /**
+         * Encodes the specified LoginOutReq message. Does not implicitly {@link gamereq.LoginOutReq.verify|verify} messages.
+         * @function encode
+         * @memberof gamereq.LoginOutReq
+         * @static
+         * @param {gamereq.ILoginOutReq} message LoginOutReq message or plain object to encode
+         * @param {$protobuf.Writer} [writer] Writer to encode to
+         * @returns {$protobuf.Writer} Writer
+         */
+        LoginOutReq.encode = function encode(message, writer) {
+            if (!writer)
+                writer = $Writer.create();
+            if (message.userid != null && Object.hasOwnProperty.call(message, "userid"))
+                writer.uint32(/* id 1, wireType 0 =*/8).int32(message.userid);
+            return writer;
+        };
+
+        /**
+         * Encodes the specified LoginOutReq message, length delimited. Does not implicitly {@link gamereq.LoginOutReq.verify|verify} messages.
+         * @function encodeDelimited
+         * @memberof gamereq.LoginOutReq
+         * @static
+         * @param {gamereq.ILoginOutReq} message LoginOutReq message or plain object to encode
+         * @param {$protobuf.Writer} [writer] Writer to encode to
+         * @returns {$protobuf.Writer} Writer
+         */
+        LoginOutReq.encodeDelimited = function encodeDelimited(message, writer) {
+            return this.encode(message, writer).ldelim();
+        };
+
+        /**
+         * Decodes a LoginOutReq message from the specified reader or buffer.
+         * @function decode
+         * @memberof gamereq.LoginOutReq
+         * @static
+         * @param {$protobuf.Reader|Uint8Array} reader Reader or buffer to decode from
+         * @param {number} [length] Message length if known beforehand
+         * @returns {gamereq.LoginOutReq} LoginOutReq
+         * @throws {Error} If the payload is not a reader or valid buffer
+         * @throws {$protobuf.util.ProtocolError} If required fields are missing
+         */
+        LoginOutReq.decode = function decode(reader, length) {
+            if (!(reader instanceof $Reader))
+                reader = $Reader.create(reader);
+            var end = length === undefined ? reader.len : reader.pos + length, message = new $root.gamereq.LoginOutReq();
+            while (reader.pos < end) {
+                var tag = reader.uint32();
+                switch (tag >>> 3) {
+                case 1:
+                    message.userid = reader.int32();
+                    break;
+                default:
+                    reader.skipType(tag & 7);
+                    break;
+                }
+            }
+            return message;
+        };
+
+        /**
+         * Decodes a LoginOutReq message from the specified reader or buffer, length delimited.
+         * @function decodeDelimited
+         * @memberof gamereq.LoginOutReq
+         * @static
+         * @param {$protobuf.Reader|Uint8Array} reader Reader or buffer to decode from
+         * @returns {gamereq.LoginOutReq} LoginOutReq
+         * @throws {Error} If the payload is not a reader or valid buffer
+         * @throws {$protobuf.util.ProtocolError} If required fields are missing
+         */
+        LoginOutReq.decodeDelimited = function decodeDelimited(reader) {
+            if (!(reader instanceof $Reader))
+                reader = new $Reader(reader);
+            return this.decode(reader, reader.uint32());
+        };
+
+        /**
+         * Verifies a LoginOutReq message.
+         * @function verify
+         * @memberof gamereq.LoginOutReq
+         * @static
+         * @param {Object.<string,*>} message Plain object to verify
+         * @returns {string|null} `null` if valid, otherwise the reason why it is not
+         */
+        LoginOutReq.verify = function verify(message) {
+            if (typeof message !== "object" || message === null)
+                return "object expected";
+            if (message.userid != null && message.hasOwnProperty("userid"))
+                if (!$util.isInteger(message.userid))
+                    return "userid: integer expected";
+            return null;
+        };
+
+        /**
+         * Creates a LoginOutReq message from a plain object. Also converts values to their respective internal types.
+         * @function fromObject
+         * @memberof gamereq.LoginOutReq
+         * @static
+         * @param {Object.<string,*>} object Plain object
+         * @returns {gamereq.LoginOutReq} LoginOutReq
+         */
+        LoginOutReq.fromObject = function fromObject(object) {
+            if (object instanceof $root.gamereq.LoginOutReq)
+                return object;
+            var message = new $root.gamereq.LoginOutReq();
+            if (object.userid != null)
+                message.userid = object.userid | 0;
+            return message;
+        };
+
+        /**
+         * Creates a plain object from a LoginOutReq message. Also converts values to other types if specified.
+         * @function toObject
+         * @memberof gamereq.LoginOutReq
+         * @static
+         * @param {gamereq.LoginOutReq} message LoginOutReq
+         * @param {$protobuf.IConversionOptions} [options] Conversion options
+         * @returns {Object.<string,*>} Plain object
+         */
+        LoginOutReq.toObject = function toObject(message, options) {
+            if (!options)
+                options = {};
+            var object = {};
+            if (options.defaults)
+                object.userid = 0;
+            if (message.userid != null && message.hasOwnProperty("userid"))
+                object.userid = message.userid;
+            return object;
+        };
+
+        /**
+         * Converts this LoginOutReq to JSON.
+         * @function toJSON
+         * @memberof gamereq.LoginOutReq
+         * @instance
+         * @returns {Object.<string,*>} JSON object
+         */
+        LoginOutReq.prototype.toJSON = function toJSON() {
+            return this.constructor.toObject(this, $protobuf.util.toJSONOptions);
+        };
+
+        return LoginOutReq;
     })();
 
     gamereq.UserInfo = (function() {

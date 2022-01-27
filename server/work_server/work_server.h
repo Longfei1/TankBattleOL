@@ -131,7 +131,7 @@ void WorkServer::SendResponse(ContextHeadPtr context_head, RequestPtr request, c
     }
     else
     {
-        ret.set_sequence(-1);//服务发送的消息不需要客户端相应，序列号可以返回无效值
+        ret.set_sequence(-1);//服务发送的消息不需要客户端响应，序列号可以返回无效值
     }
 
     auto d = ret.mutable_data();
@@ -147,7 +147,7 @@ void WorkServer::SendNotify(ContextHeadPtr context_head, google::protobuf::uint3
     ret.set_request(request_id);
     ret.set_need_echo(false);
 
-    ret.set_sequence(-1);//服务发送的消息不需要客户端相应，序列号可以返回无效值
+    ret.set_sequence(-1);//服务发送的消息不需要客户端响应，序列号可以返回无效值
 
     auto d = ret.mutable_data();
     d->PackFrom(proto_data);

@@ -11,6 +11,7 @@ import GameConfigModel from "./GameConfigModel";
 
 class GameDataModel extends BaseModel {
     _playMode: number = -1;
+    _menuPage: number = 0;
     _gameOver: boolean = false;
     _enableOperate: boolean = false;
     _gameMapData:  number[][] =  [];
@@ -32,6 +33,10 @@ class GameDataModel extends BaseModel {
     _playerLevel: { [id: number] : number } = {};
     _gameRunning: boolean = false;
     _propDestroyEnemyNum: number = 0;
+
+    //网络相关数据
+    _netUserID: number = 0; //用户ID
+    _netTimestamp: number = 0; //服务器时间戳
 
     initModel() {
         super.initModel();
@@ -790,18 +795,24 @@ class GameDataModel extends BaseModel {
 
     getHighScore(): number {
         let key = "GameHighScore";
+        return this.getLocalStorageNumber("GameHighScore");
+    }
+
+    setHighScore(score: number) {
+        this.setLocalStorageNumber("GameHighScore", score);
+    }
+
+    setLocalStorageNumber(key: string, value: number) {
+        cc.sys.localStorage.setItem(key, value.toString());
+    }
+
+    getLocalStorageNumber(key: string): number {
         let value = cc.sys.localStorage.getItem(key);
 
         if (value) {
             return Number(value);
         }
-
         return 0;
-    }
-
-    setHighScore(score: number) {
-        let key = "GameHighScore";
-        cc.sys.localStorage.setItem(key, score.toString());
     }
 
     isValidCollision(other: any /*cc.Collider*/, self: any /*cc.Collider*/): boolean {
@@ -825,6 +836,27 @@ class GameDataModel extends BaseModel {
             cc.rect(width, 0, 10, height), //右
             cc.rect(0, height, width, 10), //上
         ]
+    }
+
+    //设置登录数据
+    setLoginInData(userID: number, timestamp: number) {
+        this._netUserID = userID;
+        this._netTimestamp = timestamp;
+
+        //写入缓存，以便重启游戏后使用
+        this.setLocalStorageNumber("NetUserID", userID);
+        this.setLocalStorageNumber("NetTimeStamp", timestamp);
+    }
+
+    //获取登录数据
+    getLoginInData() {
+        let userid = this._netUserID;
+        let timestamp = this._netTimestamp;
+        if (userid == 0) {
+            userid = this.getLocalStorageNumber("NetUserID");
+            timestamp = this.getLocalStorageNumber("NetTimeStamp");
+        }
+        return {userid, timestamp};
     }
 }
 export default new GameDataModel();

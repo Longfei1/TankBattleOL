@@ -6,6 +6,8 @@ export namespace GameDef {
     export const GAMEMODE_SINGLE_PLAYER         = 0;
     export const GAMEMODE_DOUBLE_PLAYER         = 1;
     export const GAMEMODE_MAP_EDIT              = 2;
+    export const GAMEMODE_ONLINE_PLAY           = 3;
+    export const GAMEMODE_MAP_EDIT_ONLINE       = 4;
 
     //运动方向
     export const DIRECTION_UP                   = 0;

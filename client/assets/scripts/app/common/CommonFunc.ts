@@ -1,5 +1,7 @@
 import AudioModel from "../model/AudioModel";
 import protobuf = require("../../packages/protobufjs/pb_minimal");
+import Toast from "../component/common/Toast";
+import { google } from "../network/proto/basereq";
 
 export default class CommonFunc {
     static copyObject(object): any {
@@ -168,14 +170,49 @@ export default class CommonFunc {
         return new Date().getTime();
     }
 
-    static pbEncode(pbHandler: any, obj: any): ArrayBuffer {
+    static pbEncode(obj: any, pbHandler: any): ArrayBuffer {
         let msg = pbHandler.create(obj);
         let dataEncode = pbHandler.encode(msg).finish();
         return dataEncode;
     }
 
-    static pbDecode(pbHandler: any, buf: ArrayBuffer): any {
+    static pbDecode(buf: ArrayBuffer, pbHandler: any): any {
         let dataDecode = pbHandler.decode(buf);
         return dataDecode;
+    }
+
+    static pbObjectToAny(obj:any, pbHandler: any, typeUrl: string) {
+        let dataEncode = CommonFunc.pbEncode(obj, pbHandler);
+        let dataAny = google.protobuf.Any.create({
+            type_url: "type.googleapis.com/" + typeUrl,
+            value: new Uint8Array(dataEncode),
+        });
+        return dataAny;
+    }
+
+    static pbAnyToObject(pbAnyData: google.protobuf.Any, pbHandler: any) {
+        return CommonFunc.pbDecode(pbAnyData.value, pbHandler);
+    }
+
+    /**
+     * 
+     * @param tipString 提示字符
+     * @param time 停留时间
+     */
+    static showToast(tipString:string, time: number) {
+        cc.loader.loadRes("prefab/Toast", (error, pfb) => {
+            if (!error) {
+                let root = cc.director.getScene().getChildByName("Canvas");
+                let node = cc.instantiate(pfb);
+                if (root && node) {
+                    node.getComponent(Toast).init({
+                        tipString: tipString,
+                        time: time,
+                    })
+                    root.addChild(node, 10000);
+                    node.y = -10;
+                }
+            }
+        });
     }
 }

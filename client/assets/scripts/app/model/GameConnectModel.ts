@@ -1,174 +1,94 @@
 import BaseModel from "./BaseModel";
-import { WSConnect } from "../network/NetWork";
-import BaseReq = require("../network/proto/basereq");
 import CommonFunc from "../common/CommonFunc";
+import { GameDef } from "../define/GameDef";
+import { GameConnect } from "../network/NetWork";
+import {gamereq} from "../network/proto/gamereq";
 import { GameConfig } from "../GameConfig";
-import { GameReq } from "../network/GameReq";
-
-class RequestMsg {
-    requestID: number = 0;
-    needEcho: boolean = false;
-    data: any = null;
-    handler: Function = null;
-}
-
-const PLUSE_INTERVAL = 30;//心跳发送间隔时长
+import { GameProtocal } from "../network/GameProtocal";
+import { EventDef } from "../define/EventDef";
+import { google } from "../network/proto/basereq";
+import GameDataModel from "./GameDataModel";
 
 class GameConnectModel extends BaseModel {
-    private _socket: WSConnect = null;
-
-    private _sequence: number = 0;//消息序列号
-    private _waitResponse: boolean = false;//是否在等待回应
-    private _waitSequence: number = -1;//等待回应的序列号
-    private _requestQueue: RequestMsg[] = [];//请求队列
-    private _responseHandler: Function = null;//响应回调函数
-
-    private _notifyHandler: { [requestid: number]: Function } = {};//通知处理函数
-
-    private _pluseTimer = null;//心跳定时器
-
-    EVENT_SOCKET_ERROR = "EVENT_SOCKET_ERROR";
+    private _gameConnect: GameConnect = null;
 
     initModel() {
-        if (this.isNetSupported()) {
-            this._socket = new WSConnect("Game", false);
-
-            this._socket.setMessageHandler((data) => {
-                this.onMessage(data);
-            });
-        }
-        else {
-            console.log("not support websocket!")
-        }
+        this._gameConnect = new GameConnect("MainGame");
+        this._gameConnect.setSocketErrorHandler(() => {
+            this.onSocketError();
+        });
     }
 
-    isNetSupported(): boolean {
-        if ("WebSocket" in window) {
-            return true;
-        }
-        else {
-            return false;
-        }
+    onSocketError() {
+        console.log("GameConnectModel socket error!");
+        this.emit(EventDef.EV_MAINGAME_SOCKET_ERROR);
     }
 
-    isConnected(): boolean {
-        return this._socket.isConnected();
-    }
+    /**
+     * 连接服务器
+     * @param callback 返回值：0-成功 1-连接失败 -2-登录失败 
+     */
+    connectServer(callback: Function) {
+       if (!this._gameConnect.isConnected()) {
+           this._gameConnect.connect(GameConfig.serverIP, GameConfig.serverPort, (ret) => {
+                if (ret) {
+                    console.log("connect server ok!");
 
-    addNotifyHandler(requestID: number, handler: Function) {
-        this._notifyHandler[requestID] = handler;
-    }
-
-    connect(callback: Function) {
-        let fnRet = callback;
-        if (!this.isConnected()) {
-            this._socket.connect(GameConfig.serverIP, GameConfig.serverPort, () => {
-                if (fnRet) {
-                    fnRet(true);
-                    fnRet = null;
+                    //连接成功后，自动登录
+                    this.sendLoginIn((ret, tip) => {
+                        if (callback) {
+                            callback(ret ? 0 : 2, tip);
+                        }
+                    });
                 }
-                this.startPluseTimer();
-            }, () => {
-                if (fnRet) {
-                    fnRet(false);
-                    fnRet = null;
-
-                    this.emit(this.EVENT_SOCKET_ERROR);//分发error事件
+                else {
+                    console.log("connect server failed!");
+                    if (callback) {
+                        callback(1);
+                    }
                 }
-                this.stopPluseTimer();
-            })
+           });
+       }
+    }
+
+    //断开服务连接
+    disconnectServer() {
+        if (this._gameConnect.isConnected()) {
+            this._gameConnect.disconnect();
         }
     }
 
-    disconnect() {
-        this._socket.disconnect();
+    //服务是否连接
+    isServerConnected(): boolean {
+        return this._gameConnect.isConnected();
     }
 
-    sendRequest(requestID:number, pbData: any, needResponse: boolean = false, responseHandler: Function = null) {
-        if (!this.isConnected() || this._waitResponse) {
-            let request: RequestMsg = {
-                requestID: requestID,
-                needEcho: needResponse,
-                data: pbData,
-                handler: responseHandler,
-            };
-            
-            this.pushRequestToQueue(request);
-            return;
-        }
+    //登录
+    sendLoginIn(callback: Function) {
+        let anyPackage: GameProtocal.PbAnyPackage = {
+            typeUrl: "gamereq.LoginInReq",
+            pbHandler: gamereq.LoginInReq,
+            obj: GameDataModel.getLoginInData(),
+        } 
 
-        let msg = {
-            request: requestID,
-            needEcho: needResponse,
-            sequence: this._sequence,
-            data: pbData,
-        };
+        this._gameConnect.sendRequest(GameProtocal.GR_USER_LOGIN_IN, anyPackage, true, (pbAnyData: google.protobuf.Any) => {
+            let loginInRsp: gamereq.LoginInRsp = CommonFunc.pbAnyToObject(pbAnyData, gamereq.LoginInRsp);
 
-        if (needResponse) {
-            this._waitResponse = true;
-            this._waitSequence = msg.sequence;
-            this._responseHandler = responseHandler;
-        }
-
-        this._sequence++;
-
-        let dataEncode = CommonFunc.pbEncode(BaseReq.basereq.Request, msg);
-        this._socket.sendData(dataEncode);
-
-        if (!needResponse) {
-            this.sendRequestInQueue();
-        }
-    }
-
-    private onMessage(data: ArrayBuffer) {
-        let request: BaseReq.basereq.Request = CommonFunc.pbDecode(BaseReq.basereq.Request, data);
-
-        if (this._waitResponse && this._waitSequence == request.sequence) {
-            if (this._responseHandler) {
-                this._responseHandler(request.data);
+            if (loginInRsp.success) {
+                //登录结果
+                this.onLoginInResult(loginInRsp);
             }
 
-            this._waitResponse = false;
-            this._waitSequence = -1;
-            this._responseHandler = null;
-
-            this.sendRequestInQueue();
-            return;
-        }
-
-        if (this._notifyHandler[request.request]) {
-            this._notifyHandler[request.request](request.data);
-        }
+            if (callback) {
+                callback(loginInRsp.success, loginInRsp.description);
+            }
+        });
     }
 
-    private pushRequestToQueue(request: RequestMsg) {
-        this._requestQueue.push(request);
-    }
-
-    private sendRequestInQueue() {
-        if (this._requestQueue.length > 0) {
-            let request = this._requestQueue[0];
-            this._requestQueue.splice(0, 1);
-
-            this.sendRequest(request.requestID, request.data, request.needEcho, request.handler);
-        }
-    }
-
-    private sendPluse() {
-        this.sendRequest(GameReq.GR_CONNECT_PLUSE, null);
-    }
-
-    private startPluseTimer() {
-        this.stopPluseTimer();
-        this._pluseTimer = setInterval(() => {
-            this.sendPluse();
-        }, PLUSE_INTERVAL);
-    }
-
-    private stopPluseTimer() {
-        if (this._pluseTimer) {
-            clearInterval(this._pluseTimer);
-            this._pluseTimer = null;
+    //登录成功
+    onLoginInResult(loginInRsp: gamereq.LoginInRsp) {
+        if (loginInRsp.success) {
+            GameDataModel.setLoginInData(loginInRsp.userid, loginInRsp.timestamp);
         }
     }
 }

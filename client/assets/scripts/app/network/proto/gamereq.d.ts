@@ -2,97 +2,295 @@ import * as $protobuf from "protobufjs";
 /** Namespace gamereq. */
 export namespace gamereq {
 
-    /** Properties of a LoginInfo. */
-    interface ILoginInfo {
+    /** Properties of a LoginInReq. */
+    interface ILoginInReq {
 
-        /** LoginInfo userid */
+        /** LoginInReq userid */
         userid?: (number|null);
 
-        /** LoginInfo timestamp */
+        /** LoginInReq timestamp */
         timestamp?: (number|Long|null);
     }
 
-    /** Represents a LoginInfo. */
-    class LoginInfo implements ILoginInfo {
+    /** Represents a LoginInReq. */
+    class LoginInReq implements ILoginInReq {
 
         /**
-         * Constructs a new LoginInfo.
+         * Constructs a new LoginInReq.
          * @param [properties] Properties to set
          */
-        constructor(properties?: gamereq.ILoginInfo);
+        constructor(properties?: gamereq.ILoginInReq);
 
-        /** LoginInfo userid. */
+        /** LoginInReq userid. */
         public userid: number;
 
-        /** LoginInfo timestamp. */
+        /** LoginInReq timestamp. */
         public timestamp: (number|Long);
 
         /**
-         * Creates a new LoginInfo instance using the specified properties.
+         * Creates a new LoginInReq instance using the specified properties.
          * @param [properties] Properties to set
-         * @returns LoginInfo instance
+         * @returns LoginInReq instance
          */
-        public static create(properties?: gamereq.ILoginInfo): gamereq.LoginInfo;
+        public static create(properties?: gamereq.ILoginInReq): gamereq.LoginInReq;
 
         /**
-         * Encodes the specified LoginInfo message. Does not implicitly {@link gamereq.LoginInfo.verify|verify} messages.
-         * @param message LoginInfo message or plain object to encode
+         * Encodes the specified LoginInReq message. Does not implicitly {@link gamereq.LoginInReq.verify|verify} messages.
+         * @param message LoginInReq message or plain object to encode
          * @param [writer] Writer to encode to
          * @returns Writer
          */
-        public static encode(message: gamereq.ILoginInfo, writer?: $protobuf.Writer): $protobuf.Writer;
+        public static encode(message: gamereq.ILoginInReq, writer?: $protobuf.Writer): $protobuf.Writer;
 
         /**
-         * Encodes the specified LoginInfo message, length delimited. Does not implicitly {@link gamereq.LoginInfo.verify|verify} messages.
-         * @param message LoginInfo message or plain object to encode
+         * Encodes the specified LoginInReq message, length delimited. Does not implicitly {@link gamereq.LoginInReq.verify|verify} messages.
+         * @param message LoginInReq message or plain object to encode
          * @param [writer] Writer to encode to
          * @returns Writer
          */
-        public static encodeDelimited(message: gamereq.ILoginInfo, writer?: $protobuf.Writer): $protobuf.Writer;
+        public static encodeDelimited(message: gamereq.ILoginInReq, writer?: $protobuf.Writer): $protobuf.Writer;
 
         /**
-         * Decodes a LoginInfo message from the specified reader or buffer.
+         * Decodes a LoginInReq message from the specified reader or buffer.
          * @param reader Reader or buffer to decode from
          * @param [length] Message length if known beforehand
-         * @returns LoginInfo
+         * @returns LoginInReq
          * @throws {Error} If the payload is not a reader or valid buffer
          * @throws {$protobuf.util.ProtocolError} If required fields are missing
          */
-        public static decode(reader: ($protobuf.Reader|Uint8Array), length?: number): gamereq.LoginInfo;
+        public static decode(reader: ($protobuf.Reader|Uint8Array), length?: number): gamereq.LoginInReq;
 
         /**
-         * Decodes a LoginInfo message from the specified reader or buffer, length delimited.
+         * Decodes a LoginInReq message from the specified reader or buffer, length delimited.
          * @param reader Reader or buffer to decode from
-         * @returns LoginInfo
+         * @returns LoginInReq
          * @throws {Error} If the payload is not a reader or valid buffer
          * @throws {$protobuf.util.ProtocolError} If required fields are missing
          */
-        public static decodeDelimited(reader: ($protobuf.Reader|Uint8Array)): gamereq.LoginInfo;
+        public static decodeDelimited(reader: ($protobuf.Reader|Uint8Array)): gamereq.LoginInReq;
 
         /**
-         * Verifies a LoginInfo message.
+         * Verifies a LoginInReq message.
          * @param message Plain object to verify
          * @returns `null` if valid, otherwise the reason why it is not
          */
         public static verify(message: { [k: string]: any }): (string|null);
 
         /**
-         * Creates a LoginInfo message from a plain object. Also converts values to their respective internal types.
+         * Creates a LoginInReq message from a plain object. Also converts values to their respective internal types.
          * @param object Plain object
-         * @returns LoginInfo
+         * @returns LoginInReq
          */
-        public static fromObject(object: { [k: string]: any }): gamereq.LoginInfo;
+        public static fromObject(object: { [k: string]: any }): gamereq.LoginInReq;
 
         /**
-         * Creates a plain object from a LoginInfo message. Also converts values to other types if specified.
-         * @param message LoginInfo
+         * Creates a plain object from a LoginInReq message. Also converts values to other types if specified.
+         * @param message LoginInReq
          * @param [options] Conversion options
          * @returns Plain object
          */
-        public static toObject(message: gamereq.LoginInfo, options?: $protobuf.IConversionOptions): { [k: string]: any };
+        public static toObject(message: gamereq.LoginInReq, options?: $protobuf.IConversionOptions): { [k: string]: any };
 
         /**
-         * Converts this LoginInfo to JSON.
+         * Converts this LoginInReq to JSON.
+         * @returns JSON object
+         */
+        public toJSON(): { [k: string]: any };
+    }
+
+    /** Properties of a LoginInRsp. */
+    interface ILoginInRsp {
+
+        /** LoginInRsp userid */
+        userid?: (number|null);
+
+        /** LoginInRsp timestamp */
+        timestamp?: (number|Long|null);
+
+        /** LoginInRsp success */
+        success?: (boolean|null);
+
+        /** LoginInRsp description */
+        description?: (string|null);
+    }
+
+    /** Represents a LoginInRsp. */
+    class LoginInRsp implements ILoginInRsp {
+
+        /**
+         * Constructs a new LoginInRsp.
+         * @param [properties] Properties to set
+         */
+        constructor(properties?: gamereq.ILoginInRsp);
+
+        /** LoginInRsp userid. */
+        public userid: number;
+
+        /** LoginInRsp timestamp. */
+        public timestamp: (number|Long);
+
+        /** LoginInRsp success. */
+        public success: boolean;
+
+        /** LoginInRsp description. */
+        public description: string;
+
+        /**
+         * Creates a new LoginInRsp instance using the specified properties.
+         * @param [properties] Properties to set
+         * @returns LoginInRsp instance
+         */
+        public static create(properties?: gamereq.ILoginInRsp): gamereq.LoginInRsp;
+
+        /**
+         * Encodes the specified LoginInRsp message. Does not implicitly {@link gamereq.LoginInRsp.verify|verify} messages.
+         * @param message LoginInRsp message or plain object to encode
+         * @param [writer] Writer to encode to
+         * @returns Writer
+         */
+        public static encode(message: gamereq.ILoginInRsp, writer?: $protobuf.Writer): $protobuf.Writer;
+
+        /**
+         * Encodes the specified LoginInRsp message, length delimited. Does not implicitly {@link gamereq.LoginInRsp.verify|verify} messages.
+         * @param message LoginInRsp message or plain object to encode
+         * @param [writer] Writer to encode to
+         * @returns Writer
+         */
+        public static encodeDelimited(message: gamereq.ILoginInRsp, writer?: $protobuf.Writer): $protobuf.Writer;
+
+        /**
+         * Decodes a LoginInRsp message from the specified reader or buffer.
+         * @param reader Reader or buffer to decode from
+         * @param [length] Message length if known beforehand
+         * @returns LoginInRsp
+         * @throws {Error} If the payload is not a reader or valid buffer
+         * @throws {$protobuf.util.ProtocolError} If required fields are missing
+         */
+        public static decode(reader: ($protobuf.Reader|Uint8Array), length?: number): gamereq.LoginInRsp;
+
+        /**
+         * Decodes a LoginInRsp message from the specified reader or buffer, length delimited.
+         * @param reader Reader or buffer to decode from
+         * @returns LoginInRsp
+         * @throws {Error} If the payload is not a reader or valid buffer
+         * @throws {$protobuf.util.ProtocolError} If required fields are missing
+         */
+        public static decodeDelimited(reader: ($protobuf.Reader|Uint8Array)): gamereq.LoginInRsp;
+
+        /**
+         * Verifies a LoginInRsp message.
+         * @param message Plain object to verify
+         * @returns `null` if valid, otherwise the reason why it is not
+         */
+        public static verify(message: { [k: string]: any }): (string|null);
+
+        /**
+         * Creates a LoginInRsp message from a plain object. Also converts values to their respective internal types.
+         * @param object Plain object
+         * @returns LoginInRsp
+         */
+        public static fromObject(object: { [k: string]: any }): gamereq.LoginInRsp;
+
+        /**
+         * Creates a plain object from a LoginInRsp message. Also converts values to other types if specified.
+         * @param message LoginInRsp
+         * @param [options] Conversion options
+         * @returns Plain object
+         */
+        public static toObject(message: gamereq.LoginInRsp, options?: $protobuf.IConversionOptions): { [k: string]: any };
+
+        /**
+         * Converts this LoginInRsp to JSON.
+         * @returns JSON object
+         */
+        public toJSON(): { [k: string]: any };
+    }
+
+    /** Properties of a LoginOutReq. */
+    interface ILoginOutReq {
+
+        /** LoginOutReq userid */
+        userid?: (number|null);
+    }
+
+    /** Represents a LoginOutReq. */
+    class LoginOutReq implements ILoginOutReq {
+
+        /**
+         * Constructs a new LoginOutReq.
+         * @param [properties] Properties to set
+         */
+        constructor(properties?: gamereq.ILoginOutReq);
+
+        /** LoginOutReq userid. */
+        public userid: number;
+
+        /**
+         * Creates a new LoginOutReq instance using the specified properties.
+         * @param [properties] Properties to set
+         * @returns LoginOutReq instance
+         */
+        public static create(properties?: gamereq.ILoginOutReq): gamereq.LoginOutReq;
+
+        /**
+         * Encodes the specified LoginOutReq message. Does not implicitly {@link gamereq.LoginOutReq.verify|verify} messages.
+         * @param message LoginOutReq message or plain object to encode
+         * @param [writer] Writer to encode to
+         * @returns Writer
+         */
+        public static encode(message: gamereq.ILoginOutReq, writer?: $protobuf.Writer): $protobuf.Writer;
+
+        /**
+         * Encodes the specified LoginOutReq message, length delimited. Does not implicitly {@link gamereq.LoginOutReq.verify|verify} messages.
+         * @param message LoginOutReq message or plain object to encode
+         * @param [writer] Writer to encode to
+         * @returns Writer
+         */
+        public static encodeDelimited(message: gamereq.ILoginOutReq, writer?: $protobuf.Writer): $protobuf.Writer;
+
+        /**
+         * Decodes a LoginOutReq message from the specified reader or buffer.
+         * @param reader Reader or buffer to decode from
+         * @param [length] Message length if known beforehand
+         * @returns LoginOutReq
+         * @throws {Error} If the payload is not a reader or valid buffer
+         * @throws {$protobuf.util.ProtocolError} If required fields are missing
+         */
+        public static decode(reader: ($protobuf.Reader|Uint8Array), length?: number): gamereq.LoginOutReq;
+
+        /**
+         * Decodes a LoginOutReq message from the specified reader or buffer, length delimited.
+         * @param reader Reader or buffer to decode from
+         * @returns LoginOutReq
+         * @throws {Error} If the payload is not a reader or valid buffer
+         * @throws {$protobuf.util.ProtocolError} If required fields are missing
+         */
+        public static decodeDelimited(reader: ($protobuf.Reader|Uint8Array)): gamereq.LoginOutReq;
+
+        /**
+         * Verifies a LoginOutReq message.
+         * @param message Plain object to verify
+         * @returns `null` if valid, otherwise the reason why it is not
+         */
+        public static verify(message: { [k: string]: any }): (string|null);
+
+        /**
+         * Creates a LoginOutReq message from a plain object. Also converts values to their respective internal types.
+         * @param object Plain object
+         * @returns LoginOutReq
+         */
+        public static fromObject(object: { [k: string]: any }): gamereq.LoginOutReq;
+
+        /**
+         * Creates a plain object from a LoginOutReq message. Also converts values to other types if specified.
+         * @param message LoginOutReq
+         * @param [options] Conversion options
+         * @returns Plain object
+         */
+        public static toObject(message: gamereq.LoginOutReq, options?: $protobuf.IConversionOptions): { [k: string]: any };
+
+        /**
+         * Converts this LoginOutReq to JSON.
          * @returns JSON object
          */
         public toJSON(): { [k: string]: any };

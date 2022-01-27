@@ -168,6 +168,22 @@ bool AsioWSServer::StopIOService()
     return true;
 }
 
+void AsioWSServer::InitSocketOption(ConSessionPtr session)
+{
+    session->socket_.set_option(
+		websocket::stream_base::timeout::suggested(
+			role_type::server));
+
+    session->socket_.binary(true);
+
+	//设置握手装饰器
+    session->socket_.set_option(websocket::stream_base::decorator(
+		[](websocket::response_type& res)
+		{
+			res.set(http::field::server, "AsioWSServer");
+		}));
+}
+
 void AsioWSServer::DoAccept()
 {
     //每个socket使用自己的strand
@@ -190,6 +206,7 @@ void AsioWSServer::OnAccept(const boost::system::error_code& error, boost::asio:
 
             AddConnectSession(session);//添加客户端连接
             
+            InitSocketOption(session);
             DoShakeHand(session);//开始握手
 
             session->status_ = SocketStatus::CONNECTED;
@@ -210,17 +227,6 @@ void AsioWSServer::OnAccept(const boost::system::error_code& error, boost::asio:
 
 void AsioWSServer::DoShakeHand(ConSessionPtr session)
 {
-    session->socket_.set_option(
-        websocket::stream_base::timeout::suggested(
-            role_type::server));
-
-    //设置握手装饰器
-    session->socket_.set_option(websocket::stream_base::decorator(
-        [](websocket::response_type& res)
-        {
-            res.set(http::field::server, "AsioWSServer");
-        }));
-
     //开始握手
     session->socket_.async_accept([this, session](const boost::system::error_code& error)    
         {
@@ -251,7 +257,7 @@ void AsioWSServer::OnReadDataPackage(ConSessionPtr session, const boost::system:
     if (CheckIOState(session, error))
     {
         auto read_size = session->read_buffer_.size();
-        if (session->read_buffer_.size() == size)
+        if (read_size == size)
         {
             DataPtr dataptr(new Byte[size], [](Byte* p)
                 {
@@ -259,7 +265,7 @@ void AsioWSServer::OnReadDataPackage(ConSessionPtr session, const boost::system:
                 });
             memcpy(dataptr.get(), session->read_buffer_.data().data(), size);
 
-            session->read_buffer_.consume(session->read_buffer_.size());
+            session->read_buffer_.consume(read_size);
 
             OnSocketMsg(*session->session_id_, dataptr, size);//分发数据包
         }
@@ -286,7 +292,7 @@ void AsioWSServer::TryWriteDataPackage(ConSessionPtr session)
 void AsioWSServer::DoWriteDataPackage(ConSessionPtr session)
 {
     auto& msg = session->write_queue_.front();
-    session->socket_.async_write(buffer(msg.second.get(), msg.first),MEM_CALL2(session, OnWriteDataPackage));
+    session->socket_.async_write(buffer(msg.second.get(), msg.first), MEM_CALL2(session, OnWriteDataPackage));
 }
 
 void AsioWSServer::OnWriteDataPackage(ConSessionPtr session, const boost::system::error_code& error, const std::size_t& size)
@@ -323,7 +329,7 @@ bool AsioWSServer::CheckIOState(ConSessionPtr session, const boost::system::erro
         {
             LOG_DEBUG("AsioWSServer::CheckIOState socket close by client, sessionid:%d", *session->session_id_);
         }
-        LOG_DEBUG(" AsioWSServer::CheckIOState socket io error(%d)", error);
+        LOG_DEBUG("AsioWSServer::CheckIOState socket io error(%d)", error);
         CloseConnectSession(session);
 
         return false;

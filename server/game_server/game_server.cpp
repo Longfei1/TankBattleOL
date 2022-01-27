@@ -38,7 +38,7 @@ void GameServer::OnRequest(ContextHeadPtr context_head, RequestPtr request)
 {
     switch (request->request())
     {
-    case GR_USER_LOGIN:
+    case GR_USER_LOGIN_IN:
         OnUserLogin(context_head, request);
         break;
     case GR_CREATE_ROOM:
@@ -53,7 +53,6 @@ void GameServer::OnRequest(ContextHeadPtr context_head, RequestPtr request)
     case GR_USER_OPERATION:
         OnUserOperation(context_head, request);
         break;
-
     default:
         WorkServer::OnRequest(context_head, request);
         break;
@@ -73,39 +72,61 @@ void GameServer::OnSocketValidated(ContextHeadPtr context_head, RequestPtr reque
 void GameServer::OnSocketClose(ContextHeadPtr context_head, RequestPtr request)
 {
     WorkServer::OnSocketClose(context_head, request);
+
+    RemoveUser(context_head->session);//移除用户关联
 }
 
 void GameServer::OnUserLogin(ContextHeadPtr context_head, RequestPtr request)
 {
-    gamereq::LoginInfo login;
+    gamereq::LoginInReq login;
 
-    if (!request->data().Is<gamereq::LoginInfo>())
+    if (!request->data().Is<gamereq::LoginInReq>())
     {
         return;
     }
 
     request->data().UnpackTo(&login);
 
-    auto uid = login.userid();
-    if (uid <= 0 || startup_time_ != login.timestamp())//使用已有id登录,通过服务器启动时间判断id是否有效
+    gamereq::LoginInRsp ret;
+    ret.set_success(true);
+    ret.set_userid(login.userid());
+
+    auto logonUid = GetUser(context_head->session);
+    SessionID logonSession;
+    if (logonUid > 0 && login.userid() != logonUid)//连接已有绑定id
+    {
+        ret.set_userid(logonUid);
+    }
+    else if (login.userid() > 0 && GetUserSession(login.userid(), logonSession))//id已被绑定
+    {
+        ret.set_success(false);
+        ret.set_description("该账号已在游戏中，请勿重复登录！");
+    }
+    else if (login.userid() <= 0 || startup_time_ != login.timestamp())//id无效时，重新生成id下发
     {
         //生成临时用户id
-        login.set_timestamp(startup_time_);
         int id;
         if (GenerateUserID(id))
         {
-            login.set_userid(id);
-
-            AddUser(context_head->session, id);//session-userid关联
+            ret.set_userid(id);
         }
         else
         {
-            login.set_userid(0);
+			ret.set_success(false);
+			ret.set_description("用户ID生成失败，请稍后再试！");
             LOG_ERROR("OnUserLogin failed! userid generate failed");
         }
     }
 
-    SendResponse(context_head, request, login);
+    ret.set_timestamp(startup_time_);
+
+    //更新关联
+    if (ret.success())
+    {
+        AddUser(context_head->session, ret.userid());//session-userid关联
+    }
+
+    SendResponse(context_head, request, ret);
 }
 
 void GameServer::OnCreateRoom(ContextHeadPtr context_head, RequestPtr request)

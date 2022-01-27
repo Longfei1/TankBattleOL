@@ -39,6 +39,8 @@ private:
     bool StartIOService();
     bool StopIOService();
 
+    void InitSocketOption(ConSessionPtr session);
+
     //Socket IO¥¶¿Ì
     void DoAccept();
     void OnAccept(const boost::system::error_code& error, boost::asio::ip::tcp::socket socket);

@@ -38,4 +38,6 @@ export namespace EventDef {
 
     export const EV_DISPLAY_UPDATE_ENEMY_LIFE          = "evdisplayrefreshenemylife";
     export const EV_DISPLAY_UPDATE_PLAYER_LIFE         = "evdisplayrefreshplayerlife";
+
+    export const EV_MAINGAME_SOCKET_ERROR              = "evmaingamesocketerror";
 }

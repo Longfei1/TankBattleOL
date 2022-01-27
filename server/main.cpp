@@ -6,6 +6,7 @@ int main(int argc, char* argv[])
 
     if (server.Initialize())
     {
+        LOG_INFO("Server Start!");
         while (getchar() != 'q')
         {
 

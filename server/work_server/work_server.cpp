@@ -90,6 +90,9 @@ void WorkServer::OnRequest(ContextHeadPtr context_head, RequestPtr request)
     case WR_SOCKET_CLOSE:
         OnSocketClose(context_head, request);
         break;
+    case WR_CONNECT_PLUSE:
+        OnConnectPluse(context_head, request);
+        break;
     default:
         break;
     }
