@@ -16,7 +16,7 @@
 
 #include <limits.h>
 
-#define SOCK_BUFFER_LEN 4096 //socket»º³åÇø³¤¶È£¨±ØĞë´óÓÚĞ­ÒéÍ·³¤¶ÈºÍhello data³¤¶È£©
+#define SOCK_BUFFER_LEN 4096 //socketç¼“å†²åŒºé•¿åº¦ï¼ˆå¿…é¡»å¤§äºåè®®å¤´é•¿åº¦å’Œhello dataé•¿åº¦ï¼‰
 #define SOCK_IO_THREAD_NUM 2
 #define SOCK_DEFAULT_IP "127.0.0.1"
 #define SOCK_DEFAULT_PORT 8888
@@ -24,22 +24,22 @@
 
 #define SESSION_MAX_ID UINT_MAX
 
-//¹«¹²ÀàĞÍ¶¨Òå
+//å…¬å…±ç±»å‹å®šä¹‰
 using SessionID = uint;
 using Byte = char;
 using DataPtr = std::shared_ptr<Byte>;
 
 enum class SocketStatus
 {
-    INIT,//³õÊ¼»¯
-    CONNECTED,//Á¬½Ó
-    VALIDATED,//ÑéÖ¤
-    CLOSED,//¶Ï¿ª
+    INIT,//åˆå§‹åŒ–
+    CONNECTED,//è¿æ¥
+    VALIDATED,//éªŒè¯
+    CLOSED,//æ–­å¼€
 };
 
-struct ProtocalHead//Ğ­ÒéÍ·²¿
+struct ProtocalHead//åè®®å¤´éƒ¨
 {
-    uint data_len;//Êı¾İ³¤¶È
+    uint data_len;//æ•°æ®é•¿åº¦
 };
 
 struct DataPackage
@@ -53,8 +53,8 @@ class ConnectSession : public boost::noncopyable
 public:
     enum ReadLocation
     {
-        BUFFER,//»º³åÇø
-        DATA,//Êı¾İÇø
+        BUFFER,//ç¼“å†²åŒº
+        DATA,//æ•°æ®åŒº
     };
 
     using SessionIDPtr = std::shared_ptr<SessionID>;
@@ -64,24 +64,24 @@ public:
         ) : session_id_(0), status_(SocketStatus::INIT), socket_(std::move(socket)), 
         read_location(BUFFER), read_buffer_{}, read_size_(0)
     {
-        static_assert(sizeof(ProtocalHead) < sizeof(ConnectSession::read_buffer_));//Ğ­ÒéÍ·²»ÄÜ´óÓÚ¶Á»º³åÇø
+        static_assert(sizeof(ProtocalHead) < sizeof(ConnectSession::read_buffer_));//åè®®å¤´ä¸èƒ½å¤§äºè¯»ç¼“å†²åŒº
 
         memset(&read_data_.head, 0, sizeof(read_data_.head));
         read_data_.dataptr = nullptr;
     }
 
-    //strandÈ·±£Ö»ÓĞÒ»¸öÏß³Ì·ÃÎÊ³ÉÔ±±äÁ¿
+    //strandç¡®ä¿åªæœ‰ä¸€ä¸ªçº¿ç¨‹è®¿é—®æˆå‘˜å˜é‡
     SessionIDPtr session_id_;
     SocketStatus status_;
 
-    Socket socket_;//Ì×½Ó×Ö
+    Socket socket_;//å¥—æ¥å­—
 
-    ReadLocation read_location;//¶ÁÈëÎ»ÖÃ
-    Byte read_buffer_[SOCK_BUFFER_LEN];//¶Á»º³åÇø
+    ReadLocation read_location;//è¯»å…¥ä½ç½®
+    Byte read_buffer_[SOCK_BUFFER_LEN];//è¯»ç¼“å†²åŒº
     std::size_t read_size_;
-    DataPackage read_data_;//¶ÁÊı¾İ´æ´¢Çø£¬ÓÃÓÚÕ³°ü
+    DataPackage read_data_;//è¯»æ•°æ®å­˜å‚¨åŒºï¼Œç”¨äºç²˜åŒ…
 
-    std::queue<DataPtr> write_queue_;//Ğ´Èë»º³å¶ÓÁĞ
+    std::queue<DataPtr> write_queue_;//å†™å…¥ç¼“å†²é˜Ÿåˆ—
 };
 
 class WSConnectSession : public boost::noncopyable
@@ -98,13 +98,22 @@ public:
     {
     }
 
-    //strandÈ·±£Ö»ÓĞÒ»¸öÏß³Ì·ÃÎÊ³ÉÔ±±äÁ¿
+    //strandç¡®ä¿åªæœ‰ä¸€ä¸ªçº¿ç¨‹è®¿é—®æˆå‘˜å˜é‡
     SessionIDPtr session_id_;
     SocketStatus status_;
 
-    WebSocket socket_;//Ì×½Ó×Ö
+    WebSocket socket_;//å¥—æ¥å­—
 
     Buffer read_buffer_;
 
-    std::queue<Message> write_queue_;//Ğ´Èë»º³å¶ÓÁĞ
+    std::queue<Message> write_queue_;//å†™å…¥ç¼“å†²é˜Ÿåˆ—
+};
+
+class ISocketHandler
+{
+public:
+    //socketçŠ¶æ€
+    virtual void OnSocketStatus(SocketStatus status, SessionID id) = 0;
+    //socketæ¶ˆæ¯
+    virtual void OnSocketMsg(SessionID id, DataPtr dataptr, std::size_t size) = 0;
 };

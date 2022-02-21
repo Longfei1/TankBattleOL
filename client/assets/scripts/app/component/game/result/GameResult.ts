@@ -33,9 +33,10 @@ export default class GameResult extends cc.Component {
         let allPlayerScore = 0;
         for (let i = 0; i < 2; i ++) {
             let playerResult = this.calcPlayerResult(i);
+            let playerInfo = GameDataModel.getPlayerInfo(i);
 
-            GameDataModel.addPlayerTotalScore(i, playerResult.totolScore);
-            allPlayerScore += GameDataModel.getPlayerTotalScore(i);
+            playerInfo.totalScore += playerResult.totolScore;
+            allPlayerScore += playerInfo.totalScore;
 
             playerResults[i] = playerResult;
         }
@@ -55,8 +56,8 @@ export default class GameResult extends cc.Component {
     }
 
     calcPlayerResult(no: number): GameStruct.PlayerResultInfo {
-        let propNum = GameDataModel.getPlayerPropNum(no);
-        let bonusScore = propNum * GameDef.PROP_BONUS_SCORE;
+        let playerInfo = GameDataModel.getPlayerInfo(no);
+        let bonusScore = playerInfo.propNum * GameDef.PROP_BONUS_SCORE;
 
         let tankNum = [];
         let tankScore = [];
@@ -64,7 +65,7 @@ export default class GameResult extends cc.Component {
         let totalTankNum = 0;
         for (let i = 0; i < GameDef.EnemyTankNames.length; i++) {
             let name = GameDef.EnemyTankNames[i];
-            let num = GameDataModel.getPlayerShootNum(no, name);
+            let num = playerInfo.shootNumInfo[name];
 
             tankNum[i] = num;
             tankScore[i] = num * GameDef.EnemyTankScore[name];

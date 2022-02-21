@@ -16,12 +16,11 @@ using namespace boost::beast;
     func(session, error, size);                                                     \
 }                                                                                   \
 
-AsioWSServer::AsioWSServer(SocketStatusCallback status_callback, SocketMsgCallback msg_callback,
+AsioWSServer::AsioWSServer(ISocketHandler* socket_handler,
     int port, int io_threads, SessionID min_session, SessionID max_session) 
     :port_(port), io_thread_num_(io_threads), socket_(nullptr),
     acceptor_(nullptr), session_generator_(min_session, max_session), 
-    status_callback_(status_callback), msg_callback_(msg_callback),
-    running_(false)
+    socket_handler_(socket_handler), running_(false)
 {
 }
 
@@ -41,13 +40,13 @@ bool AsioWSServer::Initialize()
         return false;
     }
 
-    //³õÊ¼»¯Ì×½Ó×Ö
+    //åˆå§‹åŒ–å¥—æ¥å­—
     if (!InitSocket())
     {
         return false;
     }
 
-    //ÔËĞĞio·şÎñ
+    //è¿è¡ŒioæœåŠ¡
     if (!StartIOService())
     {
         return false;
@@ -104,9 +103,9 @@ void AsioWSServer::SendData(SessionID id, DataPtr dataptr, std::size_t size)
     {
         boost::asio::post(session->socket_.get_executor(), [this, session, dataptr, size]()
             {
-                session->write_queue_.push(std::make_pair(size, dataptr));//¼ÓÈë·¢ËÍ¶ÓÁĞ
+                session->write_queue_.push(std::make_pair(size, dataptr));//åŠ å…¥å‘é€é˜Ÿåˆ—
 
-                if (session->write_queue_.size() > 1)//ÓĞÏûÏ¢ÕıÔÚ·¢ËÍ
+                if (session->write_queue_.size() > 1)//æœ‰æ¶ˆæ¯æ­£åœ¨å‘é€
                 {
                     return;
                 }
@@ -118,6 +117,7 @@ void AsioWSServer::SendData(SessionID id, DataPtr dataptr, std::size_t size)
 
 void AsioWSServer::CloseConnection(SessionID id)
 {
+    LOG_TRACE("AsioWSServer::CloseConnection sessionid(%d)", id);
     auto session = GetConnectSession(id);
     if (session)
     {
@@ -135,7 +135,7 @@ bool AsioWSServer::InitSocket()
     ip::tcp::endpoint ep(ip::tcp::v4(), port_);
     acceptor_.reset(new ip::tcp::acceptor(io_service_, ep));
 
-    DoAccept();//¿ªÊ¼½ÓÊÕÁ¬½Ó
+    DoAccept();//å¼€å§‹æ¥æ”¶è¿æ¥
     return true;
 }
 
@@ -149,7 +149,7 @@ bool AsioWSServer::StartIOService()
 {
     for (int i = 0; i < io_thread_num_; i++)
     {
-        io_threads_.emplace_back([this]() //Ğè±£Ö¤thisµÄÉú´æÖÜÆÚ
+        io_threads_.emplace_back([this]() //éœ€ä¿è¯thisçš„ç”Ÿå­˜å‘¨æœŸ
             {
                 io_service_.run();
             });
@@ -159,10 +159,10 @@ bool AsioWSServer::StartIOService()
 
 bool AsioWSServer::StopIOService()
 {
-    io_service_.stop();//Í£Ö¹·şÎñ
+    io_service_.stop();//åœæ­¢æœåŠ¡
     for (auto& th : io_threads_)
     {
-        th.join();//µÈ´ıIOÏß³Ì½áÊø
+        th.join();//ç­‰å¾…IOçº¿ç¨‹ç»“æŸ
     }
     io_threads_.clear();
     return true;
@@ -176,7 +176,7 @@ void AsioWSServer::InitSocketOption(ConSessionPtr session)
 
     session->socket_.binary(true);
 
-	//ÉèÖÃÎÕÊÖ×°ÊÎÆ÷
+	//è®¾ç½®æ¡æ‰‹è£…é¥°å™¨
     session->socket_.set_option(websocket::stream_base::decorator(
 		[](websocket::response_type& res)
 		{
@@ -186,7 +186,7 @@ void AsioWSServer::InitSocketOption(ConSessionPtr session)
 
 void AsioWSServer::DoAccept()
 {
-    //Ã¿¸ösocketÊ¹ÓÃ×Ô¼ºµÄstrand
+    //æ¯ä¸ªsocketä½¿ç”¨è‡ªå·±çš„strand
     acceptor_->async_accept(make_strand(io_service_), MEM_CALL1(OnAccept));
 }
 
@@ -195,7 +195,7 @@ void AsioWSServer::OnAccept(const boost::system::error_code& error, boost::asio:
     if (!error)
     {
         auto id = GenerateSessionID();
-        if (IsSessionIDValid(id))//sessionidÓĞĞ§
+        if (IsSessionIDValid(id))//sessionidæœ‰æ•ˆ
         {
             auto session = std::make_shared<WSConnectSession>(std::move(socket));
             session->session_id_.reset(new SessionID(id), [this](SessionID* pID)
@@ -204,20 +204,20 @@ void AsioWSServer::OnAccept(const boost::system::error_code& error, boost::asio:
                     delete pID;
                 });
 
-            AddConnectSession(session);//Ìí¼Ó¿Í»§¶ËÁ¬½Ó
+            AddConnectSession(session);//æ·»åŠ å®¢æˆ·ç«¯è¿æ¥
             
             InitSocketOption(session);
-            DoShakeHand(session);//¿ªÊ¼ÎÕÊÖ
+            DoShakeHand(session);//å¼€å§‹æ¡æ‰‹
 
             session->status_ = SocketStatus::CONNECTED;
-            OnSocketConnect(*session->session_id_);//Á¬½Ó³É¹¦
+            OnSocketConnect(*session->session_id_);//è¿æ¥æˆåŠŸ
         }
         else
         {
             LOG_ERROR("OnAccept error, not have enough sessionid!");
             socket.close();
         }
-        DoAccept();//¼ÌĞø¼àÌıÁ¬½Ó
+        DoAccept();//ç»§ç»­ç›‘å¬è¿æ¥
     }
     else
     {
@@ -227,7 +227,7 @@ void AsioWSServer::OnAccept(const boost::system::error_code& error, boost::asio:
 
 void AsioWSServer::DoShakeHand(ConSessionPtr session)
 {
-    //¿ªÊ¼ÎÕÊÖ
+    //å¼€å§‹æ¡æ‰‹
     session->socket_.async_accept([this, session](const boost::system::error_code& error)    
         {
             OnShakeHand(session, error);
@@ -241,9 +241,9 @@ void AsioWSServer::OnShakeHand(ConSessionPtr session, const boost::system::error
         session->status_ = SocketStatus::VALIDATED;
         OnSocketValidated(*session->session_id_);
 
-        DoReadDataPackage(session);//¿ªÊ¼¶ÁÈ¡Êı¾İ
+        DoReadDataPackage(session);//å¼€å§‹è¯»å–æ•°æ®
 
-        TryWriteDataPackage(session);//³¢ÊÔ·¢ËÍÊı¾İ
+        TryWriteDataPackage(session);//å°è¯•å‘é€æ•°æ®
     }
 }
 
@@ -267,7 +267,7 @@ void AsioWSServer::OnReadDataPackage(ConSessionPtr session, const boost::system:
 
             session->read_buffer_.consume(read_size);
 
-            OnSocketMsg(*session->session_id_, dataptr, size);//·Ö·¢Êı¾İ°ü
+            OnSocketMsg(*session->session_id_, dataptr, size);//åˆ†å‘æ•°æ®åŒ…
         }
         else
         {
@@ -276,7 +276,7 @@ void AsioWSServer::OnReadDataPackage(ConSessionPtr session, const boost::system:
 
         }
             
-        DoReadDataPackage(session);//¼ÌĞø¶ÁÈ¡Êı¾İ°ü
+        DoReadDataPackage(session);//ç»§ç»­è¯»å–æ•°æ®åŒ…
     }
 }
 
@@ -304,7 +304,7 @@ void AsioWSServer::OnWriteDataPackage(ConSessionPtr session, const boost::system
 
         if (size == msg.first)
         {
-            TryWriteDataPackage(session);//¼ÌĞøĞ´Êı¾İ°ü
+            TryWriteDataPackage(session);//ç»§ç»­å†™æ•°æ®åŒ…
         }
         else
         {
@@ -362,33 +362,33 @@ void AsioWSServer::CloseConnectSession(ConSessionPtr session, bool dispatch_even
 
 void AsioWSServer::OnSocketConnect(SessionID id)
 {
-    if (status_callback_)
+    if (socket_handler_)
     {
-        status_callback_(SocketStatus::CONNECTED, id);
+        socket_handler_->OnSocketStatus(SocketStatus::CONNECTED, id);
     }
 }
 
 void AsioWSServer::OnSocketValidated(SessionID id)
 {
-    if (status_callback_)
+    if (socket_handler_)
     {
-        status_callback_(SocketStatus::VALIDATED, id);
+        socket_handler_->OnSocketStatus(SocketStatus::VALIDATED, id);
     }
 }
 
 void AsioWSServer::OnSocketClose(SessionID id)
 {
     LOG_TRACE("AsioWSServer::OnSocketClose sessionid(%d)", id);
-    if (status_callback_)
+    if (socket_handler_)
     {
-        status_callback_(SocketStatus::CLOSED, id);
+        socket_handler_->OnSocketStatus(SocketStatus::CLOSED, id);
     }
 }
 
 void AsioWSServer::OnSocketMsg(SessionID id, DataPtr dataptr, std::size_t size)
 {
-    if (msg_callback_)
+    if (socket_handler_)
     {
-        msg_callback_(id, dataptr, size);
+        socket_handler_->OnSocketMsg(id, dataptr, size);
     }
 }

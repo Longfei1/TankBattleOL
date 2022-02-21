@@ -8,6 +8,7 @@ import { GameConfig } from "../GameConfig";
 import EnemyTank from "../component/game/tank/EnemyTank";
 import PlayerTank from "../component/game/tank/PlayerTank";
 import GameConfigModel from "./GameConfigModel";
+import { gamereq } from "../network/proto/gamereq";
 
 class GameDataModel extends BaseModel {
     _playMode: number = -1;
@@ -18,25 +19,26 @@ class GameDataModel extends BaseModel {
     _mapUnit = {width: 0, height: 0};
     _useCustomMap: boolean = false;
     _currStage: number = 0;
-    _liveStatus: { [id: number] : boolean } = {};
-
+    _localOpeCode: { [id: number] : number } = {};
+    _lastGameFrame: gamereq.GameFrameNtf = null;
+    
     //关卡相关数据
     private _scenerys: cc.Node[][] = [];
     private _enemys: { [id: number] : cc.Node } = {};
     private _players: { [id: number]: cc.Node } = {};
-
+    
     _propBuff: number = 0;
-    _playerLifeNum: { [id: number] : number } = {};
-    _playerShootNum: {[no: number]: {[name: string] : number}} = {};
-    _playerPropNum: { [id: number]: number } = {};
-    _playerTotalScore: { [id: number] : number } = {};
-    _playerLevel: { [id: number] : number } = {};
+    _playerInfo: {[id: number] : GameStruct.PlayerInfo } = {};
     _gameRunning: boolean = false;
     _propDestroyEnemyNum: number = 0;
 
     //网络相关数据
     _netUserID: number = 0; //用户ID
     _netTimestamp: number = 0; //服务器时间戳
+    _netRoomID: number = 0; //房间号
+    _netPlayerNO: number = 0; //玩家编号
+    _netRandomSeed: number = 0; //随机数种子
+    _netFrameNO: number = -1; //帧编号
 
     initModel() {
         super.initModel();
@@ -46,6 +48,9 @@ class GameDataModel extends BaseModel {
 
     initGameData() {
         this._enableOperate = false;
+
+        this.initAllPlayerInfo()
+        this.resetAllPlayerHallInfo();
 
         this.resetGameData();
     }
@@ -59,14 +64,10 @@ class GameDataModel extends BaseModel {
         //this._useCustomMap = false;
         this._currStage = 1;
         this._enableOperate = false;
-        this._liveStatus = {[0]: true, [1]: true}
 
         this._propBuff = 0;
-        this.resetPlayerLifeNum();
-        this.resetPlayerShootNum();
-        this.resetPlayerTotalScore();
-        this.resetPlayerPropNum();
-        this.resetPlayerLevel();
+        
+        this.resetAllPlayerGameInfo();
 
         this._scenerys = [];
         this.clearEnemyTank();
@@ -98,7 +99,8 @@ class GameDataModel extends BaseModel {
     }
 
     isModeEditMap() {
-        if (this._playMode === GameDef.GAMEMODE_MAP_EDIT) {
+        if (this._playMode === GameDef.GAMEMODE_MAP_EDIT
+            || this._playMode === GameDef.GAMEMODE_MAP_EDIT_ONLINE) {
             return true
         }
         return false
@@ -106,6 +108,13 @@ class GameDataModel extends BaseModel {
 
     isModeDoublePlayer(): boolean {
         if (this._playMode === GameDef.GAMEMODE_DOUBLE_PLAYER) {
+            return true;
+        }
+        return false;
+    }
+
+    isModeOnline(): boolean {
+        if (this._playMode === GameDef.GAMEMODE_ONLINE_PLAY || this._playMode === GameDef.GAMEMODE_MAP_EDIT_ONLINE) {
             return true;
         }
         return false;
@@ -176,64 +185,13 @@ class GameDataModel extends BaseModel {
         this._players = {};
     }
 
-    resetPlayerLifeNum() {
-        this._playerLifeNum = {}
-
-        this.setPlayerLifeNum(0, GameDef.PLAYER_LIFE_NUM);
-        this.setPlayerLifeNum(1, GameDef.PLAYER_LIFE_NUM);
-    }
-
-    addPlayerLifeNum(id: number) {
-        if (this._playerLifeNum[id] != null) {
-            this._playerLifeNum[id]++;
-        }
-    }
-
-    reducePlayerLifeNum(id: number) {
-        if (this._playerLifeNum[id] != null) {
-            this._playerLifeNum[id]--;
-        }
-    }
-
-    getPlayerLifeNum(id: number): number {
-        return this._playerLifeNum[id];
-    }
-
-    setPlayerLifeNum(id: number, num: number) {
-        this._playerLifeNum[id] = num;
-    }
-
-    resetPlayerShootNum() {
-        this._playerShootNum = {}
-
-        this.initPlayerShootNum(0);
-        this.initPlayerShootNum(1);
-    }
-
-    addPlayerShootNum(no: number, name: string) {
-        if (this._playerShootNum[no] != null && this._playerShootNum[no][name] != null) {
-            this._playerShootNum[no][name]++;
-        }
-    }
-
-    getPlayerShootNum(no: number, name: string): number {
-        return this._playerShootNum[no][name];
-    }
-
-    initPlayerShootNum(no: number) {
-        this._playerShootNum[no] = {};
-        for (let name of GameDef.EnemyTankNames) {
-            this._playerShootNum[no][name] = 0;
-        }
-    }
-
     getEnemyDeadTotalNum(): number {
         let total = 0;
-        CommonFunc.travelMap(this._playerShootNum[0], (name: string, num: number) => {
+        CommonFunc.travelMap(this._playerInfo[0].shootNumInfo, (name: string, num: number) => {
             total += num;
         })
 
-        CommonFunc.travelMap(this._playerShootNum[1], (name: string, num: number) => {
+        CommonFunc.travelMap(this._playerInfo[1].shootNumInfo, (name: string, num: number) => {
             total += num;
         })
         return total;
@@ -250,57 +208,81 @@ class GameDataModel extends BaseModel {
         return leftNum;
     }
 
-    resetPlayerTotalScore() {
-        this.setPlayerTotalScore(0, 0);
-        this.setPlayerTotalScore(1, 0);
+    initAllPlayerInfo() {
+        this.initPlayerInfo(0);
+        this.initPlayerInfo(1);
     }
 
-    setPlayerTotalScore(no: number, score: number) {
-        this._playerTotalScore[no] = score;
-    }
-
-    getPlayerTotalScore(no: number): number {
-        return this._playerTotalScore[no];
-    }
-
-    addPlayerTotalScore(no: number, score: number) {
-        if (this._playerTotalScore[no] != null) {
-            this._playerTotalScore[no] += score;
+    initPlayerInfo(no: number) {
+        this._playerInfo[no] = {
+            no: no,
+            userID: 0,
+            ready: false,
+            
+            //游戏信息
+            liveStatus: false,
+            lifeNum: 0,
+            shootNumInfo: {
+                LightTank: 0,
+                RapidMoveTank: 0,
+                RapidFireTank: 0,
+                HeavyTank: 0,
+            },
+            propNum: 0,
+            totalScore: 0,
+            level: 0,
         }
     }
 
-    resetPlayerPropNum() {
-        this.setPlayerPropNum(0, 0);
-        this.setPlayerPropNum(1, 0);
+    //重置玩家大厅数据
+    resetAllPlayerHallInfo() {
+        this.resetPlayerHallInfo(0);
+        this.resetPlayerHallInfo(1);
     }
 
-    setPlayerPropNum(no: number, num: number) {
-        this._playerPropNum[no] = num;
+    //重置玩家大厅数据
+    resetPlayerHallInfo(no: number) {
+        this._playerInfo[no].userID = 0;
+        this._playerInfo[no].ready = false;
     }
 
-    getPlayerPropNum(no: number): number {
-        return this._playerPropNum[no];
+    //重置玩家游戏数据
+    resetAllPlayerGameInfo() {
+        this.resetPlayerGameInfo(0);
+        this.resetPlayerGameInfo(1);
     }
 
-    addPlayerPropNum(no: number) {
-        if (this._playerPropNum[no] != null) {
-            this._playerPropNum[no]++;
-        }
+    //重置玩家游戏数据
+    resetPlayerGameInfo(no: number) {
+        this._playerInfo[no].liveStatus = true;
+        this._playerInfo[no].lifeNum = GameDef.PLAYER_LIFE_NUM;
+        this._playerInfo[no].totalScore = 0;
+        this._playerInfo[no].level = 1;
+
+        this.resetPlayerStageData(no);
     }
 
-    resetPlayerLevel() {
-        this.setPlayerLevel(0, 1);
-        this.setPlayerLevel(1, 1);
+    //重置游戏关卡数据
+    resetGameStageData() {
+        this._propDestroyEnemyNum = 0;
+
+        this.resetPlayerStageData(0);
+        this.resetPlayerStageData(1);
     }
 
-    setPlayerLevel(no: number, level: number) {
-        this._playerLevel[no] = level;
+    //重置玩家关卡数据
+    resetPlayerStageData(no: number) {
+        this._playerInfo[no].propNum = 0;
+
+        this._playerInfo[no].shootNumInfo.LightTank = 0;
+        this._playerInfo[no].shootNumInfo.RapidMoveTank = 0;
+        this._playerInfo[no].shootNumInfo.RapidFireTank = 0;
+        this._playerInfo[no].shootNumInfo.HeavyTank = 0;
     }
 
-    getPlayerLevel(no: number): number {
-        return this._playerLevel[no];
+    getPlayerInfo(no: number): GameStruct.PlayerInfo {
+        return this._playerInfo[no];
     }
-
 
     /**
      * 将地图方格的行列转换为场景中的坐标值
@@ -857,6 +839,11 @@ class GameDataModel extends BaseModel {
             timestamp = this.getLocalStorageNumber("NetTimeStamp");
         }
         return {userid, timestamp};
+    }
+
+    //获取房间玩家信息
+    getRoomPlayerInfo() {
+        return {roomid: this._netRoomID, playerno: this._netPlayerNO, userid: this._netUserID};
     }
 }
 export default new GameDataModel();

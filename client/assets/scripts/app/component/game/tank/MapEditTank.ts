@@ -42,7 +42,7 @@ export default class MapEditTank extends BaseTank {
     @property({ displayName: "场景单元", type: [cc.Node]})
     sceneryUnit: cc.Node[] = [];
 
-    _editPos: GameStruct.RcInfo = GameDef.BORN_PLACE_PLAYER1;
+    _editPos: GameStruct.RcInfo = null;
     _editSceneryType: number = GameDef.SceneryType.WALL;
     _editMode: number = MapEditMode.UNIT0;
 

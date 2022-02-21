@@ -1,3 +1,4 @@
+import { GameDef } from "../../define/GameDef";
 import AudioModel from "../../model/AudioModel";
 import GameDataModel from "../../model/GameDataModel";
 
@@ -26,8 +27,9 @@ export default class GameSuccess extends cc.Component {
 
     showScore() {
         let total = 0;
-        for (let i = 0; i < 2; i++) {
-            total += GameDataModel.getPlayerTotalScore(i);
+        for (let i = 0; i < GameDef.GAME_TOTAL_PLAYER; i++) {
+            let playerInfo = GameDataModel.getPlayerInfo(i);
+            total += playerInfo.totalScore;
         }
 
         let textScore = `本次得分：${total}`;

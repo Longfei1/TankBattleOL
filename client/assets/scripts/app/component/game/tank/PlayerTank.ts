@@ -67,7 +67,7 @@ export default class PlayerTank extends BattleTank {
 
         super.setMove(bMove, nDirection);
 
-        if (lastMove != this._isMove) {
+        if (lastMove !== this._isMove) {
             if (this._isMove) {
                 this.playMoveSound();
             }
@@ -92,22 +92,22 @@ export default class PlayerTank extends BattleTank {
         //super.lateUpdate();
 
         //
-        if (GameDataModel.isGameDebugMode()) {
-            let directions = this.getAvailableMoveDirections();
-            let textInfo = {
-                [GameDef.DIRECTION_UP]: "上",
-                [GameDef.DIRECTION_DOWN]: "下",
-                [GameDef.DIRECTION_LEFT]: "左",
-                [GameDef.DIRECTION_RIGHT]: "右",
-            };
+        // if (GameDataModel.isGameDebugMode()) {
+        //     let directions = this.getAvailableMoveDirections();
+        //     let textInfo = {
+        //         [GameDef.DIRECTION_UP]: "上",
+        //         [GameDef.DIRECTION_DOWN]: "下",
+        //         [GameDef.DIRECTION_LEFT]: "左",
+        //         [GameDef.DIRECTION_RIGHT]: "右",
+        //     };
 
-            let info = "可移动方向\n";
-            for (let it of directions) {
-                info += textInfo[it];
-            }
+        //     let info = "可移动方向\n";
+        //     for (let it of directions) {
+        //         info += textInfo[it];
+        //     }
 
-            gameController.node.emit(EventDef.EV_GAME_SHOW_DEBUG_TEXT, info);
-        }
+        //     gameController.node.emit(EventDef.EV_GAME_SHOW_DEBUG_TEXT, info);
+        // }
     }
 
     haveBuff(value: number) {
@@ -126,7 +126,8 @@ export default class PlayerTank extends BattleTank {
 
         if (this._tankLevel >= GameDef.PLAYER_LEVEL_PROTECT_ONCE_DEAD) {
             this.setTankLevel(this._tankLevel - 1);
-            GameDataModel.setPlayerLevel(this.id, this._tankLevel);
+            let playerInfo = GameDataModel.getPlayerInfo(this.id);
+            playerInfo.level = this._tankLevel;
             return;
         }
 
@@ -136,13 +137,15 @@ export default class PlayerTank extends BattleTank {
     onLevelUp() {
         if (this._tankLevel < this._tankMaxLevel) {
             this.setTankLevel(this._tankLevel + 1);
-            GameDataModel.setPlayerLevel(this.id, this._tankLevel);
+            let playerInfo = GameDataModel.getPlayerInfo(this.id);
+            playerInfo.level = this._tankLevel;
         }
     }
 
     onMaxLevel() {
         this.setTankLevel(this._tankMaxLevel);
-        GameDataModel.setPlayerLevel(this.id, this._tankLevel);
+        let playerInfo = GameDataModel.getPlayerInfo(this.id);
+        playerInfo.level = this._tankLevel;
     }
 
     onLevelUpdated() {

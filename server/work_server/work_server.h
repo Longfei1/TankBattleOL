@@ -10,12 +10,12 @@
 using namespace basereq;
 
 class AsioSockServer;
-class WorkServer : public boost::noncopyable
+class WorkServer : public boost::noncopyable, public ISocketHandler
 {
 public:
     struct ContextHead
     {
-        SessionID session;//Á¬½Ósession
+        SessionID session;//è¿æ¥session
     };
 
     using SocketServerPtr = std::shared_ptr<AsioSockServer>;
@@ -31,8 +31,8 @@ public:
     virtual bool Initialize();
     virtual void ShutDown();
 
-    void PostWork(WorkContent work);//½«workÌí¼Óµ½¹¤×÷¶ÓÁĞ
-    void DispatchWork(WorkContent work);//·Ö·¢work£¬Èôµ±Ç°Ïß³ÌÎª¹¤×÷Ïß³Ì£¬Ö±½ÓÖ´ĞĞwork£¬·ñÔò½«workÌí¼Óµ½¹¤×÷¶ÓÁĞ¡£
+    void PostWork(WorkContent work);//å°†workæ·»åŠ åˆ°å·¥ä½œé˜Ÿåˆ—
+    void DispatchWork(WorkContent work);//åˆ†å‘workï¼Œè‹¥å½“å‰çº¿ç¨‹ä¸ºå·¥ä½œçº¿ç¨‹ï¼Œç›´æ¥æ‰§è¡Œworkï¼Œå¦åˆ™å°†workæ·»åŠ åˆ°å·¥ä½œé˜Ÿåˆ—ã€‚
     void PutRequestToServer(const ContextHead& context_head, const Request& request);
     void PutRequestToServer(ContextHeadPtr context_head, RequestPtr request);
 
@@ -42,38 +42,42 @@ public:
     template <typename T>
     void SendResponse(ContextHeadPtr context_head, RequestPtr request, const T& proto_data);
 
+	void SendResponse(ContextHeadPtr context_head, RequestPtr request);
+
     template <typename T>
     void SendNotify(ContextHeadPtr context_head, google::protobuf::uint32 request_id, const T& proto_data);
+
+	void SendNotify(ContextHeadPtr context_head, google::protobuf::uint32 request_id);
 
     void CloseConnection(const ContextHead& context_head);
     void CloseConnection(SessionID id);
 
 protected:
-    virtual void OnRequest(ContextHeadPtr context_head, RequestPtr request);//¿Í»§¶ËÇëÇó
-    virtual void OnSocketConnect(ContextHeadPtr context_head, RequestPtr request);//socketÁ¬½Ó½¨Á¢
-    virtual void OnSocketValidated(ContextHeadPtr context_head, RequestPtr request);//socketÁ¬½ÓÑéÖ¤³É¹¦
-    virtual void OnSocketClose(ContextHeadPtr context_head, RequestPtr request);//socketÁ¬½Ó¶Ï¿ª
+    virtual void OnRequest(ContextHeadPtr context_head, RequestPtr request);//å®¢æˆ·ç«¯è¯·æ±‚
+    virtual void OnSocketConnect(ContextHeadPtr context_head, RequestPtr request);//socketè¿æ¥å»ºç«‹
+    virtual void OnSocketValidated(ContextHeadPtr context_head, RequestPtr request);//socketè¿æ¥éªŒè¯æˆåŠŸ
+    virtual void OnSocketClose(ContextHeadPtr context_head, RequestPtr request);//socketè¿æ¥æ–­å¼€
 
 private:
     bool StartWorkService();
     bool StopWorkService();
 
-    void OnSocketStatus(SocketStatus status, SessionID id);//socket×´Ì¬»Øµ÷
-    void OnSocketMsg(SessionID id, DataPtr dataptr, std::size_t size);//socketÏûÏ¢»Øµ÷
+    virtual void OnSocketStatus(SocketStatus status, SessionID id) override; //socketçŠ¶æ€å›è°ƒ
+    virtual void OnSocketMsg(SessionID id, DataPtr dataptr, std::size_t size) override;//socketæ¶ˆæ¯å›è°ƒ
 
-    //ĞÄÌø´¦Àí
+    //å¿ƒè·³å¤„ç†
     void StartPluseDetection();
     void DetectPluse();
     void OnConnectPluse(ContextHeadPtr context_head, RequestPtr request);
     void UpdateSessionPluse(SessionID id, time_t tm);
     void RemoveSessionPluse(SessionID id);
 private:
-    SocketServerPtr socket_server_;//asio socket·şÎñ
+    SocketServerPtr socket_server_;//asio socketæœåŠ¡
 
-    int work_thread_num_;//¹¤×÷Ïß³ÌÊı
-    std::vector<std::thread> work_threads_;//¹¤×÷Ïß³Ì
-    boost::asio::io_service work_service_;//¹¤×÷·şÎñ£¨³äµ±Ïß³Ì³Ø£©
-    std::shared_ptr<boost::asio::io_service::work> work_;//¿ØÖÆ¹¤×÷Ïß³Ì²»ÍË³ö
+    int work_thread_num_;//å·¥ä½œçº¿ç¨‹æ•°
+    std::vector<std::thread> work_threads_;//å·¥ä½œçº¿ç¨‹
+    boost::asio::io_service work_service_;//å·¥ä½œæœåŠ¡ï¼ˆå……å½“çº¿ç¨‹æ± ï¼‰
+    std::shared_ptr<boost::asio::io_service::work> work_;//æ§åˆ¶å·¥ä½œçº¿ç¨‹ä¸é€€å‡º
 
     std::mutex pluse_mutex_;
     std::unordered_map<SessionID, time_t> pluse_map_;//<session,time>
@@ -131,7 +135,7 @@ void WorkServer::SendResponse(ContextHeadPtr context_head, RequestPtr request, c
     }
     else
     {
-        ret.set_sequence(-1);//·şÎñ·¢ËÍµÄÏûÏ¢²»ĞèÒª¿Í»§¶ËÏìÓ¦£¬ĞòÁĞºÅ¿ÉÒÔ·µ»ØÎŞĞ§Öµ
+        ret.set_sequence(-1);//æœåŠ¡å‘é€çš„æ¶ˆæ¯ä¸éœ€è¦å®¢æˆ·ç«¯å“åº”ï¼Œåºåˆ—å·å¯ä»¥è¿”å›æ— æ•ˆå€¼
     }
 
     auto d = ret.mutable_data();
@@ -147,7 +151,7 @@ void WorkServer::SendNotify(ContextHeadPtr context_head, google::protobuf::uint3
     ret.set_request(request_id);
     ret.set_need_echo(false);
 
-    ret.set_sequence(-1);//·şÎñ·¢ËÍµÄÏûÏ¢²»ĞèÒª¿Í»§¶ËÏìÓ¦£¬ĞòÁĞºÅ¿ÉÒÔ·µ»ØÎŞĞ§Öµ
+    ret.set_sequence(-1);//æœåŠ¡å‘é€çš„æ¶ˆæ¯ä¸éœ€è¦å®¢æˆ·ç«¯å“åº”ï¼Œåºåˆ—å·å¯ä»¥è¿”å›æ— æ•ˆå€¼
 
     auto d = ret.mutable_data();
     d->PackFrom(proto_data);

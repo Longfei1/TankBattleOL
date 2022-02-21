@@ -6,29 +6,12 @@
 ProxyServer::ProxyServer(std::string server_ip, int server_port, int proxy_port,
     int io_threads, std::string client_hello_data, SessionID min_session, SessionID max_session)
     : server_ip_(std::move(server_ip)), server_port_(server_port), proxy_port_(proxy_port), 
-    io_thread_num_(io_threads), server_hello_data_(std::move(client_hello_data))
+    io_thread_num_(io_threads), server_hello_data_(std::move(client_hello_data)),
+    proxy_handler_(this), server_handler_(this)
 {
-    ws_server_ = std::make_shared<AsioWSServer>(
-        [this](SocketStatus status, SessionID id)
-        {
-            OnProxySocketStatus(status, id);
-        },
-        [this](SessionID id, DataPtr dataptr, std::size_t size)
-        {
-            OnProxySocketMsg(id, dataptr, size);
-        },
-        proxy_port_, io_thread_num_, min_session, max_session);
+    ws_server_ = std::make_shared<AsioWSServer>(&proxy_handler_, proxy_port_, io_thread_num_, min_session, max_session);
 
-    clients_manager_ = std::make_shared<ClientsManager>(
-        [this](SocketStatus status, SessionID id)
-        {
-            OnServerSocketStatus(status, id);
-        },
-        [this](SessionID id, DataPtr dataptr, std::size_t size)
-        {
-            OnServerSocketMsg(id, dataptr, size);
-        },
-        io_thread_num_, min_session, max_session);
+    clients_manager_ = std::make_shared<ClientsManager>(&server_handler_, io_thread_num_, min_session, max_session);
 }
 
 bool ProxyServer::Initialize()
@@ -100,7 +83,7 @@ void ProxyServer::OnProxySocketStatus(SocketStatus status, SessionID id)
 
 void ProxyServer::OnProxySocketMsg(SessionID id, DataPtr dataptr, std::size_t size)
 {
-    //×ª·¢ÏûÏ¢¸ø´úÀíÁ¬½ÓµÄ·şÎñÆ÷
+    //è½¬å‘æ¶ˆæ¯ç»™ä»£ç†è¿æ¥çš„æœåŠ¡å™¨
     SessionID client_id;
     if (GetServerSessionID(id, client_id))
     {
@@ -115,7 +98,7 @@ void ProxyServer::OnServerSocketStatus(SocketStatus status, SessionID id)
     case SocketStatus::CONNECTED:
         break;
     case SocketStatus::VALIDATED:
-        //ÑéÖ¤³É¹¦ºó£¬»á×Ô¶¯·¢ËÍ¶ÓÁĞÀïµÄÏûÏ¢
+        //éªŒè¯æˆåŠŸåï¼Œä¼šè‡ªåŠ¨å‘é€é˜Ÿåˆ—é‡Œçš„æ¶ˆæ¯
         break;
     case SocketStatus::CLOSED:
         SessionID proxy_id;
@@ -132,7 +115,7 @@ void ProxyServer::OnServerSocketStatus(SocketStatus status, SessionID id)
 
 void ProxyServer::OnServerSocketMsg(SessionID id, DataPtr dataptr, std::size_t size)
 {
-    //»ØÓ¦ÏûÏ¢¸øÁ¬½ÓwebserverµÄ¿Í»§¶Ë
+    //å›åº”æ¶ˆæ¯ç»™è¿æ¥webserverçš„å®¢æˆ·ç«¯
     SessionID proxy_id;
     if (GetProxySessionID(id, proxy_id))
     {

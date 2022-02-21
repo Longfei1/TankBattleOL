@@ -2,6 +2,7 @@ import BaseReq = require("../network/proto/basereq");
 import CommonFunc from "../common/CommonFunc";
 import { GameDef } from "../define/GameDef";
 import { GameProtocal } from "./GameProtocal";
+import { GameConfig } from "../GameConfig";
 
 export class WSConnect {
     private _tagName: string = "";
@@ -41,13 +42,13 @@ export class WSConnect {
         };
 
         this._socket.onmessage = (event: MessageEvent) => { 
-            console.log(`${this.tagPrefix()} onmessage ${event}`);
+            //console.log(`${this.tagPrefix()} onmessage ${event}`);
             let recvData = event.data
             this.onMessage(recvData);
         };
 
         this._socket.onerror = (event: Event) => { 
-            console.error(`${this.tagPrefix()} onError from[${this._hostUrl}] msg:${event}.`);
+            console.error(`${this.tagPrefix()} onError from[${this._hostUrl}]`);
 
             if (this._connecting) {
                 this.onConnectFailed();
@@ -60,7 +61,7 @@ export class WSConnect {
         };
 
         this._socket.onclose = (event: CloseEvent) => {
-            console.info(`${this.tagPrefix()} onClose from[${this._hostUrl}] msg:${event}.`);
+            console.info(`${this.tagPrefix()} onClose from[${this._hostUrl}]`);
             
             if (this._connecting) {
                 this.onConnectFailed();
@@ -150,7 +151,7 @@ export class WSConnect {
         }
     }
 
-    private tagPrefix(): string {
+    public tagPrefix(): string {
         let date = new Date()
         return `[Net${this._tagName}][${date.toLocaleTimeString()}]`;
     }
@@ -178,6 +179,7 @@ class RequestMsg {
 }
 
 const PLUSE_INTERVAL = 30;//心跳发送间隔时长
+const TIME_REQUEST_TIMEOUT = 5;//消息发送超时时间
 
 export class GameConnect {
     private _socket: WSConnect = null;
@@ -191,6 +193,9 @@ export class GameConnect {
     private _notifyHandler: { [requestid: number]: Function } = {};//通知处理函数
 
     private _pluseTimer = null;//心跳定时器
+
+    private _timeOutHandler = null;//超时处理函数
+    private _timeOutTimer = null;//超时检测定时器
 
     constructor(name: string) {
         if (this.isNetSupported()) {
@@ -214,6 +219,7 @@ export class GameConnect {
         this._responseHandler = null;
 
         this.stopPluseTimer();
+        this.stopTimeOutTimer();
     }
 
     setSocketErrorHandler(handler: Function) {
@@ -222,9 +228,14 @@ export class GameConnect {
                 if (handler) {
                     handler();
                 }
+
                 this.clearData();
             });
         }
+    }
+
+    setTimeOutHandler(handler: Function) {
+        this._timeOutHandler = handler;
     }
 
     isNetSupported(): boolean {
@@ -309,7 +320,14 @@ export class GameConnect {
         let dataEncode = CommonFunc.pbEncode(msg, BaseReq.basereq.Request);
         this._socket.sendData(dataEncode);
 
-        if (!needResponse) {
+        if (GameConfig.logNetMsg) {
+            console.log(`${this._socket.tagPrefix()} sendRequest requestid(${requestID})`);
+        }
+
+        if (needResponse) {
+            this.startTimeOutTimer();
+        }
+        else {
             this.sendRequestInQueue();
         }
     }
@@ -318,8 +336,13 @@ export class GameConnect {
         let request: BaseReq.basereq.Request = CommonFunc.pbDecode(new Uint8Array(data), BaseReq.basereq.Request);
 
         if (this._waitResponse && this._waitSequence == request.sequence) {
+            if (GameConfig.logNetMsg) {
+                console.log(`${this._socket.tagPrefix()} onResponse requestid(${request.request})`);
+            }
+            this.stopTimeOutTimer();
+            
             if (this._responseHandler) {
-                this._responseHandler(request.data);
+                this._responseHandler(request.request, request.data);
             }
 
             this._waitResponse = false;
@@ -330,6 +353,9 @@ export class GameConnect {
             return;
         }
 
+        if (GameConfig.logNetMsg) {
+            console.log(`${this._socket.tagPrefix()} onNotify requestid(${request.request})`);
+        }
         if (this._notifyHandler[request.request]) {
             this._notifyHandler[request.request](request.data);
         }
@@ -363,6 +389,30 @@ export class GameConnect {
         if (this._pluseTimer) {
             clearInterval(this._pluseTimer);
             this._pluseTimer = null;
+        }
+    }
+
+    private startTimeOutTimer() {
+        this.stopTimeOutTimer();
+        this._timeOutTimer = setInterval(() => {
+            this.onRequestTimeOut();
+        }, TIME_REQUEST_TIMEOUT * 1000);
+    }
+
+    private stopTimeOutTimer() {
+        if (this._timeOutTimer) {
+            clearInterval(this._timeOutTimer);
+            this._timeOutTimer = null;
+        }
+    }
+
+    private onRequestTimeOut() {
+        this.stopTimeOutTimer();
+
+        //请求超时时，只触发超时回调。（暂时设计为：不调用超时消息对应的回调函数，外部直接进行重连操作）
+        if (this._timeOutHandler) {
+            this._timeOutHandler();
+            this.clearData();
         }
     }
 }

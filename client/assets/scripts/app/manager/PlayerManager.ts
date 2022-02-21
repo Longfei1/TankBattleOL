@@ -8,9 +8,10 @@ import { gameController } from "../component/game/Game";
 import { EventDef } from "../define/EventDef";
 import { GameStruct } from "../define/GameStruct";
 import CommonFunc from "../common/CommonFunc";
-import AudioModel from "../model/AudioModel";
 import GameConfigModel from "../model/GameConfigModel";
 import NodePool from "../common/NodePool";
+import GameLogicModel from "../model/GameLogicModel";
+import GameOpeControl from "../define/GameOpeControl";
 
 const {ccclass, property} = cc._decorator;
 
@@ -26,16 +27,24 @@ export default class PlayerManager extends cc.Component {
     @property({ displayName: "地图编辑玩家预制体", type: cc.Prefab })
     pfbMapEditer: cc.Prefab = null;
 
-    _operateHandlerMap = {};
-
     _players: { [no: number]: PlayerTank } = {};
     _mapEditer: MapEditTank = null;
 
     _playerPool: NodePool = null;
 
+    _opeDirection: { [no: number]: GameOpeControl } = {};
+    _opeOk: { [no: number]: GameOpeControl } = {};
+    _opeCancel: { [no: number]: GameOpeControl } = {};
+
     onLoad() {
         this.initListener();
         this._playerPool = new NodePool(this.pfbPlayer, PlayerTank);
+
+        for (let i = 0; i < GameDef.GAME_TOTAL_PLAYER; i++) {
+            this._opeDirection[i] = new GameOpeControl(300, 50);
+            this._opeOk[i] = new GameOpeControl(300, 50);
+            this._opeCancel[i] = new GameOpeControl(300, 50);
+        }
     }
 
     onDestroy() {
@@ -45,12 +54,7 @@ export default class PlayerManager extends cc.Component {
     }
 
     initListener() {
-        if (GameDataModel.isModeEditMap()) {
-            GameInputModel.addKeyDownIntervalListener(this.onKeyDown, this.onKeyUp, this, null, 0.05);
-        }
-        else {
-            GameInputModel.addKeyDownOnceListener(this.onKeyDown, this.onKeyUp, this);
-        }
+        GameLogicModel.addEventListener(EventDef.EV_GL_PLAYER_OPERATION, this.onPlayerOperation, this);
 
         gameController.node.on(EventDef.EV_GAME_INIT_FINISHED, this.evGameInitFinished, this);
 
@@ -68,7 +72,7 @@ export default class PlayerManager extends cc.Component {
     }
 
     removeListener() {
-        GameInputModel.removeInputListenerByContext(this);
+        GameLogicModel.removeEventListenerByContext(this);
     }
 
     initPlayers() {
@@ -78,21 +82,19 @@ export default class PlayerManager extends cc.Component {
                 this.panelGame.addChild(mapEditer);
                 mapEditer.zIndex = GameDef.ZINDEX_MAP_EDIT_TANK;
                 let tankCom = mapEditer.getComponent(MapEditTank)
-                tankCom.setEditPosition(GameDef.BORN_PLACE_PLAYER1);
-                //tankCom.setMoveDirction(GameDef.DIRECTION_UP);
+                tankCom.setEditPosition(CommonFunc.copyObject(GameDef.BORN_PLACE_PLAYER1));
                 this._mapEditer = tankCom;
             }
         }
         else {
-            if (GameDataModel._liveStatus[0]) {
+            if (GameDataModel.getPlayerInfo(0).liveStatus) {
                 this.createPlayer(0, this.getTankAttributesById(0), GameDef.BORN_PLACE_PLAYER1);
             }
 
-            if (GameDataModel._liveStatus[1] && GameDataModel.isModeDoublePlayer()) {
+            if (GameDataModel.getPlayerInfo(1).liveStatus && GameDataModel.isModeDoublePlayer()) {
                 this.createPlayer(1, this.getTankAttributesById(1), GameDef.BORN_PLACE_PLAYER2);
             }
         }
-        gameController.node.emit(EventDef.EV_PLAYER_INIT_FINISHED);
     }
 
     resetPlayer() {
@@ -112,13 +114,14 @@ export default class PlayerManager extends cc.Component {
     }
 
     createPlayer(id: number, attr: GameStruct.TankAttributes, bornPos: GameStruct.RcInfo) {
+        let playerInfo = GameDataModel.getPlayerInfo(id);
         let player = this._playerPool.getNode();
         this.panelGame.addChild(player);
         let playerCom = player.getComponent(PlayerTank);
         playerCom.reset();
         playerCom.id = id;
         playerCom.setAttributes(attr);
-        playerCom.setTankLevel(GameDataModel.getPlayerLevel(id));
+        playerCom.setTankLevel(playerInfo.level);
         playerCom.setPosition(bornPos);
         playerCom.setMoveDirction(GameDef.DIRECTION_UP);
 
@@ -133,6 +136,35 @@ export default class PlayerManager extends cc.Component {
             this._playerPool.putNode(this._players[id].node);
             delete this._players[id];
             GameDataModel.removePlayerTank(id);
+        }
+    }
+
+    onPlayerOperation(opes: GameStruct.PlayerOperation[]) {
+        for (let i = 0; i < opes.length; i++) {
+            let ope = opes[i];
+
+            if (this._opeDirection[ope.playerNO].effectInput(ope.direction)) {
+                let dir = GameDef.DIRECTION_UP;
+                let code = GameOpeControl.getInputCode(ope.direction);
+                if (code === GameDef.NetKeyDirection.LEFT) {
+                    dir = GameDef.DIRECTION_LEFT;
+                }
+                else if (code === GameDef.NetKeyDirection.DOWN) {
+                    dir = GameDef.DIRECTION_DOWN;
+                }
+                else if (code === GameDef.NetKeyDirection.RIGHT) {
+                    dir = GameDef.DIRECTION_RIGHT;
+                }
+                this.onPlayerMove(ope.playerNO, dir);
+            }
+
+            if (this._opeOk[ope.playerNO].effectInput(ope.ok)) {
+                this.onPlayerOkClickDown(ope.playerNO);
+            }
+
+            if (this._opeCancel[ope.playerNO].effectInput(ope.cancel)) {
+                this.onPlayerCancelClickDown(ope.playerNO);
+            }
         }
     }
 
@@ -211,12 +243,6 @@ export default class PlayerManager extends cc.Component {
             case PlayerDef.KEYMAP_PLAYER2.RIGHT:
                 this.onStopMove(1, GameDef.DIRECTION_RIGHT);
                 break;
-            case PlayerDef.KEYMAP_PLAYER1.CANCEL:
-                this.onPlayerCancelClickUp(0);
-                break;
-            case PlayerDef.KEYMAP_PLAYER1.CANCEL:
-                this.onPlayerCancelClickUp(1);
-                break;
             default:
                 break;
         }
@@ -225,22 +251,24 @@ export default class PlayerManager extends cc.Component {
     onPlayerMove(playerNo: number, nDirection: number) {
         if (GameDataModel.isModeEditMap()) {
             CommonFunc.playButtonSound();
+
             //地图编辑模式移动一格
             if (playerNo === 0) {
                 let moveDiff;
                 let moveLength = GameDef.SCENERY_CONTAINS_RC;
-                if (nDirection == GameDef.DIRECTION_UP) {
+                if (nDirection === GameDef.DIRECTION_UP) {
                     moveDiff = new GameStruct.RcInfo(0, moveLength);
                 }
-                else if (nDirection == GameDef.DIRECTION_LEFT){
+                else if (nDirection === GameDef.DIRECTION_LEFT){
                     moveDiff = new GameStruct.RcInfo(-moveLength, 0);
                 }
-                else if (nDirection == GameDef.DIRECTION_DOWN){
+                else if (nDirection === GameDef.DIRECTION_DOWN){
                     moveDiff = new GameStruct.RcInfo(0, -moveLength);
                 }
-                else if (nDirection == GameDef.DIRECTION_RIGHT){
+                else if (nDirection === GameDef.DIRECTION_RIGHT){
                     moveDiff = new GameStruct.RcInfo(moveLength, 0);
                 }
+
                 this._mapEditer.moveBy(moveDiff);
             }
         }
@@ -276,15 +304,7 @@ export default class PlayerManager extends cc.Component {
         }
         else {
             if (this._players[playerNo]) {
-                this._players[playerNo].setShooting(true);
-            }
-        }
-    }
-
-    onPlayerCancelClickUp(playerNo: number) {
-        if (!GameDataModel.isModeEditMap()) {
-            if (this._players[playerNo]) {
-                this._players[playerNo].setShooting(false);
+                this._players[playerNo].shoot();
             }
         }
     }
@@ -308,13 +328,14 @@ export default class PlayerManager extends cc.Component {
     }
 
     evPlayerDead(no: number) {
-        GameDataModel._liveStatus[no] = false;
-        GameDataModel.setPlayerLevel(no, 1);
+        let playerInfo = GameDataModel.getPlayerInfo(no);
+        playerInfo.liveStatus = false;
+        playerInfo.level = 1;
         this.destroyPlayer(no);
 
-        if (GameDataModel.getPlayerLifeNum(no) > 0) {
-            GameDataModel.reducePlayerLifeNum(no);
-            GameDataModel._liveStatus[no] = true;
+        if (playerInfo.lifeNum > 0) {
+            playerInfo.lifeNum--;
+            playerInfo.liveStatus = true;
             this.createPlayer(no, this.getTankAttributesById(no), this.getBornPlaceById(no));
 
             gameController.node.emit(EventDef.EV_DISPLAY_UPDATE_PLAYER_LIFE);
@@ -327,7 +348,7 @@ export default class PlayerManager extends cc.Component {
                 bGameOver = false;
             }
 
-            if (GameDataModel.isModeDoublePlayer() && !this.isPlayerNoLife(0)) {
+            if (GameDataModel.isModeDoublePlayer() && !this.isPlayerNoLife(1)) {
                 bGameOver = false;
             }
 
@@ -362,7 +383,8 @@ export default class PlayerManager extends cc.Component {
 
     isPlayerNoLife(no: number) {
         //玩家状态为死亡且没有多余的剩余生命
-        if (!GameDataModel._liveStatus[no] && GameDataModel.getPlayerLifeNum(no) <= 0) {
+        let playerInfo = GameDataModel.getPlayerInfo(no)
+        if (!playerInfo.liveStatus && playerInfo.lifeNum <= 0) {
             return true;
         }
         return false;

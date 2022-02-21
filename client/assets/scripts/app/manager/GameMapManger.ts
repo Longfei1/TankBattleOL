@@ -53,7 +53,6 @@ export default class GameMapManager extends cc.Component {
         gameController.node.on(EventDef.EV_GAME_INIT_FINISHED, this.evGameInitFinished, this);
 
         if (!GameDataModel.isModeEditMap()) {
-            gameController.node.on(EventDef.EV_PLAYER_INIT_FINISHED, this.evPlayerInitFinished, this);
             gameController.node.on(EventDef.EV_GAME_PREPARE_GAME, this.evPrepareGame, this);
             gameController.node.on(EventDef.EV_GAME_ENDED, this.evGameEnded, this);
 
@@ -311,10 +310,6 @@ export default class GameMapManager extends cc.Component {
                 this.destroyScenery(pos);
             }
         }
-    }
-
-    evPlayerInitFinished() {
-        
     }
 
     isHomeBasePosition(sceneryPos: GameStruct.RcInfo) {

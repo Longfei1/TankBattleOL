@@ -1,6 +1,5 @@
 import CommonFunc from "../../common/CommonFunc";
 import { PlayerDef } from "../../define/PlayerDef";
-import GameInputModel from "../../model/GameInputModel";
 
 const {ccclass, property} = cc._decorator;
 @ccclass
@@ -26,14 +25,13 @@ export default class MenuChoose extends cc.Component {
 
     _cursor: cc.Node = null;
     _currChoose: number = 0;
-    _bSelect: boolean = false;
 
     onLoad() {
         this.initCursor();
     }
 
     onDestroy() {
-        this._cursor.destroy();
+        this._cursor = null;
     }
 
     initCursor() {
@@ -50,8 +48,6 @@ export default class MenuChoose extends cc.Component {
     }
 
     onMenuHide(bNext: boolean) {
-        this._bSelect = false;
-
         //进入返回一级菜单时，重置当前菜单光标位置
         if (!bNext) {
             this._currChoose = 0;
@@ -60,24 +56,34 @@ export default class MenuChoose extends cc.Component {
     }
 
     onMoveUp() {
+        CommonFunc.playButtonSound();
+
         this._currChoose = (this._currChoose + this.nodeMenuItems.length - 1)%this.nodeMenuItems.length;
         this.updateCursorPosition();
     }
 
     onMoveDown() {       
+        CommonFunc.playButtonSound();
+
         this._currChoose = (this._currChoose + this.nodeMenuItems.length + 1) % this.nodeMenuItems.length;
         this.updateCursorPosition();
     }
 
     onSelectItems() {
-        if (!this._bSelect) {
-            this._bSelect = true;
-
-            this.handlerChoose.emit([this.menuItemValue[this._currChoose]]);
-        }
+        CommonFunc.playButtonSound();
+        
+        this.handlerChoose.emit([this.menuItemValue[this._currChoose]]);
     }
 
-    onSelectFailed() {
-        this._bSelect = false;
+    getIndexByMenuItemValue(value: number): number {
+        let index = 0;
+        for (let i = 0; i < this.menuItemValue.length; i++) {
+            if (value == this.menuItemValue[i]) {
+                index = i;
+                break;
+            }
+        }
+
+        return index;
     }
 }

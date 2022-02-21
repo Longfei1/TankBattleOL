@@ -29,6 +29,9 @@
     <ClCompile Include="proto\gamereq.pb.cc">
       <Filter>proto</Filter>
     </ClCompile>
+    <ClCompile Include="game_server\player.cpp">
+      <Filter>game_server</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="proto\test.pb.h">
@@ -73,6 +76,9 @@
     </ClInclude>
     <ClInclude Include="proto\gamereq.pb.h">
       <Filter>proto</Filter>
+    </ClInclude>
+    <ClInclude Include="game_server\player.h">
+      <Filter>game_server</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>

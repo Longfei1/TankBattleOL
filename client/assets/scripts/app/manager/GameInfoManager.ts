@@ -92,10 +92,8 @@ export default class GameInfoManager extends cc.Component {
         }
 
         for (let i = 0; i < this.textPlayerLife.length; i++) {
-            let num = GameDataModel.getPlayerLifeNum(i);
-            if (num != null) {
-                this.textPlayerLife[i].string = num.toString();
-            }
+            let playerInfo = GameDataModel.getPlayerInfo(i);
+            this.textPlayerLife[i].string = playerInfo.lifeNum.toString();
         }
     }
 

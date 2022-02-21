@@ -7,7 +7,7 @@
 
 #include "common/utils/utils.h"
 
-//asioÊµÏÖwebsocket·şÎñ£¬Ïß³Ì°²È«¡£
+//asioå®ç°websocketæœåŠ¡ï¼Œçº¿ç¨‹å®‰å…¨ã€‚
 class AsioWSServer : public boost::noncopyable
 {
 public:
@@ -18,7 +18,7 @@ public:
     using SocketStatusCallback = std::function<void(SocketStatus, SessionID)>;
     using SocketMsgCallback = std::function<void(SessionID, DataPtr, std::size_t)>;
 public:
-    AsioWSServer(SocketStatusCallback status_callback, SocketMsgCallback msg_callback,
+    AsioWSServer(ISocketHandler* socket_handler,
         int port = SOCK_DEFAULT_PORT, int io_threads = SOCK_IO_THREAD_NUM, 
         SessionID min_session = 1, SessionID max_session = SESSION_MAX_ID);
     ~AsioWSServer();
@@ -26,13 +26,13 @@ public:
     bool Initialize();
     void ShutDown();
     
-    //Îª±ÜÃâÊ¹ÓÃ»¥³âÁ¿±£»¤»Øµ÷º¯Êı£¬»Øµ÷º¯ÊıÉèÖÃÔÚ¹¹Ôìº¯Êı´¦£¬²»Ìá¹©ÉèÖÃ»Øµ÷½Ó¿Ú¡£
-    //void SetSocketStatusCallback(SocketStatusCallback callback);//ÉèÖÃ×´Ì¬»Øµ÷
-    //void SetSocketMsgCallback(SocketMsgCallback callback);//ÉèÖÃÏûÏ¢»Øµ÷
+    //ä¸ºé¿å…ä½¿ç”¨äº’æ–¥é‡ä¿æŠ¤å›è°ƒå‡½æ•°ï¼Œå›è°ƒå‡½æ•°è®¾ç½®åœ¨æ„é€ å‡½æ•°å¤„ï¼Œä¸æä¾›è®¾ç½®å›è°ƒæ¥å£ã€‚
+    //void SetSocketStatusCallback(SocketStatusCallback callback);//è®¾ç½®çŠ¶æ€å›è°ƒ
+    //void SetSocketMsgCallback(SocketMsgCallback callback);//è®¾ç½®æ¶ˆæ¯å›è°ƒ
 
-    void SendData(SessionID id, const Byte* senddata, std::size_t size);//·¢ËÍÊı¾İ°ü£¬¶àÏß³Ì°²È«
-    void SendData(SessionID id, DataPtr dataptr, std::size_t size);//·¢ËÍÊı¾İ°ü£¬¶àÏß³Ì°²È«
-    void CloseConnection(SessionID id);//¹Ø±ÕÁ¬½Ó
+    void SendData(SessionID id, const Byte* senddata, std::size_t size);//å‘é€æ•°æ®åŒ…ï¼Œå¤šçº¿ç¨‹å®‰å…¨
+    void SendData(SessionID id, DataPtr dataptr, std::size_t size);//å‘é€æ•°æ®åŒ…ï¼Œå¤šçº¿ç¨‹å®‰å…¨
+    void CloseConnection(SessionID id);//å…³é—­è¿æ¥
 private:
     bool InitSocket();
     bool UnInitSocket();
@@ -41,7 +41,7 @@ private:
 
     void InitSocketOption(ConSessionPtr session);
 
-    //Socket IO´¦Àí
+    //Socket IOå¤„ç†
     void DoAccept();
     void OnAccept(const boost::system::error_code& error, boost::asio::ip::tcp::socket socket);
     void DoShakeHand(ConSessionPtr session);
@@ -62,30 +62,29 @@ private:
     void ClearConnectSessionMap();
     void CloseConnectSession(ConSessionPtr session, bool dispatch_event = true);
 
-    void OnSocketConnect(SessionID id);//socketÁ¬½Ó½¨Á¢
-    void OnSocketValidated(SessionID id);//socketÁ¬½ÓÑéÖ¤³É¹¦
-    void OnSocketClose(SessionID id);//socketÁ¬½Ó¶Ï¿ª
-    void OnSocketMsg(SessionID id, DataPtr dataptr, std::size_t size);//socketÏûÏ¢½ÓÊÕ
+    void OnSocketConnect(SessionID id);//socketè¿æ¥å»ºç«‹
+    void OnSocketValidated(SessionID id);//socketè¿æ¥éªŒè¯æˆåŠŸ
+    void OnSocketClose(SessionID id);//socketè¿æ¥æ–­å¼€
+    void OnSocketMsg(SessionID id, DataPtr dataptr, std::size_t size);//socketæ¶ˆæ¯æ¥æ”¶
 private:
     int port_;
-    int io_thread_num_;//ioÏß³ÌÊı
+    int io_thread_num_;//ioçº¿ç¨‹æ•°
 
     std::string hello_data_;
 
     boost::asio::io_service io_service_;//asio
-    SocketPtr socket_;//·şÎñÌ×½Ó×Ö
+    SocketPtr socket_;//æœåŠ¡å¥—æ¥å­—
     AcceptorPtr acceptor_;
-    std::vector<std::thread> io_threads_;//ioÏß³Ì
+    std::vector<std::thread> io_threads_;//ioçº¿ç¨‹
 
     std::mutex session_map_mtx_;
-    std::unordered_map<SessionID, ConSessionPtr> session_map_;//Á¬½Ó±í
+    std::unordered_map<SessionID, ConSessionPtr> session_map_;//è¿æ¥è¡¨
 
     std::mutex session_gernerator_mtx_;
-    myutils::IDGenerator<SessionID> session_generator_;//sessionidÉú³ÉÆ÷
+    myutils::IDGenerator<SessionID> session_generator_;//sessionidç”Ÿæˆå™¨
 
-    //»Øµ÷º¯Êı
-    SocketStatusCallback status_callback_;
-    SocketMsgCallback msg_callback_;
+    //å›è°ƒ
+    ISocketHandler* socket_handler_;
 
     std::atomic_bool running_;
 };

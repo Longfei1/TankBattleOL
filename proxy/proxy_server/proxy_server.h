@@ -4,8 +4,40 @@
 
 class AsioWSServer;
 class ClientsManager;
+class ProxyServer;
+
+class ProxySocketHandler : public ISocketHandler
+{
+public:
+    ProxySocketHandler(ProxyServer* server) : server_(server) {}
+
+	//socketçŠ¶æ€
+    virtual void OnSocketStatus(SocketStatus status, SessionID id) override;
+	//socketæ¶ˆæ¯
+    virtual void OnSocketMsg(SessionID id, DataPtr dataptr, std::size_t size) override;
+
+private:
+    ProxyServer* server_;
+};
+
+class ServerSocketHandler : public ISocketHandler
+{
+public:
+    ServerSocketHandler(ProxyServer* server) : server_(server) {}
+
+	//socketçŠ¶æ€
+    virtual void OnSocketStatus(SocketStatus status, SessionID id) override;
+	//socketæ¶ˆæ¯
+    virtual void OnSocketMsg(SessionID id, DataPtr dataptr, std::size_t size) override;
+
+private:
+	ProxyServer* server_;
+};
+
 class ProxyServer : public boost::noncopyable
 {
+    friend ProxySocketHandler;
+    friend ServerSocketHandler;
 public:
     using WSServerPtr = std::shared_ptr<AsioWSServer>;
     using ClientsManagerPtr = std::shared_ptr<ClientsManager>;
@@ -19,28 +51,63 @@ public:
     void ShutDown();
 
 private:
-    void OnProxySocketStatus(SocketStatus status, SessionID id);//socket×´Ì¬»Øµ÷
-    void OnProxySocketMsg(SessionID id, DataPtr dataptr, std::size_t size);//socketÏûÏ¢»Øµ÷
-    void OnServerSocketStatus(SocketStatus status, SessionID id);//socket×´Ì¬»Øµ÷
-    void OnServerSocketMsg(SessionID id, DataPtr dataptr, std::size_t size);//socketÏûÏ¢»Øµ÷
+    void OnProxySocketStatus(SocketStatus status, SessionID id);//socketçŠ¶æ€å›è°ƒ
+    void OnProxySocketMsg(SessionID id, DataPtr dataptr, std::size_t size);//socketæ¶ˆæ¯å›è°ƒ
+    void OnServerSocketStatus(SocketStatus status, SessionID id);//socketçŠ¶æ€å›è°ƒ
+    void OnServerSocketMsg(SessionID id, DataPtr dataptr, std::size_t size);//socketæ¶ˆæ¯å›è°ƒ
 
     bool GetServerSessionID(SessionID proxy_id, SessionID& server_id);
     bool GetProxySessionID(SessionID server_id, SessionID& proxy_id);
     void AddSessionRelation(SessionID proxy_id, SessionID server_id);
     void RemoveSessionRelation(SessionID proxy_id);
 private:
-    std::string server_ip_;//Á¬½Ó·şÎñip
-    int server_port_;//Á¬½Ó·şÎñ¶Ë¿Ú
+    std::string server_ip_;//è¿æ¥æœåŠ¡ip
+    int server_port_;//è¿æ¥æœåŠ¡ç«¯å£
 
-    int proxy_port_;//´úÀí·şÎñ¼àÌı¶Ë¿Ú
+    int proxy_port_;//ä»£ç†æœåŠ¡ç›‘å¬ç«¯å£
 
-    int io_thread_num_;//ioÏß³ÌÊı
+    int io_thread_num_;//ioçº¿ç¨‹æ•°
 
     std::string server_hello_data_;
 
-    WSServerPtr ws_server_;//websocket·şÎñ
-    ClientsManagerPtr clients_manager_;//clients¹ÜÀíÆ÷
+    WSServerPtr ws_server_;//websocketæœåŠ¡
+    ClientsManagerPtr clients_manager_;//clientsç®¡ç†å™¨
 
     std::mutex session_relation_mtx_;
     std::unordered_map<SessionID, SessionID> session_relation_;//<proxy, server>
+
+    ProxySocketHandler proxy_handler_;
+    ServerSocketHandler server_handler_;
 };
+
+inline void ProxySocketHandler::OnSocketStatus(SocketStatus status, SessionID id)
+{
+	if (server_)
+	{
+		server_->OnProxySocketStatus(status, id);
+	}
+}
+
+inline void ProxySocketHandler::OnSocketMsg(SessionID id, DataPtr dataptr, std::size_t size)
+{
+	if (server_)
+	{
+		server_->OnProxySocketMsg(id, dataptr, size);
+	}
+}
+
+inline void ServerSocketHandler::OnSocketStatus(SocketStatus status, SessionID id)
+{
+	if (server_)
+	{
+		server_->OnServerSocketStatus(status, id);
+	}
+}
+
+inline void ServerSocketHandler::OnSocketMsg(SessionID id, DataPtr dataptr, std::size_t size)
+{
+	if (server_)
+	{
+		server_->OnServerSocketMsg(id, dataptr, size);
+	}
+}

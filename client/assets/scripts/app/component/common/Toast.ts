@@ -24,11 +24,7 @@ export default class Toast extends cc.Component {
     onLoad() {
         this.showTip();   
     }
-
-    start() {
-        this.showTip();
-    }
-
+    
     init(param) {
         if (param) {
             this.txtTip.string = param.tipString ? param.tipString : "";//先设置字符串，start后才能获取到变化后的宽度（当前引擎版本bug）
@@ -37,7 +33,7 @@ export default class Toast extends cc.Component {
     }
 
     showTip() {
-        this.nodeBg.height = this.txtTip.node.height + 10;
+        this.nodeBg.height = this.txtTip.node.height + 20;
         this.txtTip.node.y = this.txtTip.node.y - 2;
 
         this.node.opacity = 0;

@@ -140,7 +140,7 @@ export default class EnemyTank extends BattleTank {
         if (CommonFunc.isBitSet(GameDataModel._propBuff, GameDef.PROP_BUFF_STATIC)) {
             return;
         }
-        if (!bMove || nDirection != this._moveDirection) {
+        if (!bMove || nDirection !== this._moveDirection) {
             this._bTryMoving = false; //停止移动或换方向，重置尝试移动标志
             this._bTryShoot = false;
         }

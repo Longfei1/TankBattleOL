@@ -2,72 +2,80 @@ syntax = "proto3";
  
 package gamereq;
  
-//µÇÂ¼ÇëÇó
-message LoginInReq 
+//ç™»å½•è¯·æ±‚
+message LoginIn 
 {
-    int32 userid = 1;
-    int64 timestamp = 2;
+    uint32 userid = 1;
+    uint64 timestamp = 2;
 }
 
-//µÇÂ¼»ØÓ¦
-message LoginInRsp
+//é”™è¯¯ä¿¡æ¯
+message ErrorInfo
 {
-    int32 userid = 1;
-    int64 timestamp = 2;
-    bool success = 3;
-    string description = 4;
+    string description = 1;
 }
 
-//µÇ³öÇëÇó
-message LoginOutReq
+//ç™»å‡ºè¯·æ±‚
+message LoginOut
 {
-	int32 userid = 1;
+	uint32 userid = 1;
 }
 
-//ÓÃ»§ĞÅÏ¢
+//ç”¨æˆ·ä¿¡æ¯
 message UserInfo
 {
-    int32 userid = 1;
+    uint32 userid = 1;
 }
 
-//·¿¼äÍæ¼ÒĞÅÏ¢
+//æˆ¿é—´ç©å®¶ä¿¡æ¯
 message RoomPlayerInfo
 {
-    int32 roomid = 1;
-    int32 playerno = 2;
-    int32 userid = 3;
+    uint32 roomid = 1;
+    uint32 playerno = 2;
+    uint32 userid = 3;
 }
 
-//·¿¼ä²Ù×÷
-message RoomOperation
+//èœå•åˆ‡æ¢
+message MenuSwitchInfo
 {
     RoomPlayerInfo where = 1;
-    bool success = 2;
+    uint32 index = 2;
 }
 
-//ÓÎÏ·²Ù×÷
-message GameOperation
+//èœå•é€‰æ‹©
+message MenuChooseInfo
 {
-    int32 key = 1;//²Ù×÷°´¼ü
-    int32 event = 2;//°´¼üÊÂ¼ş
+    RoomPlayerInfo where = 1;
+    int32 index = 2;
 }
 
-//Íæ¼Ò²Ù×÷
+//æ¸¸æˆå¼€å§‹
+message GameStartRsp
+{
+    RoomPlayerInfo where = 1;
+    uint32 mode = 2;//æ¸¸æˆæ¨¡å¼
+    uint32 randomseed = 3;//éšæœºæ•°ç§å­
+}
+
+//ç©å®¶æ“ä½œ
 message UserOperation
 {
-    RoomPlayerInfo where = 1;//²Ù×÷Ô´ 
-    GameOperation ope = 2;//ÓÎÏ·²Ù×÷
+    uint32 playerno = 1;//æ“ä½œç©å®¶ 
+    uint32 opecode = 2;//æ“ä½œç 
 }
 
-//ÓÎÏ·Ö¡£¨Âß¼­Ö¡£©
-message GameFrame
+//æ¸¸æˆå¸§ï¼ˆé€»è¾‘å¸§ï¼‰è¯·æ±‚
+message GameFrameReq
 {
-    int32 frame = 1;//Ö¡ºÅ
-    repeated UserOperation useropes = 2;
+    uint32 roomid = 1;//æˆ¿é—´å·
+    uint32 userid = 2;//ç©å®¶ID
+    uint32 frame = 3;//å¸§å·
+    UserOperation userope = 4;//ç©å®¶æ“ä½œ
 }
 
-//ÓÎÏ·¹Ø¼üÖ¡£¬°üº¬¶à¸öÂß¼­Ö¡
-message MainGameFrame
+//æ¸¸æˆå¸§ï¼ˆé€»è¾‘å¸§ï¼‰é€šçŸ¥
+message GameFrameNtf
 {
-    repeated GameFrame frames= 1;
+    uint32 frame = 1;//å¸§å·
+    repeated UserOperation useropes = 2;//ç©å®¶æ“ä½œ
 }

@@ -12,7 +12,6 @@ class GameServer : public WorkServer
 public: 
     using RoomPtr = std::shared_ptr<Room>;
 
-    static const int frame_interval_;
 public:
     GameServer(int port = SOCK_DEFAULT_PORT, int io_threads = SOCK_IO_THREAD_NUM,
         int work_threads = SOCK_WORK_THREAD_NUM, std::string hello_data = SOCK_HELLO_DATA,
@@ -22,10 +21,9 @@ public:
     virtual void ShutDown() override;
 
     template <typename T>
-    void NotifyPlayer(int user_id, google::protobuf::uint32 request_id, const T& proto_data);
+    void NotifyPlayer(uint user_id, google::protobuf::uint32 request_id, const T& proto_data);
 
-    template <typename T>
-    void NotifyRoomPlayer(RoomPtr room, google::protobuf::uint32 request_id, const T& proto_data);
+	void SendFailedResponse(ContextHeadPtr context_head, RequestPtr request, const std::string& msg);
 
 protected:
     virtual void OnRequest(ContextHeadPtr context_head, RequestPtr request) override;
@@ -33,50 +31,54 @@ protected:
     virtual void OnSocketValidated(ContextHeadPtr context_head, RequestPtr request) override;
     virtual void OnSocketClose(ContextHeadPtr context_head, RequestPtr request) override;
 
-    void OnUserLogin(ContextHeadPtr context_head, RequestPtr request);//µÇÂ¼Á¬½Ó
-    void OnCreateRoom(ContextHeadPtr context_head, RequestPtr request);//´´½¨·¿¼ä
-    void OnJoinRoom(ContextHeadPtr context_head, RequestPtr request);//¼ÓÈë·¿¼ä
-    void OnLeaveRoom(ContextHeadPtr context_head, RequestPtr request);//Àë¿ª·¿¼ä
-    void OnUserOperation(ContextHeadPtr context_head, RequestPtr request);//²Ù×÷ÉÏ´«
+    void OnUserLogin(ContextHeadPtr context_head, RequestPtr request);//ç™»å½•è¿æ¥
+    void OnCreateRoom(ContextHeadPtr context_head, RequestPtr request);//åˆ›å»ºæˆ¿é—´
+    void OnJoinRoom(ContextHeadPtr context_head, RequestPtr request);//åŠ å…¥æˆ¿é—´
+    void OnLeaveRoom(ContextHeadPtr context_head, RequestPtr request);//ç¦»å¼€æˆ¿é—´
+    void OnRoomReady(ContextHeadPtr context_head, RequestPtr request);//æˆ¿é—´å‡†å¤‡
+    void OnRoomUnReady(ContextHeadPtr context_head, RequestPtr request);//æˆ¿é—´å–æ¶ˆå‡†å¤‡
+    void OnRoomStart(ContextHeadPtr context_head, RequestPtr request);//æˆ¿é—´å¼€å§‹
+    void OnMenuSwitch(ContextHeadPtr context_head, RequestPtr request);//èœå•åˆ‡æ¢
+    void OnMenuChoose(ContextHeadPtr context_head, RequestPtr request);//èœå•é€‰æ‹©
+    void OnMenuBack(ContextHeadPtr context_head, RequestPtr request);//èœå•è¿”å›
 
-    bool GenerateUserID(int &user_id);
+    void OnGameFrame(ContextHeadPtr context_head, RequestPtr request);//æ¸¸æˆå¸§
+
+    bool GenerateUserID(uint &user_id);
 
     //session-user
-    void AddUser(SessionID session, int user_id);
-    int GetUser(SessionID session);
+    void AddUser(SessionID session, uint user_id);
+    uint GetUser(SessionID session);
     void RemoveUser(SessionID session);
-    bool GetUserSession(int user_id, SessionID& session);
+    bool GetUserSession(uint user_id, SessionID& session);
 
     //room
-    void AddRoom(int room_id, RoomPtr roomptr);
-    RoomPtr GetRoom(int room_id);
-    void RemoveRoom(int room_id);
+    void AddRoom(uint room_id, RoomPtr roomptr);
+    RoomPtr GetRoom(uint room_id);
+    void RemoveRoom(uint room_id);
+    RoomPtr GetUserRoom(uint user_id);
 
     bool StartGameFrameService();
     bool StopGameFrameService();
-
-    void OnGameFrame(RoomPtr room);
-    void StartGameFrameTimer(RoomPtr room);
-    void StopGameFrameTimer(RoomPtr room);
 private:
-    time_t startup_time_;//·şÎñÆô¶¯Ê±¼ä
+    time_t startup_time_;//æœåŠ¡å¯åŠ¨æ—¶é—´
 
     std::mutex userid_gernerator_mtx_;
-    myutils::IDGenerator<int> userid_generator_;//useridÉú³ÉÆ÷
+    myutils::IDGenerator<uint> userid_generator_;//useridç”Ÿæˆå™¨
 
     std::mutex users_mtx_;
-    std::unordered_map<SessionID, int> users_;//<session, userid>
+    std::unordered_map<SessionID, uint> users_;//<session, userid>
 
     std::mutex rooms_mtx_;
-    std::unordered_map<int, RoomPtr> rooms_;
+    std::unordered_map<uint, RoomPtr> rooms_;
 
-    std::vector<std::thread> frame_threads_;//Âß¼­Ö¡´¦ÀíÏß³Ì
-    boost::asio::io_service frame_service_;//Âß¼­Ö¡´¦Àí·şÎñ
-    std::shared_ptr<boost::asio::io_service::work> frame_work_;//¿ØÖÆÂß¼­Ö¡Ïß³Ì²»ÍË³ö
+    std::vector<std::thread> frame_threads_;//é€»è¾‘å¸§å¤„ç†çº¿ç¨‹
+    boost::asio::io_service frame_service_;//é€»è¾‘å¸§å¤„ç†æœåŠ¡
+    std::shared_ptr<boost::asio::io_service::work> frame_work_;//æ§åˆ¶é€»è¾‘å¸§çº¿ç¨‹ä¸é€€å‡º
 };
 
 template <typename T>
-void GameServer::NotifyPlayer(int user_id, google::protobuf::uint32 request_id, const T& proto_data)
+void GameServer::NotifyPlayer(uint user_id, google::protobuf::uint32 request_id, const T& proto_data)
 {
     SessionID session;
     if (GetUserSession(user_id, session))
@@ -88,24 +90,7 @@ void GameServer::NotifyPlayer(int user_id, google::protobuf::uint32 request_id, 
     }
 }
 
-template <typename T>
-void GameServer::NotifyRoomPlayer(RoomPtr room, google::protobuf::uint32 request_id, const T& proto_data)
-{
-    if (room)
-    {
-        std::lock_guard<std::mutex> lock(room->mtx_);
-
-        for (auto uid : room->player)
-        {
-            if (uid > 0)
-            {
-                NotifyPlayer(uid, request_id, proto_data);
-            }
-        }
-    }
-}
-
-inline bool GameServer::GenerateUserID(int& user_id)
+inline bool GameServer::GenerateUserID(uint& user_id)
 {
     std::lock_guard<std::mutex> lock(userid_gernerator_mtx_);
     auto id = userid_generator_.GenerateOneID();
@@ -118,13 +103,13 @@ inline bool GameServer::GenerateUserID(int& user_id)
 }
 
 
-inline void GameServer::AddUser(SessionID session, int user_id)
+inline void GameServer::AddUser(SessionID session, uint user_id)
 {
     std::lock_guard<std::mutex> lock(users_mtx_);
     users_[session] = user_id;
 }
 
-inline int GameServer::GetUser(SessionID session)
+inline uint GameServer::GetUser(SessionID session)
 {
     std::lock_guard<std::mutex> lock(users_mtx_);
     if (users_.find(session) != users_.end())
@@ -140,13 +125,13 @@ inline void GameServer::RemoveUser(SessionID session)
     users_.erase(session);
 }
 
-inline void GameServer::AddRoom(int room_id, RoomPtr roomptr)
+inline void GameServer::AddRoom(uint room_id, RoomPtr roomptr)
 {
     std::lock_guard<std::mutex> lock(rooms_mtx_);
     rooms_[room_id] = roomptr;
 }
 
-inline GameServer::RoomPtr GameServer::GetRoom(int room_id)
+inline GameServer::RoomPtr GameServer::GetRoom(uint room_id)
 {
     std::lock_guard<std::mutex> lock(rooms_mtx_);
     if (rooms_.find(room_id) != rooms_.end())
@@ -156,7 +141,7 @@ inline GameServer::RoomPtr GameServer::GetRoom(int room_id)
     return nullptr;
 }
 
-inline void GameServer::RemoveRoom(int room_id)
+inline void GameServer::RemoveRoom(uint room_id)
 {
     std::lock_guard<std::mutex> lock(rooms_mtx_);
     rooms_.erase(room_id);

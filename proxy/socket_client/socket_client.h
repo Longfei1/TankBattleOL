@@ -11,12 +11,12 @@ public:
     using SocketMsgCallback = std::function<void(SessionID, DataPtr, std::size_t)>;
 public:
     AsioSockClient(boost::asio::io_service& service, ConnectSession::SessionIDPtr client_session,
-        SocketStatusCallback status_callback, SocketMsgCallback msg_callback);
+        ISocketHandler* socket_handler);
 
     void ConnectServer(std::string ip, int port, std::string hello_data = SOCK_HELLO_DATA);
     void CloseConnection();
 
-    void SendData(const Byte* senddata, std::size_t size);//发送数据包，多线程安全
+    void SendData(const Byte* senddata, std::size_t size);//鍙戦�佹暟鎹寘锛屽绾跨▼瀹夊叏
 
     SessionID GetSessionID();
 private:
@@ -33,21 +33,20 @@ private:
 
     void CloseConnectSession(bool dispatch_event = true);
 
-    void OnSocketConnect();//socket连接建立
-    void OnSocketValidated();//socket连接验证成功
-    void OnSocketClose();//socket连接断开
-    void OnSocketMsg(DataPtr dataptr, std::size_t size);//socket消息接收
+    void OnSocketConnect();//socket杩炴帴寤虹珛
+    void OnSocketValidated();//socket杩炴帴楠岃瘉鎴愬姛
+    void OnSocketClose();//socket杩炴帴鏂紑
+    void OnSocketMsg(DataPtr dataptr, std::size_t size);//socket娑堟伅鎺ユ敹
 
 private:
     std::string ip_;
     int port_;
     std::string hello_data_;
 
-    ConSessionPtr session_;//连接
+    ConSessionPtr session_;//杩炴帴
 
-    //回调函数
-    SocketStatusCallback status_callback_;
-    SocketMsgCallback msg_callback_;
+    //鍥炶皟
+    ISocketHandler* socket_handler_;
 };
 
 inline SessionID AsioSockClient::GetSessionID()

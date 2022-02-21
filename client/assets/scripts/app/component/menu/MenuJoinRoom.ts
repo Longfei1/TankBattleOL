@@ -43,12 +43,8 @@ export default class MenuJoinRoom extends MenuChoose {
             this.editRoomNo.setFocus();
             return;
         }
-
-        if (!this._bSelect) {
-            this._bSelect = true;
-
-            this.handlerChoose.emit([this.menuItemValue[this._currChoose], this.editRoomNo.string]);
-        }
+        
+        this.handlerChoose.emit([this.menuItemValue[this._currChoose], this.editRoomNo.string]);
     }
 
     onMoveUp() {
@@ -63,12 +59,10 @@ export default class MenuJoinRoom extends MenuChoose {
     }
 
     onMenuHide(bNext: boolean) {
-        super.onMenuHide(bNext);
+        this._currChoose = 0;
+        this.updateCursorPosition();
 
-        //进入返回一级菜单时，重置当前菜单光标位置
-        if (!bNext) {
-            this.showEditTip(false);
-            this.editRoomNo.string = "";
-        }
+        this.showEditTip(false);
+        this.editRoomNo.string = "";
     }
 }

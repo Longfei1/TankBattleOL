@@ -15,12 +15,11 @@ using namespace boost::asio;
     func(session, error, size);                                                     \
 }                                                                                   \
 
-AsioSockServer::AsioSockServer(SocketStatusCallback status_callback, SocketMsgCallback msg_callback,
+AsioSockServer::AsioSockServer(ISocketHandler* socket_handler,
     int port, int io_threads, std::string hello_data, SessionID min_session, SessionID max_session) 
     : port_(port), io_thread_num_(io_threads), hello_data_(std::move(hello_data)),
     socket_(nullptr), acceptor_(nullptr), session_generator_(min_session, max_session),
-    status_callback_(status_callback), msg_callback_(msg_callback),
-    running_(false)
+    running_(false), socket_handler_(socket_handler)
 {
 }
 
@@ -40,13 +39,13 @@ bool AsioSockServer::Initialize()
         return false;
     }
 
-    //≥ı ºªØÃ◊Ω”◊÷
+    //ÂàùÂßãÂåñÂ•óÊé•Â≠ó
     if (!InitSocket())
     {
         return false;
     }
 
-    //‘À––io∑˛ŒÒ
+    //ËøêË°åioÊúçÂä°
     if (!StartIOService())
     {
         return false;
@@ -96,9 +95,9 @@ void AsioSockServer::SendData(SessionID id, const Byte* senddata, std::size_t si
 
         boost::asio::post(session->socket_.get_executor(), [this, session, data]()
             {
-                session->write_queue_.push(data);//º”»Î∑¢ÀÕ∂”¡–
+                session->write_queue_.push(data);//Âä†ÂÖ•ÂèëÈÄÅÈòüÂàó
 
-                if (session->write_queue_.size() > 1)//”–œ˚œ¢’˝‘⁄∑¢ÀÕ
+                if (session->write_queue_.size() > 1)//ÊúâÊ∂àÊÅØÊ≠£Âú®ÂèëÈÄÅ
                 {
                     return;
                 }
@@ -110,12 +109,13 @@ void AsioSockServer::SendData(SessionID id, const Byte* senddata, std::size_t si
 
 void AsioSockServer::CloseConnection(SessionID id)
 {
+    LOG_TRACE("AsioSockServer::CloseConnection sessionid(%d)", id);
     auto session = GetConnectSession(id);
     if (session)
     {
         boost::asio::post(session->socket_.get_executor(), [this, session]()
             {
-                CloseConnectSession(session, false);//Õ‚≤øΩ”ø⁄πÿ±’¡¨Ω”£¨≤ª‘⁄∑÷∑¢socketcloseœ˚œ¢ ¬º˛
+                CloseConnectSession(session, false);//Â§ñÈÉ®Êé•Âè£ÂÖ≥Èó≠ËøûÊé•Ôºå‰∏çÂú®ÂàÜÂèësocketcloseÊ∂àÊÅØ‰∫ã‰ª∂
             });
     }
 }
@@ -128,7 +128,7 @@ bool AsioSockServer::InitSocket()
     acceptor_.reset(new ip::tcp::acceptor(io_service_, ep));
     acceptor_->set_option(socket_base::reuse_address(true));
 
-    DoAccept();//ø™ ºΩ” ’¡¨Ω”
+    DoAccept();//ÂºÄÂßãÊé•Êî∂ËøûÊé•
     return true;
 }
 
@@ -142,7 +142,7 @@ bool AsioSockServer::StartIOService()
 {
     for (int i = 0; i < io_thread_num_; i++)
     {
-        io_threads_.emplace_back([this]() //–Ë±£÷§thisµƒ…˙¥Ê÷‹∆⁄
+        io_threads_.emplace_back([this]() //ÈúÄ‰øùËØÅthisÁöÑÁîüÂ≠òÂë®Êúü
             {
                 io_service_.run();
             });
@@ -152,10 +152,10 @@ bool AsioSockServer::StartIOService()
 
 bool AsioSockServer::StopIOService()
 {
-    io_service_.stop();//Õ£÷π∑˛ŒÒ
+    io_service_.stop();//ÂÅúÊ≠¢ÊúçÂä°
     for (auto& th : io_threads_)
     {
-        th.join();//µ»¥˝IOœﬂ≥ÃΩ· ¯
+        th.join();//Á≠âÂæÖIOÁ∫øÁ®ãÁªìÊùü
     }
     io_threads_.clear();
     return true;
@@ -163,7 +163,7 @@ bool AsioSockServer::StopIOService()
 
 void AsioSockServer::DoAccept()
 {
-    //√ø∏ˆsocket π”√◊‘º∫µƒstrand
+    //ÊØè‰∏™socket‰ΩøÁî®Ëá™Â∑±ÁöÑstrand
     acceptor_->async_accept(make_strand(io_service_), MEM_CALL1(OnAccept));
 }
 
@@ -172,7 +172,7 @@ void AsioSockServer::OnAccept(const boost::system::error_code& error, boost::asi
     if (!error)
     {
         auto id = GenerateSessionID();
-        if (IsSessionIDValid(id))//sessionid”––ß
+        if (IsSessionIDValid(id))//sessionidÊúâÊïà
         {
             auto session = std::make_shared<ConnectSession>(std::move(socket));
             session->session_id_.reset(new SessionID(id), [this](SessionID* pID)
@@ -181,20 +181,20 @@ void AsioSockServer::OnAccept(const boost::system::error_code& error, boost::asi
                     delete pID;
                 });
 
-            AddConnectSession(session);//ÃÌº”øÕªß∂À¡¨Ω”
+            AddConnectSession(session);//Ê∑ªÂä†ÂÆ¢Êà∑Á´ØËøûÊé•
             
-            DoValidateHello(session);//µ»¥˝—È÷§øÕªß∂À∑¢ÀÕHello–≈œ¢
+            DoValidateHello(session);//Á≠âÂæÖÈ™åËØÅÂÆ¢Êà∑Á´ØÂèëÈÄÅHello‰ø°ÊÅØ
 
             session->status_ = SocketStatus::CONNECTED;
-            OnSocketConnect(*session->session_id_);//¡¨Ω”≥…π¶
+            OnSocketConnect(*session->session_id_);//ËøûÊé•ÊàêÂäü
 
-            //DoAccept();//ºÃ–¯º‡Ã˝¡¨Ω”
+            //DoAccept();//ÁªßÁª≠ÁõëÂê¨ËøûÊé•
         }
         else
         {
             LOG_ERROR("OnAccept error, not have enough sessionid!");
         }
-        DoAccept();//ºÃ–¯º‡Ã˝¡¨Ω”
+        DoAccept();//ÁªßÁª≠ÁõëÂê¨ËøûÊé•
     }
     else
     {
@@ -204,7 +204,7 @@ void AsioSockServer::OnAccept(const boost::system::error_code& error, boost::asi
 
 void AsioSockServer::DoValidateHello(ConSessionPtr session)
 {
-    //hello data ≥§∂»≤ªƒ‹¥Û”⁄ª∫≥Â«¯
+    //hello data ÈïøÂ∫¶‰∏çËÉΩÂ§ß‰∫éÁºìÂÜ≤Âå∫
     session->socket_.async_receive(
         buffer(session->read_buffer_ + session->read_size_, hello_data_.size() - session->read_size_),
         MEM_CALL2(session, OnValidateHello));
@@ -217,13 +217,13 @@ void AsioSockServer::OnValidateHello(ConSessionPtr session, const boost::system:
         session->read_size_ += size;
         if (session->read_size_ < hello_data_.size())
         {
-            DoValidateHello(session);//ºÃ–¯∂¡»°hello ˝æ›
+            DoValidateHello(session);//ÁªßÁª≠ËØªÂèñhelloÊï∞ÊçÆ
         }
         else if (session->read_size_ == hello_data_.size())
         {
             if (0 == strncmp(session->read_buffer_, hello_data_.c_str(), hello_data_.size()))
             {
-                //—È÷§≥…π¶
+                //È™åËØÅÊàêÂäü
                 session->status_ = SocketStatus::VALIDATED;
                 OnSocketValidated(*session->session_id_);
 
@@ -232,7 +232,7 @@ void AsioSockServer::OnValidateHello(ConSessionPtr session, const boost::system:
 #endif
                 session->read_size_ = 0;
 
-                DoReadDataPackage(session);//ºÃ–¯∂¡»° ˝æ›
+                DoReadDataPackage(session);//ÁªßÁª≠ËØªÂèñÊï∞ÊçÆ
 
                 TryWriteDataPackage(session);
             }
@@ -283,8 +283,8 @@ void AsioSockServer::OnReadDataPackage(ConSessionPtr session, const boost::syste
                         delete[] p;
                     });
 
-                memcpy(&session->read_data_.head, start_pos, sizeof(ProtocalHead));//øΩ±¥ProtocalHead
-                memcpy(session->read_data_.dataptr.get(), start_pos + sizeof(ProtocalHead), copy_size);//øΩ±¥dataptr
+                memcpy(&session->read_data_.head, start_pos, sizeof(ProtocalHead));//Êã∑Ë¥ùProtocalHead
+                memcpy(session->read_data_.dataptr.get(), start_pos + sizeof(ProtocalHead), copy_size);//Êã∑Ë¥ùdataptr
                 start_pos += sizeof(ProtocalHead) + copy_size;
                 left_size -= sizeof(ProtocalHead) + copy_size;
             };
@@ -293,23 +293,23 @@ void AsioSockServer::OnReadDataPackage(ConSessionPtr session, const boost::syste
             {
                 auto head = reinterpret_cast<ProtocalHead*>(start_pos);
                 
-                if (left_size >= sizeof(ProtocalHead) + head->data_len)//“—∂¡»°ÕÍ’˚∏ˆ ˝æ›∞¸
+                if (left_size >= sizeof(ProtocalHead) + head->data_len)//Â∑≤ËØªÂèñÂÆåÊï¥‰∏™Êï∞ÊçÆÂåÖ
                 {
                     create_and_copy_data(head->data_len, head->data_len);
 
-                    OnSocketMsg(*session->session_id_, session->read_data_.dataptr, head->data_len);//∑÷∑¢ ˝æ›∞¸
+                    OnSocketMsg(*session->session_id_, session->read_data_.dataptr, head->data_len);//ÂàÜÂèëÊï∞ÊçÆÂåÖ
                 }
                 else
                 {
-                    if (sizeof(session->read_buffer_) >= sizeof(ProtocalHead) + head->data_len)//ª∫≥Â«¯◊„πª»›ƒ… ˝æ›∞¸
+                    if (sizeof(session->read_buffer_) >= sizeof(ProtocalHead) + head->data_len)//ÁºìÂÜ≤Âå∫Ë∂≥Â§üÂÆπÁ∫≥Êï∞ÊçÆÂåÖ
                     {
                     }
                     else
                     {
-                        //ª∫≥Â«¯≤ªπª»›ƒ… ˝æ›∞¸£¨≤…”√∂ØÃ¨ ˝æ›«¯∂¡»°£¨“‘¥ÔµΩ’≥∞¸ƒøµƒ°£
+                        //ÁºìÂÜ≤Âå∫‰∏çÂ§üÂÆπÁ∫≥Êï∞ÊçÆÂåÖÔºåÈááÁî®Âä®ÊÄÅÊï∞ÊçÆÂå∫ËØªÂèñÔºå‰ª•ËææÂà∞Á≤òÂåÖÁõÆÁöÑ„ÄÇ
 
-                        session->read_location = ConnectSession::DATA; //œ¬“ª¥Œ¥” ˝æ›«¯∂¡»°
-                        session->read_size_ = left_size - sizeof(ProtocalHead);//“—∂¡ ˝æ›«¯≥§∂»
+                        session->read_location = ConnectSession::DATA; //‰∏ã‰∏ÄÊ¨°‰ªéÊï∞ÊçÆÂå∫ËØªÂèñ
+                        session->read_size_ = left_size - sizeof(ProtocalHead);//Â∑≤ËØªÊï∞ÊçÆÂå∫ÈïøÂ∫¶
 
                         create_and_copy_data(head->data_len, left_size - sizeof(ProtocalHead));
 
@@ -321,7 +321,7 @@ void AsioSockServer::OnReadDataPackage(ConSessionPtr session, const boost::syste
                 }
             }
 
-            //’˚¿Ìª∫≥Â«¯£¨ºÃ–¯∂¡»° ˝æ›∞¸
+            //Êï¥ÁêÜÁºìÂÜ≤Âå∫ÔºåÁªßÁª≠ËØªÂèñÊï∞ÊçÆÂåÖ
             if (session->read_location == ConnectSession::BUFFER && session->read_buffer_ != start_pos)
             {
                 memcpy(session->read_buffer_, start_pos, left_size);
@@ -335,9 +335,9 @@ void AsioSockServer::OnReadDataPackage(ConSessionPtr session, const boost::syste
         {
             if (session->read_size_ == session->read_data_.head.data_len)
             {
-                OnSocketMsg(*session->session_id_, session->read_data_.dataptr, session->read_data_.head.data_len);//∑÷∑¢ ˝æ›∞¸
+                OnSocketMsg(*session->session_id_, session->read_data_.dataptr, session->read_data_.head.data_len);//ÂàÜÂèëÊï∞ÊçÆÂåÖ
 
-                session->read_location = ConnectSession::BUFFER; //ª÷∏¥Œ™¥”ª∫≥Â«¯∂¡»°
+                session->read_location = ConnectSession::BUFFER; //ÊÅ¢Â§ç‰∏∫‰ªéÁºìÂÜ≤Âå∫ËØªÂèñ
                 session->read_size_ = 0;
             }
             else if (session->read_size_ > session->read_data_.head.data_len)
@@ -347,7 +347,7 @@ void AsioSockServer::OnReadDataPackage(ConSessionPtr session, const boost::syste
                 return;
             }
         }
-        DoReadDataPackage(session);//ºÃ–¯∂¡»° ˝æ›∞¸
+        DoReadDataPackage(session);//ÁªßÁª≠ËØªÂèñÊï∞ÊçÆÂåÖ
     }
 }
 
@@ -378,7 +378,7 @@ void AsioSockServer::OnWriteDataPackage(ConSessionPtr session, const boost::syst
 
         if (size == total_size)
         {
-            TryWriteDataPackage(session);//≥¢ ‘–¥œ¬“ª∏ˆ ˝æ›
+            TryWriteDataPackage(session);//Â∞ùËØïÂÜô‰∏ã‰∏Ä‰∏™Êï∞ÊçÆ
         }
         else
         {
@@ -429,33 +429,33 @@ void AsioSockServer::CloseConnectSession(ConSessionPtr session, bool dispatch_ev
 
 void AsioSockServer::OnSocketConnect(SessionID id)
 {
-    if (status_callback_)
+    if (socket_handler_)
     {
-        status_callback_(SocketStatus::CONNECTED, id);
+        socket_handler_->OnSocketStatus(SocketStatus::CONNECTED, id);
     }
 }
 
 void AsioSockServer::OnSocketValidated(SessionID id)
 {
-    if (status_callback_)
+    if (socket_handler_)
     {
-        status_callback_(SocketStatus::VALIDATED, id);
+        socket_handler_->OnSocketStatus(SocketStatus::VALIDATED, id);
     }
 }
 
 void AsioSockServer::OnSocketClose(SessionID id)
 {
     LOG_TRACE("AsioSockServer::OnSocketClose sessionid(%d)", id);
-    if (status_callback_)
+    if (socket_handler_)
     {
-        status_callback_(SocketStatus::CLOSED, id);
+        socket_handler_->OnSocketStatus(SocketStatus::CLOSED, id);
     }
 }
 
 void AsioSockServer::OnSocketMsg(SessionID id, DataPtr dataptr, std::size_t size)
 {
-    if (msg_callback_)
+    if (socket_handler_)
     {
-        msg_callback_(id, dataptr, size);
+        socket_handler_->OnSocketMsg(id, dataptr, size);
     }
 }

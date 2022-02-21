@@ -2,5 +2,5 @@
 
 #define SOCK_WORK_THREAD_NUM                4
 
-#define PLUSE_TIMER_INTERVAL                10//ÐÄÌø¶¨Ê±Æ÷¼ä¸ô
-#define PLUSE_OVERDUE_TIME                  100//ÐÄÌø³¬Ê±Ê±¼ä
+#define PLUSE_TIMER_INTERVAL                10//å¿ƒè·³å®šæ—¶å™¨é—´éš”
+#define PLUSE_OVERDUE_TIME                  100//å¿ƒè·³è¶…æ—¶æ—¶é—´

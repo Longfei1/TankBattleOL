@@ -123,4 +123,38 @@ export namespace GameStruct {
         type: number;
         rect: cc.Rect;
     }
+
+    export class ShootNumInfo {
+        LightTank: number;
+        RapidMoveTank: number;
+        RapidFireTank: number;
+        HeavyTank: number;
+    }
+
+    export class PlayerInfo {
+        no: number; //编号 
+        userID: number; //用户ID
+        ready: boolean; //准备状态
+        
+        //游戏信息
+        liveStatus: boolean; //生存状态
+        lifeNum: number; //生命数量
+        shootNumInfo: ShootNumInfo; //击败信息
+        propNum: number; //获得道具数量
+        totalScore: number; //总分数
+        level: number; //坦克等级
+    }
+
+    export class GameKeyInfo {
+        status: number;
+        record: number;
+    }
+
+    export class PlayerOperation {
+        playerNO: number;
+
+        direction: GameKeyInfo;
+        ok: GameKeyInfo;
+        cancel: GameKeyInfo;
+    }
 }

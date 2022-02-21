@@ -5,14 +5,14 @@
 
 namespace myutils
 {
-    //idÉú³ÉÆ÷
+    //idç”Ÿæˆå™¨
     template <typename T>
     class IDGenerator : boost::noncopyable
     {
     public:
         IDGenerator() = default;
 
-        //Ö¸¶¨Éú³ÉÆ÷id·¶Î§[start,end)
+        //æŒ‡å®šç”Ÿæˆå™¨idèŒƒå›´[start,end)
         IDGenerator(T start, T end) : start_(start), end_(end), now_(start) 
         {
         }

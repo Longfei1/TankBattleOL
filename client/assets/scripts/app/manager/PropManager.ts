@@ -35,8 +35,6 @@ export default class EnemyManager extends cc.Component {
             this._prop.removeFromParent();
         }
 
-        GameDataModel.resetPlayerPropNum();
-
         this.removeTimers();
     }
 
@@ -90,6 +88,7 @@ export default class EnemyManager extends cc.Component {
         if (this._prop && playerNode) {
             let type = this._prop.getComponent(Prop)._type;
             let playerTank = playerNode.getComponent(PlayerTank);
+            let playerInfo = GameDataModel.getPlayerInfo(playerTank.id);
 
             switch(type) {
                 case GameDef.PropType.BOMB:
@@ -105,7 +104,7 @@ export default class EnemyManager extends cc.Component {
                 case GameDef.PropType.TANK:
                     //坦克
                     AudioModel.playSound("sound/prop_2");
-                    GameDataModel.addPlayerLifeNum(playerTank.id);
+                    playerInfo.lifeNum++;
                     gameController.node.emit(EventDef.EV_DISPLAY_UPDATE_PLAYER_LIFE);
                     break;
                 case GameDef.PropType.HELMET:
@@ -131,7 +130,7 @@ export default class EnemyManager extends cc.Component {
                     }
                     else {
                         //满级再吃手枪，加生命数量
-                        GameDataModel.addPlayerLifeNum(playerTank.id);
+                        playerInfo.lifeNum++;
                         gameController.node.emit(EventDef.EV_DISPLAY_UPDATE_PLAYER_LIFE);
                     }
                     break;
@@ -139,7 +138,7 @@ export default class EnemyManager extends cc.Component {
                     break;
             }
 
-            GameDataModel.addPlayerPropNum(playerTank.id);
+            playerInfo.propNum++;
             gameController.playGainScoreAni(this._prop.getPosition(), GameDef.PROP_BONUS_SCORE);
         }
     }

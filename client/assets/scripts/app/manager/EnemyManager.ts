@@ -68,8 +68,6 @@ export default class EnemyManager extends cc.Component {
         this._bornPlaceIndex = 0;
 
         this.resetEnemy();
-        GameDataModel.resetPlayerShootNum();
-        GameDataModel._propDestroyEnemyNum = 0;
     }
 
     resetEnemy() {
@@ -108,7 +106,8 @@ export default class EnemyManager extends cc.Component {
     evEnemyDead(id : number) {
         if (this._enemyTanks[id]) {
             if (this._enemyTanks[id]._destroyedBy >= 0) {
-                GameDataModel.addPlayerShootNum(this._enemyTanks[id]._destroyedBy, this._enemyTanks[id]._tankName);
+                let playerInfo = GameDataModel.getPlayerInfo(this._enemyTanks[id]._destroyedBy);
+                playerInfo[this._enemyTanks[id]._tankName]++;
             }else {
                 GameDataModel._propDestroyEnemyNum++;
             }

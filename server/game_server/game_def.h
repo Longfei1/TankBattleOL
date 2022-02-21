@@ -6,8 +6,9 @@ enum class KeyboardEvent
     KEY_DOWN,
 };
 
-#define TOTAL_PLAYER                         2 //·¿¼äÍæ¼ÒÊý
-#define MAIN_FRAMES_NUM                      15 //Ö÷Âß¼­Ö¡ÊýÁ¿£¨1s£©
-#define FRAMES_OF_MAINFRAME_NUM              4 //Ö÷Âß¼­Ö¡°üº¬µÄÖ¡ÊýÁ¿
+#define TOTAL_PLAYER                         2 //æˆ¿é—´çŽ©å®¶æ•°
+#define GAME_FRAMES_NUM                      15 //å¸§æ•°é‡ï¼ˆ1sï¼‰
 
-#define GAMEFRAME_THREAD_NUM                 1 //ÓÎÏ·Ö¡Ïß³ÌÊýÁ¿
+#define GAMEFRAME_THREAD_NUM                 1 //æ¸¸æˆå¸§çº¿ç¨‹æ•°é‡
+
+#define FRAME_TIMEOUT_TIME                   5 //å¸§åŒæ­¥è¶…æ—¶æ—¶é—´(s)

@@ -77,12 +77,12 @@
   <ImportGroup Label="PropertySheets" />
   <PropertyGroup Label="UserMacros" />
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
-    <IncludePath>/root/code/projects/proxy;/root/program/boost/boost_1_74_0/include;$(IncludePath)</IncludePath>
-    <LibraryPath>/root/program/boost/boost_1_74_0/lib;$(LibraryPath)</LibraryPath>
+    <IncludePath>/usr/code/projects/proxy;/usr/program/boost_1_74_0/include;$(IncludePath)</IncludePath>
+    <LibraryPath>/usr/program/boost_1_74_0/lib;$(LibraryPath)</LibraryPath>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
-    <IncludePath>/root/code/projects/proxy;/root/program/boost/boost_1_74_0/include;$(IncludePath)</IncludePath>
-    <LibraryPath>/root/program/boost/boost_1_74_0/lib;$(LibraryPath)</LibraryPath>
+    <IncludePath>/usr/code/projects/proxy;/usr/program/boost_1_74_0/include;$(IncludePath)</IncludePath>
+    <LibraryPath>/usr/program/boost_1_74_0/lib;$(LibraryPath)</LibraryPath>
   </PropertyGroup>
   <ItemGroup>
     <ClCompile Include="..\common\log\log.cpp" />
@@ -108,7 +108,7 @@
       <LibraryDependencies>pthread</LibraryDependencies>
     </Link>
     <ClCompile>
-      <AdditionalIncludeDirectories>./;../;%(ClCompile.AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>./;../;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
     </ClCompile>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">

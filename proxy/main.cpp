@@ -1,4 +1,4 @@
-﻿#include "proxy_server/proxy_server.h"
+#include "proxy_server/proxy_server.h"
 #include "common/log/log.h"
 
 int main(int argc, char* argv[])

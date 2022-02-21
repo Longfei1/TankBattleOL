@@ -18,25 +18,25 @@ $root.gamereq = (function() {
      */
     var gamereq = {};
 
-    gamereq.LoginInReq = (function() {
+    gamereq.LoginIn = (function() {
 
         /**
-         * Properties of a LoginInReq.
+         * Properties of a LoginIn.
          * @memberof gamereq
-         * @interface ILoginInReq
-         * @property {number|null} [userid] LoginInReq userid
-         * @property {number|Long|null} [timestamp] LoginInReq timestamp
+         * @interface ILoginIn
+         * @property {number|null} [userid] LoginIn userid
+         * @property {number|Long|null} [timestamp] LoginIn timestamp
          */
 
         /**
-         * Constructs a new LoginInReq.
+         * Constructs a new LoginIn.
          * @memberof gamereq
-         * @classdesc Represents a LoginInReq.
-         * @implements ILoginInReq
+         * @classdesc Represents a LoginIn.
+         * @implements ILoginIn
          * @constructor
-         * @param {gamereq.ILoginInReq=} [properties] Properties to set
+         * @param {gamereq.ILoginIn=} [properties] Properties to set
          */
-        function LoginInReq(properties) {
+        function LoginIn(properties) {
             if (properties)
                 for (var keys = Object.keys(properties), i = 0; i < keys.length; ++i)
                     if (properties[keys[i]] != null)
@@ -44,88 +44,88 @@ $root.gamereq = (function() {
         }
 
         /**
-         * LoginInReq userid.
+         * LoginIn userid.
          * @member {number} userid
-         * @memberof gamereq.LoginInReq
+         * @memberof gamereq.LoginIn
          * @instance
          */
-        LoginInReq.prototype.userid = 0;
+        LoginIn.prototype.userid = 0;
 
         /**
-         * LoginInReq timestamp.
+         * LoginIn timestamp.
          * @member {number|Long} timestamp
-         * @memberof gamereq.LoginInReq
+         * @memberof gamereq.LoginIn
          * @instance
          */
-        LoginInReq.prototype.timestamp = $util.Long ? $util.Long.fromBits(0,0,false) : 0;
+        LoginIn.prototype.timestamp = $util.Long ? $util.Long.fromBits(0,0,true) : 0;
 
         /**
-         * Creates a new LoginInReq instance using the specified properties.
+         * Creates a new LoginIn instance using the specified properties.
          * @function create
-         * @memberof gamereq.LoginInReq
+         * @memberof gamereq.LoginIn
          * @static
-         * @param {gamereq.ILoginInReq=} [properties] Properties to set
-         * @returns {gamereq.LoginInReq} LoginInReq instance
+         * @param {gamereq.ILoginIn=} [properties] Properties to set
+         * @returns {gamereq.LoginIn} LoginIn instance
          */
-        LoginInReq.create = function create(properties) {
-            return new LoginInReq(properties);
+        LoginIn.create = function create(properties) {
+            return new LoginIn(properties);
         };
 
         /**
-         * Encodes the specified LoginInReq message. Does not implicitly {@link gamereq.LoginInReq.verify|verify} messages.
+         * Encodes the specified LoginIn message. Does not implicitly {@link gamereq.LoginIn.verify|verify} messages.
          * @function encode
-         * @memberof gamereq.LoginInReq
+         * @memberof gamereq.LoginIn
          * @static
-         * @param {gamereq.ILoginInReq} message LoginInReq message or plain object to encode
+         * @param {gamereq.ILoginIn} message LoginIn message or plain object to encode
          * @param {$protobuf.Writer} [writer] Writer to encode to
          * @returns {$protobuf.Writer} Writer
          */
-        LoginInReq.encode = function encode(message, writer) {
+        LoginIn.encode = function encode(message, writer) {
             if (!writer)
                 writer = $Writer.create();
             if (message.userid != null && Object.hasOwnProperty.call(message, "userid"))
-                writer.uint32(/* id 1, wireType 0 =*/8).int32(message.userid);
+                writer.uint32(/* id 1, wireType 0 =*/8).uint32(message.userid);
             if (message.timestamp != null && Object.hasOwnProperty.call(message, "timestamp"))
-                writer.uint32(/* id 2, wireType 0 =*/16).int64(message.timestamp);
+                writer.uint32(/* id 2, wireType 0 =*/16).uint64(message.timestamp);
             return writer;
         };
 
         /**
-         * Encodes the specified LoginInReq message, length delimited. Does not implicitly {@link gamereq.LoginInReq.verify|verify} messages.
+         * Encodes the specified LoginIn message, length delimited. Does not implicitly {@link gamereq.LoginIn.verify|verify} messages.
          * @function encodeDelimited
-         * @memberof gamereq.LoginInReq
+         * @memberof gamereq.LoginIn
          * @static
-         * @param {gamereq.ILoginInReq} message LoginInReq message or plain object to encode
+         * @param {gamereq.ILoginIn} message LoginIn message or plain object to encode
          * @param {$protobuf.Writer} [writer] Writer to encode to
          * @returns {$protobuf.Writer} Writer
          */
-        LoginInReq.encodeDelimited = function encodeDelimited(message, writer) {
+        LoginIn.encodeDelimited = function encodeDelimited(message, writer) {
             return this.encode(message, writer).ldelim();
         };
 
         /**
-         * Decodes a LoginInReq message from the specified reader or buffer.
+         * Decodes a LoginIn message from the specified reader or buffer.
          * @function decode
-         * @memberof gamereq.LoginInReq
+         * @memberof gamereq.LoginIn
          * @static
          * @param {$protobuf.Reader|Uint8Array} reader Reader or buffer to decode from
          * @param {number} [length] Message length if known beforehand
-         * @returns {gamereq.LoginInReq} LoginInReq
+         * @returns {gamereq.LoginIn} LoginIn
          * @throws {Error} If the payload is not a reader or valid buffer
          * @throws {$protobuf.util.ProtocolError} If required fields are missing
          */
-        LoginInReq.decode = function decode(reader, length) {
+        LoginIn.decode = function decode(reader, length) {
             if (!(reader instanceof $Reader))
                 reader = $Reader.create(reader);
-            var end = length === undefined ? reader.len : reader.pos + length, message = new $root.gamereq.LoginInReq();
+            var end = length === undefined ? reader.len : reader.pos + length, message = new $root.gamereq.LoginIn();
             while (reader.pos < end) {
                 var tag = reader.uint32();
                 switch (tag >>> 3) {
                 case 1:
-                    message.userid = reader.int32();
+                    message.userid = reader.uint32();
                     break;
                 case 2:
-                    message.timestamp = reader.int64();
+                    message.timestamp = reader.uint64();
                     break;
                 default:
                     reader.skipType(tag & 7);
@@ -136,30 +136,30 @@ $root.gamereq = (function() {
         };
 
         /**
-         * Decodes a LoginInReq message from the specified reader or buffer, length delimited.
+         * Decodes a LoginIn message from the specified reader or buffer, length delimited.
          * @function decodeDelimited
-         * @memberof gamereq.LoginInReq
+         * @memberof gamereq.LoginIn
          * @static
          * @param {$protobuf.Reader|Uint8Array} reader Reader or buffer to decode from
-         * @returns {gamereq.LoginInReq} LoginInReq
+         * @returns {gamereq.LoginIn} LoginIn
          * @throws {Error} If the payload is not a reader or valid buffer
          * @throws {$protobuf.util.ProtocolError} If required fields are missing
          */
-        LoginInReq.decodeDelimited = function decodeDelimited(reader) {
+        LoginIn.decodeDelimited = function decodeDelimited(reader) {
             if (!(reader instanceof $Reader))
                 reader = new $Reader(reader);
             return this.decode(reader, reader.uint32());
         };
 
         /**
-         * Verifies a LoginInReq message.
+         * Verifies a LoginIn message.
          * @function verify
-         * @memberof gamereq.LoginInReq
+         * @memberof gamereq.LoginIn
          * @static
          * @param {Object.<string,*>} message Plain object to verify
          * @returns {string|null} `null` if valid, otherwise the reason why it is not
          */
-        LoginInReq.verify = function verify(message) {
+        LoginIn.verify = function verify(message) {
             if (typeof message !== "object" || message === null)
                 return "object expected";
             if (message.userid != null && message.hasOwnProperty("userid"))
@@ -172,48 +172,48 @@ $root.gamereq = (function() {
         };
 
         /**
-         * Creates a LoginInReq message from a plain object. Also converts values to their respective internal types.
+         * Creates a LoginIn message from a plain object. Also converts values to their respective internal types.
          * @function fromObject
-         * @memberof gamereq.LoginInReq
+         * @memberof gamereq.LoginIn
          * @static
          * @param {Object.<string,*>} object Plain object
-         * @returns {gamereq.LoginInReq} LoginInReq
+         * @returns {gamereq.LoginIn} LoginIn
          */
-        LoginInReq.fromObject = function fromObject(object) {
-            if (object instanceof $root.gamereq.LoginInReq)
+        LoginIn.fromObject = function fromObject(object) {
+            if (object instanceof $root.gamereq.LoginIn)
                 return object;
-            var message = new $root.gamereq.LoginInReq();
+            var message = new $root.gamereq.LoginIn();
             if (object.userid != null)
-                message.userid = object.userid | 0;
+                message.userid = object.userid >>> 0;
             if (object.timestamp != null)
                 if ($util.Long)
-                    (message.timestamp = $util.Long.fromValue(object.timestamp)).unsigned = false;
+                    (message.timestamp = $util.Long.fromValue(object.timestamp)).unsigned = true;
                 else if (typeof object.timestamp === "string")
                     message.timestamp = parseInt(object.timestamp, 10);
                 else if (typeof object.timestamp === "number")
                     message.timestamp = object.timestamp;
                 else if (typeof object.timestamp === "object")
-                    message.timestamp = new $util.LongBits(object.timestamp.low >>> 0, object.timestamp.high >>> 0).toNumber();
+                    message.timestamp = new $util.LongBits(object.timestamp.low >>> 0, object.timestamp.high >>> 0).toNumber(true);
             return message;
         };
 
         /**
-         * Creates a plain object from a LoginInReq message. Also converts values to other types if specified.
+         * Creates a plain object from a LoginIn message. Also converts values to other types if specified.
          * @function toObject
-         * @memberof gamereq.LoginInReq
+         * @memberof gamereq.LoginIn
          * @static
-         * @param {gamereq.LoginInReq} message LoginInReq
+         * @param {gamereq.LoginIn} message LoginIn
          * @param {$protobuf.IConversionOptions} [options] Conversion options
          * @returns {Object.<string,*>} Plain object
          */
-        LoginInReq.toObject = function toObject(message, options) {
+        LoginIn.toObject = function toObject(message, options) {
             if (!options)
                 options = {};
             var object = {};
             if (options.defaults) {
                 object.userid = 0;
                 if ($util.Long) {
-                    var long = new $util.Long(0, 0, false);
+                    var long = new $util.Long(0, 0, true);
                     object.timestamp = options.longs === String ? long.toString() : options.longs === Number ? long.toNumber() : long;
                 } else
                     object.timestamp = options.longs === String ? "0" : 0;
@@ -224,45 +224,42 @@ $root.gamereq = (function() {
                 if (typeof message.timestamp === "number")
                     object.timestamp = options.longs === String ? String(message.timestamp) : message.timestamp;
                 else
-                    object.timestamp = options.longs === String ? $util.Long.prototype.toString.call(message.timestamp) : options.longs === Number ? new $util.LongBits(message.timestamp.low >>> 0, message.timestamp.high >>> 0).toNumber() : message.timestamp;
+                    object.timestamp = options.longs === String ? $util.Long.prototype.toString.call(message.timestamp) : options.longs === Number ? new $util.LongBits(message.timestamp.low >>> 0, message.timestamp.high >>> 0).toNumber(true) : message.timestamp;
             return object;
         };
 
         /**
-         * Converts this LoginInReq to JSON.
+         * Converts this LoginIn to JSON.
          * @function toJSON
-         * @memberof gamereq.LoginInReq
+         * @memberof gamereq.LoginIn
          * @instance
          * @returns {Object.<string,*>} JSON object
          */
-        LoginInReq.prototype.toJSON = function toJSON() {
+        LoginIn.prototype.toJSON = function toJSON() {
             return this.constructor.toObject(this, $protobuf.util.toJSONOptions);
         };
 
-        return LoginInReq;
+        return LoginIn;
     })();
 
-    gamereq.LoginInRsp = (function() {
+    gamereq.ErrorInfo = (function() {
 
         /**
-         * Properties of a LoginInRsp.
+         * Properties of an ErrorInfo.
          * @memberof gamereq
-         * @interface ILoginInRsp
-         * @property {number|null} [userid] LoginInRsp userid
-         * @property {number|Long|null} [timestamp] LoginInRsp timestamp
-         * @property {boolean|null} [success] LoginInRsp success
-         * @property {string|null} [description] LoginInRsp description
+         * @interface IErrorInfo
+         * @property {string|null} [description] ErrorInfo description
          */
 
         /**
-         * Constructs a new LoginInRsp.
+         * Constructs a new ErrorInfo.
          * @memberof gamereq
-         * @classdesc Represents a LoginInRsp.
-         * @implements ILoginInRsp
+         * @classdesc Represents an ErrorInfo.
+         * @implements IErrorInfo
          * @constructor
-         * @param {gamereq.ILoginInRsp=} [properties] Properties to set
+         * @param {gamereq.IErrorInfo=} [properties] Properties to set
          */
-        function LoginInRsp(properties) {
+        function ErrorInfo(properties) {
             if (properties)
                 for (var keys = Object.keys(properties), i = 0; i < keys.length; ++i)
                     if (properties[keys[i]] != null)
@@ -270,113 +267,74 @@ $root.gamereq = (function() {
         }
 
         /**
-         * LoginInRsp userid.
-         * @member {number} userid
-         * @memberof gamereq.LoginInRsp
-         * @instance
-         */
-        LoginInRsp.prototype.userid = 0;
-
-        /**
-         * LoginInRsp timestamp.
-         * @member {number|Long} timestamp
-         * @memberof gamereq.LoginInRsp
-         * @instance
-         */
-        LoginInRsp.prototype.timestamp = $util.Long ? $util.Long.fromBits(0,0,false) : 0;
-
-        /**
-         * LoginInRsp success.
-         * @member {boolean} success
-         * @memberof gamereq.LoginInRsp
-         * @instance
-         */
-        LoginInRsp.prototype.success = false;
-
-        /**
-         * LoginInRsp description.
+         * ErrorInfo description.
          * @member {string} description
-         * @memberof gamereq.LoginInRsp
+         * @memberof gamereq.ErrorInfo
          * @instance
          */
-        LoginInRsp.prototype.description = "";
+        ErrorInfo.prototype.description = "";
 
         /**
-         * Creates a new LoginInRsp instance using the specified properties.
+         * Creates a new ErrorInfo instance using the specified properties.
          * @function create
-         * @memberof gamereq.LoginInRsp
+         * @memberof gamereq.ErrorInfo
          * @static
-         * @param {gamereq.ILoginInRsp=} [properties] Properties to set
-         * @returns {gamereq.LoginInRsp} LoginInRsp instance
+         * @param {gamereq.IErrorInfo=} [properties] Properties to set
+         * @returns {gamereq.ErrorInfo} ErrorInfo instance
          */
-        LoginInRsp.create = function create(properties) {
-            return new LoginInRsp(properties);
+        ErrorInfo.create = function create(properties) {
+            return new ErrorInfo(properties);
         };
 
         /**
-         * Encodes the specified LoginInRsp message. Does not implicitly {@link gamereq.LoginInRsp.verify|verify} messages.
+         * Encodes the specified ErrorInfo message. Does not implicitly {@link gamereq.ErrorInfo.verify|verify} messages.
          * @function encode
-         * @memberof gamereq.LoginInRsp
+         * @memberof gamereq.ErrorInfo
          * @static
-         * @param {gamereq.ILoginInRsp} message LoginInRsp message or plain object to encode
+         * @param {gamereq.IErrorInfo} message ErrorInfo message or plain object to encode
          * @param {$protobuf.Writer} [writer] Writer to encode to
          * @returns {$protobuf.Writer} Writer
          */
-        LoginInRsp.encode = function encode(message, writer) {
+        ErrorInfo.encode = function encode(message, writer) {
             if (!writer)
                 writer = $Writer.create();
-            if (message.userid != null && Object.hasOwnProperty.call(message, "userid"))
-                writer.uint32(/* id 1, wireType 0 =*/8).int32(message.userid);
-            if (message.timestamp != null && Object.hasOwnProperty.call(message, "timestamp"))
-                writer.uint32(/* id 2, wireType 0 =*/16).int64(message.timestamp);
-            if (message.success != null && Object.hasOwnProperty.call(message, "success"))
-                writer.uint32(/* id 3, wireType 0 =*/24).bool(message.success);
             if (message.description != null && Object.hasOwnProperty.call(message, "description"))
-                writer.uint32(/* id 4, wireType 2 =*/34).string(message.description);
+                writer.uint32(/* id 1, wireType 2 =*/10).string(message.description);
             return writer;
         };
 
         /**
-         * Encodes the specified LoginInRsp message, length delimited. Does not implicitly {@link gamereq.LoginInRsp.verify|verify} messages.
+         * Encodes the specified ErrorInfo message, length delimited. Does not implicitly {@link gamereq.ErrorInfo.verify|verify} messages.
          * @function encodeDelimited
-         * @memberof gamereq.LoginInRsp
+         * @memberof gamereq.ErrorInfo
          * @static
-         * @param {gamereq.ILoginInRsp} message LoginInRsp message or plain object to encode
+         * @param {gamereq.IErrorInfo} message ErrorInfo message or plain object to encode
          * @param {$protobuf.Writer} [writer] Writer to encode to
          * @returns {$protobuf.Writer} Writer
          */
-        LoginInRsp.encodeDelimited = function encodeDelimited(message, writer) {
+        ErrorInfo.encodeDelimited = function encodeDelimited(message, writer) {
             return this.encode(message, writer).ldelim();
         };
 
         /**
-         * Decodes a LoginInRsp message from the specified reader or buffer.
+         * Decodes an ErrorInfo message from the specified reader or buffer.
          * @function decode
-         * @memberof gamereq.LoginInRsp
+         * @memberof gamereq.ErrorInfo
          * @static
          * @param {$protobuf.Reader|Uint8Array} reader Reader or buffer to decode from
          * @param {number} [length] Message length if known beforehand
-         * @returns {gamereq.LoginInRsp} LoginInRsp
+         * @returns {gamereq.ErrorInfo} ErrorInfo
          * @throws {Error} If the payload is not a reader or valid buffer
          * @throws {$protobuf.util.ProtocolError} If required fields are missing
          */
-        LoginInRsp.decode = function decode(reader, length) {
+        ErrorInfo.decode = function decode(reader, length) {
             if (!(reader instanceof $Reader))
                 reader = $Reader.create(reader);
-            var end = length === undefined ? reader.len : reader.pos + length, message = new $root.gamereq.LoginInRsp();
+            var end = length === undefined ? reader.len : reader.pos + length, message = new $root.gamereq.ErrorInfo();
             while (reader.pos < end) {
                 var tag = reader.uint32();
                 switch (tag >>> 3) {
                 case 1:
-                    message.userid = reader.int32();
-                    break;
-                case 2:
-                    message.timestamp = reader.int64();
-                    break;
-                case 3:
-                    message.success = reader.bool();
-                    break;
-                case 4:
                     message.description = reader.string();
                     break;
                 default:
@@ -388,41 +346,32 @@ $root.gamereq = (function() {
         };
 
         /**
-         * Decodes a LoginInRsp message from the specified reader or buffer, length delimited.
+         * Decodes an ErrorInfo message from the specified reader or buffer, length delimited.
          * @function decodeDelimited
-         * @memberof gamereq.LoginInRsp
+         * @memberof gamereq.ErrorInfo
          * @static
          * @param {$protobuf.Reader|Uint8Array} reader Reader or buffer to decode from
-         * @returns {gamereq.LoginInRsp} LoginInRsp
+         * @returns {gamereq.ErrorInfo} ErrorInfo
          * @throws {Error} If the payload is not a reader or valid buffer
          * @throws {$protobuf.util.ProtocolError} If required fields are missing
          */
-        LoginInRsp.decodeDelimited = function decodeDelimited(reader) {
+        ErrorInfo.decodeDelimited = function decodeDelimited(reader) {
             if (!(reader instanceof $Reader))
                 reader = new $Reader(reader);
             return this.decode(reader, reader.uint32());
         };
 
         /**
-         * Verifies a LoginInRsp message.
+         * Verifies an ErrorInfo message.
          * @function verify
-         * @memberof gamereq.LoginInRsp
+         * @memberof gamereq.ErrorInfo
          * @static
          * @param {Object.<string,*>} message Plain object to verify
          * @returns {string|null} `null` if valid, otherwise the reason why it is not
          */
-        LoginInRsp.verify = function verify(message) {
+        ErrorInfo.verify = function verify(message) {
             if (typeof message !== "object" || message === null)
                 return "object expected";
-            if (message.userid != null && message.hasOwnProperty("userid"))
-                if (!$util.isInteger(message.userid))
-                    return "userid: integer expected";
-            if (message.timestamp != null && message.hasOwnProperty("timestamp"))
-                if (!$util.isInteger(message.timestamp) && !(message.timestamp && $util.isInteger(message.timestamp.low) && $util.isInteger(message.timestamp.high)))
-                    return "timestamp: integer|Long expected";
-            if (message.success != null && message.hasOwnProperty("success"))
-                if (typeof message.success !== "boolean")
-                    return "success: boolean expected";
             if (message.description != null && message.hasOwnProperty("description"))
                 if (!$util.isString(message.description))
                     return "description: string expected";
@@ -430,104 +379,74 @@ $root.gamereq = (function() {
         };
 
         /**
-         * Creates a LoginInRsp message from a plain object. Also converts values to their respective internal types.
+         * Creates an ErrorInfo message from a plain object. Also converts values to their respective internal types.
          * @function fromObject
-         * @memberof gamereq.LoginInRsp
+         * @memberof gamereq.ErrorInfo
          * @static
          * @param {Object.<string,*>} object Plain object
-         * @returns {gamereq.LoginInRsp} LoginInRsp
+         * @returns {gamereq.ErrorInfo} ErrorInfo
          */
-        LoginInRsp.fromObject = function fromObject(object) {
-            if (object instanceof $root.gamereq.LoginInRsp)
+        ErrorInfo.fromObject = function fromObject(object) {
+            if (object instanceof $root.gamereq.ErrorInfo)
                 return object;
-            var message = new $root.gamereq.LoginInRsp();
-            if (object.userid != null)
-                message.userid = object.userid | 0;
-            if (object.timestamp != null)
-                if ($util.Long)
-                    (message.timestamp = $util.Long.fromValue(object.timestamp)).unsigned = false;
-                else if (typeof object.timestamp === "string")
-                    message.timestamp = parseInt(object.timestamp, 10);
-                else if (typeof object.timestamp === "number")
-                    message.timestamp = object.timestamp;
-                else if (typeof object.timestamp === "object")
-                    message.timestamp = new $util.LongBits(object.timestamp.low >>> 0, object.timestamp.high >>> 0).toNumber();
-            if (object.success != null)
-                message.success = Boolean(object.success);
+            var message = new $root.gamereq.ErrorInfo();
             if (object.description != null)
                 message.description = String(object.description);
             return message;
         };
 
         /**
-         * Creates a plain object from a LoginInRsp message. Also converts values to other types if specified.
+         * Creates a plain object from an ErrorInfo message. Also converts values to other types if specified.
          * @function toObject
-         * @memberof gamereq.LoginInRsp
+         * @memberof gamereq.ErrorInfo
          * @static
-         * @param {gamereq.LoginInRsp} message LoginInRsp
+         * @param {gamereq.ErrorInfo} message ErrorInfo
          * @param {$protobuf.IConversionOptions} [options] Conversion options
          * @returns {Object.<string,*>} Plain object
          */
-        LoginInRsp.toObject = function toObject(message, options) {
+        ErrorInfo.toObject = function toObject(message, options) {
             if (!options)
                 options = {};
             var object = {};
-            if (options.defaults) {
-                object.userid = 0;
-                if ($util.Long) {
-                    var long = new $util.Long(0, 0, false);
-                    object.timestamp = options.longs === String ? long.toString() : options.longs === Number ? long.toNumber() : long;
-                } else
-                    object.timestamp = options.longs === String ? "0" : 0;
-                object.success = false;
+            if (options.defaults)
                 object.description = "";
-            }
-            if (message.userid != null && message.hasOwnProperty("userid"))
-                object.userid = message.userid;
-            if (message.timestamp != null && message.hasOwnProperty("timestamp"))
-                if (typeof message.timestamp === "number")
-                    object.timestamp = options.longs === String ? String(message.timestamp) : message.timestamp;
-                else
-                    object.timestamp = options.longs === String ? $util.Long.prototype.toString.call(message.timestamp) : options.longs === Number ? new $util.LongBits(message.timestamp.low >>> 0, message.timestamp.high >>> 0).toNumber() : message.timestamp;
-            if (message.success != null && message.hasOwnProperty("success"))
-                object.success = message.success;
             if (message.description != null && message.hasOwnProperty("description"))
                 object.description = message.description;
             return object;
         };
 
         /**
-         * Converts this LoginInRsp to JSON.
+         * Converts this ErrorInfo to JSON.
          * @function toJSON
-         * @memberof gamereq.LoginInRsp
+         * @memberof gamereq.ErrorInfo
          * @instance
          * @returns {Object.<string,*>} JSON object
          */
-        LoginInRsp.prototype.toJSON = function toJSON() {
+        ErrorInfo.prototype.toJSON = function toJSON() {
             return this.constructor.toObject(this, $protobuf.util.toJSONOptions);
         };
 
-        return LoginInRsp;
+        return ErrorInfo;
     })();
 
-    gamereq.LoginOutReq = (function() {
+    gamereq.LoginOut = (function() {
 
         /**
-         * Properties of a LoginOutReq.
+         * Properties of a LoginOut.
          * @memberof gamereq
-         * @interface ILoginOutReq
-         * @property {number|null} [userid] LoginOutReq userid
+         * @interface ILoginOut
+         * @property {number|null} [userid] LoginOut userid
          */
 
         /**
-         * Constructs a new LoginOutReq.
+         * Constructs a new LoginOut.
          * @memberof gamereq
-         * @classdesc Represents a LoginOutReq.
-         * @implements ILoginOutReq
+         * @classdesc Represents a LoginOut.
+         * @implements ILoginOut
          * @constructor
-         * @param {gamereq.ILoginOutReq=} [properties] Properties to set
+         * @param {gamereq.ILoginOut=} [properties] Properties to set
          */
-        function LoginOutReq(properties) {
+        function LoginOut(properties) {
             if (properties)
                 for (var keys = Object.keys(properties), i = 0; i < keys.length; ++i)
                     if (properties[keys[i]] != null)
@@ -535,75 +454,75 @@ $root.gamereq = (function() {
         }
 
         /**
-         * LoginOutReq userid.
+         * LoginOut userid.
          * @member {number} userid
-         * @memberof gamereq.LoginOutReq
+         * @memberof gamereq.LoginOut
          * @instance
          */
-        LoginOutReq.prototype.userid = 0;
+        LoginOut.prototype.userid = 0;
 
         /**
-         * Creates a new LoginOutReq instance using the specified properties.
+         * Creates a new LoginOut instance using the specified properties.
          * @function create
-         * @memberof gamereq.LoginOutReq
+         * @memberof gamereq.LoginOut
          * @static
-         * @param {gamereq.ILoginOutReq=} [properties] Properties to set
-         * @returns {gamereq.LoginOutReq} LoginOutReq instance
+         * @param {gamereq.ILoginOut=} [properties] Properties to set
+         * @returns {gamereq.LoginOut} LoginOut instance
          */
-        LoginOutReq.create = function create(properties) {
-            return new LoginOutReq(properties);
+        LoginOut.create = function create(properties) {
+            return new LoginOut(properties);
         };
 
         /**
-         * Encodes the specified LoginOutReq message. Does not implicitly {@link gamereq.LoginOutReq.verify|verify} messages.
+         * Encodes the specified LoginOut message. Does not implicitly {@link gamereq.LoginOut.verify|verify} messages.
          * @function encode
-         * @memberof gamereq.LoginOutReq
+         * @memberof gamereq.LoginOut
          * @static
-         * @param {gamereq.ILoginOutReq} message LoginOutReq message or plain object to encode
+         * @param {gamereq.ILoginOut} message LoginOut message or plain object to encode
          * @param {$protobuf.Writer} [writer] Writer to encode to
          * @returns {$protobuf.Writer} Writer
          */
-        LoginOutReq.encode = function encode(message, writer) {
+        LoginOut.encode = function encode(message, writer) {
             if (!writer)
                 writer = $Writer.create();
             if (message.userid != null && Object.hasOwnProperty.call(message, "userid"))
-                writer.uint32(/* id 1, wireType 0 =*/8).int32(message.userid);
+                writer.uint32(/* id 1, wireType 0 =*/8).uint32(message.userid);
             return writer;
         };
 
         /**
-         * Encodes the specified LoginOutReq message, length delimited. Does not implicitly {@link gamereq.LoginOutReq.verify|verify} messages.
+         * Encodes the specified LoginOut message, length delimited. Does not implicitly {@link gamereq.LoginOut.verify|verify} messages.
          * @function encodeDelimited
-         * @memberof gamereq.LoginOutReq
+         * @memberof gamereq.LoginOut
          * @static
-         * @param {gamereq.ILoginOutReq} message LoginOutReq message or plain object to encode
+         * @param {gamereq.ILoginOut} message LoginOut message or plain object to encode
          * @param {$protobuf.Writer} [writer] Writer to encode to
          * @returns {$protobuf.Writer} Writer
          */
-        LoginOutReq.encodeDelimited = function encodeDelimited(message, writer) {
+        LoginOut.encodeDelimited = function encodeDelimited(message, writer) {
             return this.encode(message, writer).ldelim();
         };
 
         /**
-         * Decodes a LoginOutReq message from the specified reader or buffer.
+         * Decodes a LoginOut message from the specified reader or buffer.
          * @function decode
-         * @memberof gamereq.LoginOutReq
+         * @memberof gamereq.LoginOut
          * @static
          * @param {$protobuf.Reader|Uint8Array} reader Reader or buffer to decode from
          * @param {number} [length] Message length if known beforehand
-         * @returns {gamereq.LoginOutReq} LoginOutReq
+         * @returns {gamereq.LoginOut} LoginOut
          * @throws {Error} If the payload is not a reader or valid buffer
          * @throws {$protobuf.util.ProtocolError} If required fields are missing
          */
-        LoginOutReq.decode = function decode(reader, length) {
+        LoginOut.decode = function decode(reader, length) {
             if (!(reader instanceof $Reader))
                 reader = $Reader.create(reader);
-            var end = length === undefined ? reader.len : reader.pos + length, message = new $root.gamereq.LoginOutReq();
+            var end = length === undefined ? reader.len : reader.pos + length, message = new $root.gamereq.LoginOut();
             while (reader.pos < end) {
                 var tag = reader.uint32();
                 switch (tag >>> 3) {
                 case 1:
-                    message.userid = reader.int32();
+                    message.userid = reader.uint32();
                     break;
                 default:
                     reader.skipType(tag & 7);
@@ -614,30 +533,30 @@ $root.gamereq = (function() {
         };
 
         /**
-         * Decodes a LoginOutReq message from the specified reader or buffer, length delimited.
+         * Decodes a LoginOut message from the specified reader or buffer, length delimited.
          * @function decodeDelimited
-         * @memberof gamereq.LoginOutReq
+         * @memberof gamereq.LoginOut
          * @static
          * @param {$protobuf.Reader|Uint8Array} reader Reader or buffer to decode from
-         * @returns {gamereq.LoginOutReq} LoginOutReq
+         * @returns {gamereq.LoginOut} LoginOut
          * @throws {Error} If the payload is not a reader or valid buffer
          * @throws {$protobuf.util.ProtocolError} If required fields are missing
          */
-        LoginOutReq.decodeDelimited = function decodeDelimited(reader) {
+        LoginOut.decodeDelimited = function decodeDelimited(reader) {
             if (!(reader instanceof $Reader))
                 reader = new $Reader(reader);
             return this.decode(reader, reader.uint32());
         };
 
         /**
-         * Verifies a LoginOutReq message.
+         * Verifies a LoginOut message.
          * @function verify
-         * @memberof gamereq.LoginOutReq
+         * @memberof gamereq.LoginOut
          * @static
          * @param {Object.<string,*>} message Plain object to verify
          * @returns {string|null} `null` if valid, otherwise the reason why it is not
          */
-        LoginOutReq.verify = function verify(message) {
+        LoginOut.verify = function verify(message) {
             if (typeof message !== "object" || message === null)
                 return "object expected";
             if (message.userid != null && message.hasOwnProperty("userid"))
@@ -647,32 +566,32 @@ $root.gamereq = (function() {
         };
 
         /**
-         * Creates a LoginOutReq message from a plain object. Also converts values to their respective internal types.
+         * Creates a LoginOut message from a plain object. Also converts values to their respective internal types.
          * @function fromObject
-         * @memberof gamereq.LoginOutReq
+         * @memberof gamereq.LoginOut
          * @static
          * @param {Object.<string,*>} object Plain object
-         * @returns {gamereq.LoginOutReq} LoginOutReq
+         * @returns {gamereq.LoginOut} LoginOut
          */
-        LoginOutReq.fromObject = function fromObject(object) {
-            if (object instanceof $root.gamereq.LoginOutReq)
+        LoginOut.fromObject = function fromObject(object) {
+            if (object instanceof $root.gamereq.LoginOut)
                 return object;
-            var message = new $root.gamereq.LoginOutReq();
+            var message = new $root.gamereq.LoginOut();
             if (object.userid != null)
-                message.userid = object.userid | 0;
+                message.userid = object.userid >>> 0;
             return message;
         };
 
         /**
-         * Creates a plain object from a LoginOutReq message. Also converts values to other types if specified.
+         * Creates a plain object from a LoginOut message. Also converts values to other types if specified.
          * @function toObject
-         * @memberof gamereq.LoginOutReq
+         * @memberof gamereq.LoginOut
          * @static
-         * @param {gamereq.LoginOutReq} message LoginOutReq
+         * @param {gamereq.LoginOut} message LoginOut
          * @param {$protobuf.IConversionOptions} [options] Conversion options
          * @returns {Object.<string,*>} Plain object
          */
-        LoginOutReq.toObject = function toObject(message, options) {
+        LoginOut.toObject = function toObject(message, options) {
             if (!options)
                 options = {};
             var object = {};
@@ -684,17 +603,17 @@ $root.gamereq = (function() {
         };
 
         /**
-         * Converts this LoginOutReq to JSON.
+         * Converts this LoginOut to JSON.
          * @function toJSON
-         * @memberof gamereq.LoginOutReq
+         * @memberof gamereq.LoginOut
          * @instance
          * @returns {Object.<string,*>} JSON object
          */
-        LoginOutReq.prototype.toJSON = function toJSON() {
+        LoginOut.prototype.toJSON = function toJSON() {
             return this.constructor.toObject(this, $protobuf.util.toJSONOptions);
         };
 
-        return LoginOutReq;
+        return LoginOut;
     })();
 
     gamereq.UserInfo = (function() {
@@ -754,7 +673,7 @@ $root.gamereq = (function() {
             if (!writer)
                 writer = $Writer.create();
             if (message.userid != null && Object.hasOwnProperty.call(message, "userid"))
-                writer.uint32(/* id 1, wireType 0 =*/8).int32(message.userid);
+                writer.uint32(/* id 1, wireType 0 =*/8).uint32(message.userid);
             return writer;
         };
 
@@ -790,7 +709,7 @@ $root.gamereq = (function() {
                 var tag = reader.uint32();
                 switch (tag >>> 3) {
                 case 1:
-                    message.userid = reader.int32();
+                    message.userid = reader.uint32();
                     break;
                 default:
                     reader.skipType(tag & 7);
@@ -846,7 +765,7 @@ $root.gamereq = (function() {
                 return object;
             var message = new $root.gamereq.UserInfo();
             if (object.userid != null)
-                message.userid = object.userid | 0;
+                message.userid = object.userid >>> 0;
             return message;
         };
 
@@ -959,11 +878,11 @@ $root.gamereq = (function() {
             if (!writer)
                 writer = $Writer.create();
             if (message.roomid != null && Object.hasOwnProperty.call(message, "roomid"))
-                writer.uint32(/* id 1, wireType 0 =*/8).int32(message.roomid);
+                writer.uint32(/* id 1, wireType 0 =*/8).uint32(message.roomid);
             if (message.playerno != null && Object.hasOwnProperty.call(message, "playerno"))
-                writer.uint32(/* id 2, wireType 0 =*/16).int32(message.playerno);
+                writer.uint32(/* id 2, wireType 0 =*/16).uint32(message.playerno);
             if (message.userid != null && Object.hasOwnProperty.call(message, "userid"))
-                writer.uint32(/* id 3, wireType 0 =*/24).int32(message.userid);
+                writer.uint32(/* id 3, wireType 0 =*/24).uint32(message.userid);
             return writer;
         };
 
@@ -999,13 +918,13 @@ $root.gamereq = (function() {
                 var tag = reader.uint32();
                 switch (tag >>> 3) {
                 case 1:
-                    message.roomid = reader.int32();
+                    message.roomid = reader.uint32();
                     break;
                 case 2:
-                    message.playerno = reader.int32();
+                    message.playerno = reader.uint32();
                     break;
                 case 3:
-                    message.userid = reader.int32();
+                    message.userid = reader.uint32();
                     break;
                 default:
                     reader.skipType(tag & 7);
@@ -1067,11 +986,11 @@ $root.gamereq = (function() {
                 return object;
             var message = new $root.gamereq.RoomPlayerInfo();
             if (object.roomid != null)
-                message.roomid = object.roomid | 0;
+                message.roomid = object.roomid >>> 0;
             if (object.playerno != null)
-                message.playerno = object.playerno | 0;
+                message.playerno = object.playerno >>> 0;
             if (object.userid != null)
-                message.userid = object.userid | 0;
+                message.userid = object.userid >>> 0;
             return message;
         };
 
@@ -1116,25 +1035,25 @@ $root.gamereq = (function() {
         return RoomPlayerInfo;
     })();
 
-    gamereq.RoomOperation = (function() {
+    gamereq.MenuSwitchInfo = (function() {
 
         /**
-         * Properties of a RoomOperation.
+         * Properties of a MenuSwitchInfo.
          * @memberof gamereq
-         * @interface IRoomOperation
-         * @property {gamereq.IRoomPlayerInfo|null} [where] RoomOperation where
-         * @property {boolean|null} [success] RoomOperation success
+         * @interface IMenuSwitchInfo
+         * @property {gamereq.IRoomPlayerInfo|null} [where] MenuSwitchInfo where
+         * @property {number|null} [index] MenuSwitchInfo index
          */
 
         /**
-         * Constructs a new RoomOperation.
+         * Constructs a new MenuSwitchInfo.
          * @memberof gamereq
-         * @classdesc Represents a RoomOperation.
-         * @implements IRoomOperation
+         * @classdesc Represents a MenuSwitchInfo.
+         * @implements IMenuSwitchInfo
          * @constructor
-         * @param {gamereq.IRoomOperation=} [properties] Properties to set
+         * @param {gamereq.IMenuSwitchInfo=} [properties] Properties to set
          */
-        function RoomOperation(properties) {
+        function MenuSwitchInfo(properties) {
             if (properties)
                 for (var keys = Object.keys(properties), i = 0; i < keys.length; ++i)
                     if (properties[keys[i]] != null)
@@ -1142,80 +1061,80 @@ $root.gamereq = (function() {
         }
 
         /**
-         * RoomOperation where.
+         * MenuSwitchInfo where.
          * @member {gamereq.IRoomPlayerInfo|null|undefined} where
-         * @memberof gamereq.RoomOperation
+         * @memberof gamereq.MenuSwitchInfo
          * @instance
          */
-        RoomOperation.prototype.where = null;
+        MenuSwitchInfo.prototype.where = null;
 
         /**
-         * RoomOperation success.
-         * @member {boolean} success
-         * @memberof gamereq.RoomOperation
+         * MenuSwitchInfo index.
+         * @member {number} index
+         * @memberof gamereq.MenuSwitchInfo
          * @instance
          */
-        RoomOperation.prototype.success = false;
+        MenuSwitchInfo.prototype.index = 0;
 
         /**
-         * Creates a new RoomOperation instance using the specified properties.
+         * Creates a new MenuSwitchInfo instance using the specified properties.
          * @function create
-         * @memberof gamereq.RoomOperation
+         * @memberof gamereq.MenuSwitchInfo
          * @static
-         * @param {gamereq.IRoomOperation=} [properties] Properties to set
-         * @returns {gamereq.RoomOperation} RoomOperation instance
+         * @param {gamereq.IMenuSwitchInfo=} [properties] Properties to set
+         * @returns {gamereq.MenuSwitchInfo} MenuSwitchInfo instance
          */
-        RoomOperation.create = function create(properties) {
-            return new RoomOperation(properties);
+        MenuSwitchInfo.create = function create(properties) {
+            return new MenuSwitchInfo(properties);
         };
 
         /**
-         * Encodes the specified RoomOperation message. Does not implicitly {@link gamereq.RoomOperation.verify|verify} messages.
+         * Encodes the specified MenuSwitchInfo message. Does not implicitly {@link gamereq.MenuSwitchInfo.verify|verify} messages.
          * @function encode
-         * @memberof gamereq.RoomOperation
+         * @memberof gamereq.MenuSwitchInfo
          * @static
-         * @param {gamereq.IRoomOperation} message RoomOperation message or plain object to encode
+         * @param {gamereq.IMenuSwitchInfo} message MenuSwitchInfo message or plain object to encode
          * @param {$protobuf.Writer} [writer] Writer to encode to
          * @returns {$protobuf.Writer} Writer
          */
-        RoomOperation.encode = function encode(message, writer) {
+        MenuSwitchInfo.encode = function encode(message, writer) {
             if (!writer)
                 writer = $Writer.create();
             if (message.where != null && Object.hasOwnProperty.call(message, "where"))
                 $root.gamereq.RoomPlayerInfo.encode(message.where, writer.uint32(/* id 1, wireType 2 =*/10).fork()).ldelim();
-            if (message.success != null && Object.hasOwnProperty.call(message, "success"))
-                writer.uint32(/* id 2, wireType 0 =*/16).bool(message.success);
+            if (message.index != null && Object.hasOwnProperty.call(message, "index"))
+                writer.uint32(/* id 2, wireType 0 =*/16).uint32(message.index);
             return writer;
         };
 
         /**
-         * Encodes the specified RoomOperation message, length delimited. Does not implicitly {@link gamereq.RoomOperation.verify|verify} messages.
+         * Encodes the specified MenuSwitchInfo message, length delimited. Does not implicitly {@link gamereq.MenuSwitchInfo.verify|verify} messages.
          * @function encodeDelimited
-         * @memberof gamereq.RoomOperation
+         * @memberof gamereq.MenuSwitchInfo
          * @static
-         * @param {gamereq.IRoomOperation} message RoomOperation message or plain object to encode
+         * @param {gamereq.IMenuSwitchInfo} message MenuSwitchInfo message or plain object to encode
          * @param {$protobuf.Writer} [writer] Writer to encode to
          * @returns {$protobuf.Writer} Writer
          */
-        RoomOperation.encodeDelimited = function encodeDelimited(message, writer) {
+        MenuSwitchInfo.encodeDelimited = function encodeDelimited(message, writer) {
             return this.encode(message, writer).ldelim();
         };
 
         /**
-         * Decodes a RoomOperation message from the specified reader or buffer.
+         * Decodes a MenuSwitchInfo message from the specified reader or buffer.
          * @function decode
-         * @memberof gamereq.RoomOperation
+         * @memberof gamereq.MenuSwitchInfo
          * @static
          * @param {$protobuf.Reader|Uint8Array} reader Reader or buffer to decode from
          * @param {number} [length] Message length if known beforehand
-         * @returns {gamereq.RoomOperation} RoomOperation
+         * @returns {gamereq.MenuSwitchInfo} MenuSwitchInfo
          * @throws {Error} If the payload is not a reader or valid buffer
          * @throws {$protobuf.util.ProtocolError} If required fields are missing
          */
-        RoomOperation.decode = function decode(reader, length) {
+        MenuSwitchInfo.decode = function decode(reader, length) {
             if (!(reader instanceof $Reader))
                 reader = $Reader.create(reader);
-            var end = length === undefined ? reader.len : reader.pos + length, message = new $root.gamereq.RoomOperation();
+            var end = length === undefined ? reader.len : reader.pos + length, message = new $root.gamereq.MenuSwitchInfo();
             while (reader.pos < end) {
                 var tag = reader.uint32();
                 switch (tag >>> 3) {
@@ -1223,7 +1142,7 @@ $root.gamereq = (function() {
                     message.where = $root.gamereq.RoomPlayerInfo.decode(reader, reader.uint32());
                     break;
                 case 2:
-                    message.success = reader.bool();
+                    message.index = reader.uint32();
                     break;
                 default:
                     reader.skipType(tag & 7);
@@ -1234,30 +1153,30 @@ $root.gamereq = (function() {
         };
 
         /**
-         * Decodes a RoomOperation message from the specified reader or buffer, length delimited.
+         * Decodes a MenuSwitchInfo message from the specified reader or buffer, length delimited.
          * @function decodeDelimited
-         * @memberof gamereq.RoomOperation
+         * @memberof gamereq.MenuSwitchInfo
          * @static
          * @param {$protobuf.Reader|Uint8Array} reader Reader or buffer to decode from
-         * @returns {gamereq.RoomOperation} RoomOperation
+         * @returns {gamereq.MenuSwitchInfo} MenuSwitchInfo
          * @throws {Error} If the payload is not a reader or valid buffer
          * @throws {$protobuf.util.ProtocolError} If required fields are missing
          */
-        RoomOperation.decodeDelimited = function decodeDelimited(reader) {
+        MenuSwitchInfo.decodeDelimited = function decodeDelimited(reader) {
             if (!(reader instanceof $Reader))
                 reader = new $Reader(reader);
             return this.decode(reader, reader.uint32());
         };
 
         /**
-         * Verifies a RoomOperation message.
+         * Verifies a MenuSwitchInfo message.
          * @function verify
-         * @memberof gamereq.RoomOperation
+         * @memberof gamereq.MenuSwitchInfo
          * @static
          * @param {Object.<string,*>} message Plain object to verify
          * @returns {string|null} `null` if valid, otherwise the reason why it is not
          */
-        RoomOperation.verify = function verify(message) {
+        MenuSwitchInfo.verify = function verify(message) {
             if (typeof message !== "object" || message === null)
                 return "object expected";
             if (message.where != null && message.hasOwnProperty("where")) {
@@ -1265,91 +1184,91 @@ $root.gamereq = (function() {
                 if (error)
                     return "where." + error;
             }
-            if (message.success != null && message.hasOwnProperty("success"))
-                if (typeof message.success !== "boolean")
-                    return "success: boolean expected";
+            if (message.index != null && message.hasOwnProperty("index"))
+                if (!$util.isInteger(message.index))
+                    return "index: integer expected";
             return null;
         };
 
         /**
-         * Creates a RoomOperation message from a plain object. Also converts values to their respective internal types.
+         * Creates a MenuSwitchInfo message from a plain object. Also converts values to their respective internal types.
          * @function fromObject
-         * @memberof gamereq.RoomOperation
+         * @memberof gamereq.MenuSwitchInfo
          * @static
          * @param {Object.<string,*>} object Plain object
-         * @returns {gamereq.RoomOperation} RoomOperation
+         * @returns {gamereq.MenuSwitchInfo} MenuSwitchInfo
          */
-        RoomOperation.fromObject = function fromObject(object) {
-            if (object instanceof $root.gamereq.RoomOperation)
+        MenuSwitchInfo.fromObject = function fromObject(object) {
+            if (object instanceof $root.gamereq.MenuSwitchInfo)
                 return object;
-            var message = new $root.gamereq.RoomOperation();
+            var message = new $root.gamereq.MenuSwitchInfo();
             if (object.where != null) {
                 if (typeof object.where !== "object")
-                    throw TypeError(".gamereq.RoomOperation.where: object expected");
+                    throw TypeError(".gamereq.MenuSwitchInfo.where: object expected");
                 message.where = $root.gamereq.RoomPlayerInfo.fromObject(object.where);
             }
-            if (object.success != null)
-                message.success = Boolean(object.success);
+            if (object.index != null)
+                message.index = object.index >>> 0;
             return message;
         };
 
         /**
-         * Creates a plain object from a RoomOperation message. Also converts values to other types if specified.
+         * Creates a plain object from a MenuSwitchInfo message. Also converts values to other types if specified.
          * @function toObject
-         * @memberof gamereq.RoomOperation
+         * @memberof gamereq.MenuSwitchInfo
          * @static
-         * @param {gamereq.RoomOperation} message RoomOperation
+         * @param {gamereq.MenuSwitchInfo} message MenuSwitchInfo
          * @param {$protobuf.IConversionOptions} [options] Conversion options
          * @returns {Object.<string,*>} Plain object
          */
-        RoomOperation.toObject = function toObject(message, options) {
+        MenuSwitchInfo.toObject = function toObject(message, options) {
             if (!options)
                 options = {};
             var object = {};
             if (options.defaults) {
                 object.where = null;
-                object.success = false;
+                object.index = 0;
             }
             if (message.where != null && message.hasOwnProperty("where"))
                 object.where = $root.gamereq.RoomPlayerInfo.toObject(message.where, options);
-            if (message.success != null && message.hasOwnProperty("success"))
-                object.success = message.success;
+            if (message.index != null && message.hasOwnProperty("index"))
+                object.index = message.index;
             return object;
         };
 
         /**
-         * Converts this RoomOperation to JSON.
+         * Converts this MenuSwitchInfo to JSON.
          * @function toJSON
-         * @memberof gamereq.RoomOperation
+         * @memberof gamereq.MenuSwitchInfo
          * @instance
          * @returns {Object.<string,*>} JSON object
          */
-        RoomOperation.prototype.toJSON = function toJSON() {
+        MenuSwitchInfo.prototype.toJSON = function toJSON() {
             return this.constructor.toObject(this, $protobuf.util.toJSONOptions);
         };
 
-        return RoomOperation;
+        return MenuSwitchInfo;
     })();
 
-    gamereq.GameOperation = (function() {
+    gamereq.MenuChooseInfo = (function() {
 
         /**
-         * Properties of a GameOperation.
+         * Properties of a MenuChooseInfo.
          * @memberof gamereq
-         * @interface IGameOperation
-         * @property {number|null} [key] GameOperation key
-         * @property {number|null} [event] GameOperation event
+         * @interface IMenuChooseInfo
+         * @property {gamereq.IRoomPlayerInfo|null} [where] MenuChooseInfo where
+         * @property {number|null} [index] MenuChooseInfo index
          */
 
         /**
-         * Constructs a new GameOperation.
+         * Constructs a new MenuChooseInfo.
          * @memberof gamereq
-         * @classdesc Represents a GameOperation.
-         * @implements IGameOperation
+         * @classdesc Represents a MenuChooseInfo.
+         * @implements IMenuChooseInfo
          * @constructor
-         * @param {gamereq.IGameOperation=} [properties] Properties to set
+         * @param {gamereq.IMenuChooseInfo=} [properties] Properties to set
          */
-        function GameOperation(properties) {
+        function MenuChooseInfo(properties) {
             if (properties)
                 for (var keys = Object.keys(properties), i = 0; i < keys.length; ++i)
                     if (properties[keys[i]] != null)
@@ -1357,88 +1276,88 @@ $root.gamereq = (function() {
         }
 
         /**
-         * GameOperation key.
-         * @member {number} key
-         * @memberof gamereq.GameOperation
+         * MenuChooseInfo where.
+         * @member {gamereq.IRoomPlayerInfo|null|undefined} where
+         * @memberof gamereq.MenuChooseInfo
          * @instance
          */
-        GameOperation.prototype.key = 0;
+        MenuChooseInfo.prototype.where = null;
 
         /**
-         * GameOperation event.
-         * @member {number} event
-         * @memberof gamereq.GameOperation
+         * MenuChooseInfo index.
+         * @member {number} index
+         * @memberof gamereq.MenuChooseInfo
          * @instance
          */
-        GameOperation.prototype.event = 0;
+        MenuChooseInfo.prototype.index = 0;
 
         /**
-         * Creates a new GameOperation instance using the specified properties.
+         * Creates a new MenuChooseInfo instance using the specified properties.
          * @function create
-         * @memberof gamereq.GameOperation
+         * @memberof gamereq.MenuChooseInfo
          * @static
-         * @param {gamereq.IGameOperation=} [properties] Properties to set
-         * @returns {gamereq.GameOperation} GameOperation instance
+         * @param {gamereq.IMenuChooseInfo=} [properties] Properties to set
+         * @returns {gamereq.MenuChooseInfo} MenuChooseInfo instance
          */
-        GameOperation.create = function create(properties) {
-            return new GameOperation(properties);
+        MenuChooseInfo.create = function create(properties) {
+            return new MenuChooseInfo(properties);
         };
 
         /**
-         * Encodes the specified GameOperation message. Does not implicitly {@link gamereq.GameOperation.verify|verify} messages.
+         * Encodes the specified MenuChooseInfo message. Does not implicitly {@link gamereq.MenuChooseInfo.verify|verify} messages.
          * @function encode
-         * @memberof gamereq.GameOperation
+         * @memberof gamereq.MenuChooseInfo
          * @static
-         * @param {gamereq.IGameOperation} message GameOperation message or plain object to encode
+         * @param {gamereq.IMenuChooseInfo} message MenuChooseInfo message or plain object to encode
          * @param {$protobuf.Writer} [writer] Writer to encode to
          * @returns {$protobuf.Writer} Writer
          */
-        GameOperation.encode = function encode(message, writer) {
+        MenuChooseInfo.encode = function encode(message, writer) {
             if (!writer)
                 writer = $Writer.create();
-            if (message.key != null && Object.hasOwnProperty.call(message, "key"))
-                writer.uint32(/* id 1, wireType 0 =*/8).int32(message.key);
-            if (message.event != null && Object.hasOwnProperty.call(message, "event"))
-                writer.uint32(/* id 2, wireType 0 =*/16).int32(message.event);
+            if (message.where != null && Object.hasOwnProperty.call(message, "where"))
+                $root.gamereq.RoomPlayerInfo.encode(message.where, writer.uint32(/* id 1, wireType 2 =*/10).fork()).ldelim();
+            if (message.index != null && Object.hasOwnProperty.call(message, "index"))
+                writer.uint32(/* id 2, wireType 0 =*/16).int32(message.index);
             return writer;
         };
 
         /**
-         * Encodes the specified GameOperation message, length delimited. Does not implicitly {@link gamereq.GameOperation.verify|verify} messages.
+         * Encodes the specified MenuChooseInfo message, length delimited. Does not implicitly {@link gamereq.MenuChooseInfo.verify|verify} messages.
          * @function encodeDelimited
-         * @memberof gamereq.GameOperation
+         * @memberof gamereq.MenuChooseInfo
          * @static
-         * @param {gamereq.IGameOperation} message GameOperation message or plain object to encode
+         * @param {gamereq.IMenuChooseInfo} message MenuChooseInfo message or plain object to encode
          * @param {$protobuf.Writer} [writer] Writer to encode to
          * @returns {$protobuf.Writer} Writer
          */
-        GameOperation.encodeDelimited = function encodeDelimited(message, writer) {
+        MenuChooseInfo.encodeDelimited = function encodeDelimited(message, writer) {
             return this.encode(message, writer).ldelim();
         };
 
         /**
-         * Decodes a GameOperation message from the specified reader or buffer.
+         * Decodes a MenuChooseInfo message from the specified reader or buffer.
          * @function decode
-         * @memberof gamereq.GameOperation
+         * @memberof gamereq.MenuChooseInfo
          * @static
          * @param {$protobuf.Reader|Uint8Array} reader Reader or buffer to decode from
          * @param {number} [length] Message length if known beforehand
-         * @returns {gamereq.GameOperation} GameOperation
+         * @returns {gamereq.MenuChooseInfo} MenuChooseInfo
          * @throws {Error} If the payload is not a reader or valid buffer
          * @throws {$protobuf.util.ProtocolError} If required fields are missing
          */
-        GameOperation.decode = function decode(reader, length) {
+        MenuChooseInfo.decode = function decode(reader, length) {
             if (!(reader instanceof $Reader))
                 reader = $Reader.create(reader);
-            var end = length === undefined ? reader.len : reader.pos + length, message = new $root.gamereq.GameOperation();
+            var end = length === undefined ? reader.len : reader.pos + length, message = new $root.gamereq.MenuChooseInfo();
             while (reader.pos < end) {
                 var tag = reader.uint32();
                 switch (tag >>> 3) {
                 case 1:
-                    message.key = reader.int32();
+                    message.where = $root.gamereq.RoomPlayerInfo.decode(reader, reader.uint32());
                     break;
                 case 2:
-                    message.event = reader.int32();
+                    message.index = reader.int32();
                     break;
                 default:
                     reader.skipType(tag & 7);
@@ -1449,96 +1368,338 @@ $root.gamereq = (function() {
         };
 
         /**
-         * Decodes a GameOperation message from the specified reader or buffer, length delimited.
+         * Decodes a MenuChooseInfo message from the specified reader or buffer, length delimited.
          * @function decodeDelimited
-         * @memberof gamereq.GameOperation
+         * @memberof gamereq.MenuChooseInfo
          * @static
          * @param {$protobuf.Reader|Uint8Array} reader Reader or buffer to decode from
-         * @returns {gamereq.GameOperation} GameOperation
+         * @returns {gamereq.MenuChooseInfo} MenuChooseInfo
          * @throws {Error} If the payload is not a reader or valid buffer
          * @throws {$protobuf.util.ProtocolError} If required fields are missing
          */
-        GameOperation.decodeDelimited = function decodeDelimited(reader) {
+        MenuChooseInfo.decodeDelimited = function decodeDelimited(reader) {
             if (!(reader instanceof $Reader))
                 reader = new $Reader(reader);
             return this.decode(reader, reader.uint32());
         };
 
         /**
-         * Verifies a GameOperation message.
+         * Verifies a MenuChooseInfo message.
          * @function verify
-         * @memberof gamereq.GameOperation
+         * @memberof gamereq.MenuChooseInfo
          * @static
          * @param {Object.<string,*>} message Plain object to verify
          * @returns {string|null} `null` if valid, otherwise the reason why it is not
          */
-        GameOperation.verify = function verify(message) {
+        MenuChooseInfo.verify = function verify(message) {
             if (typeof message !== "object" || message === null)
                 return "object expected";
-            if (message.key != null && message.hasOwnProperty("key"))
-                if (!$util.isInteger(message.key))
-                    return "key: integer expected";
-            if (message.event != null && message.hasOwnProperty("event"))
-                if (!$util.isInteger(message.event))
-                    return "event: integer expected";
+            if (message.where != null && message.hasOwnProperty("where")) {
+                var error = $root.gamereq.RoomPlayerInfo.verify(message.where);
+                if (error)
+                    return "where." + error;
+            }
+            if (message.index != null && message.hasOwnProperty("index"))
+                if (!$util.isInteger(message.index))
+                    return "index: integer expected";
             return null;
         };
 
         /**
-         * Creates a GameOperation message from a plain object. Also converts values to their respective internal types.
+         * Creates a MenuChooseInfo message from a plain object. Also converts values to their respective internal types.
          * @function fromObject
-         * @memberof gamereq.GameOperation
+         * @memberof gamereq.MenuChooseInfo
          * @static
          * @param {Object.<string,*>} object Plain object
-         * @returns {gamereq.GameOperation} GameOperation
+         * @returns {gamereq.MenuChooseInfo} MenuChooseInfo
          */
-        GameOperation.fromObject = function fromObject(object) {
-            if (object instanceof $root.gamereq.GameOperation)
+        MenuChooseInfo.fromObject = function fromObject(object) {
+            if (object instanceof $root.gamereq.MenuChooseInfo)
                 return object;
-            var message = new $root.gamereq.GameOperation();
-            if (object.key != null)
-                message.key = object.key | 0;
-            if (object.event != null)
-                message.event = object.event | 0;
+            var message = new $root.gamereq.MenuChooseInfo();
+            if (object.where != null) {
+                if (typeof object.where !== "object")
+                    throw TypeError(".gamereq.MenuChooseInfo.where: object expected");
+                message.where = $root.gamereq.RoomPlayerInfo.fromObject(object.where);
+            }
+            if (object.index != null)
+                message.index = object.index | 0;
             return message;
         };
 
         /**
-         * Creates a plain object from a GameOperation message. Also converts values to other types if specified.
+         * Creates a plain object from a MenuChooseInfo message. Also converts values to other types if specified.
          * @function toObject
-         * @memberof gamereq.GameOperation
+         * @memberof gamereq.MenuChooseInfo
          * @static
-         * @param {gamereq.GameOperation} message GameOperation
+         * @param {gamereq.MenuChooseInfo} message MenuChooseInfo
          * @param {$protobuf.IConversionOptions} [options] Conversion options
          * @returns {Object.<string,*>} Plain object
          */
-        GameOperation.toObject = function toObject(message, options) {
+        MenuChooseInfo.toObject = function toObject(message, options) {
             if (!options)
                 options = {};
             var object = {};
             if (options.defaults) {
-                object.key = 0;
-                object.event = 0;
+                object.where = null;
+                object.index = 0;
             }
-            if (message.key != null && message.hasOwnProperty("key"))
-                object.key = message.key;
-            if (message.event != null && message.hasOwnProperty("event"))
-                object.event = message.event;
+            if (message.where != null && message.hasOwnProperty("where"))
+                object.where = $root.gamereq.RoomPlayerInfo.toObject(message.where, options);
+            if (message.index != null && message.hasOwnProperty("index"))
+                object.index = message.index;
             return object;
         };
 
         /**
-         * Converts this GameOperation to JSON.
+         * Converts this MenuChooseInfo to JSON.
          * @function toJSON
-         * @memberof gamereq.GameOperation
+         * @memberof gamereq.MenuChooseInfo
          * @instance
          * @returns {Object.<string,*>} JSON object
          */
-        GameOperation.prototype.toJSON = function toJSON() {
+        MenuChooseInfo.prototype.toJSON = function toJSON() {
             return this.constructor.toObject(this, $protobuf.util.toJSONOptions);
         };
 
-        return GameOperation;
+        return MenuChooseInfo;
+    })();
+
+    gamereq.GameStartRsp = (function() {
+
+        /**
+         * Properties of a GameStartRsp.
+         * @memberof gamereq
+         * @interface IGameStartRsp
+         * @property {gamereq.IRoomPlayerInfo|null} [where] GameStartRsp where
+         * @property {number|null} [mode] GameStartRsp mode
+         * @property {number|null} [randomseed] GameStartRsp randomseed
+         */
+
+        /**
+         * Constructs a new GameStartRsp.
+         * @memberof gamereq
+         * @classdesc Represents a GameStartRsp.
+         * @implements IGameStartRsp
+         * @constructor
+         * @param {gamereq.IGameStartRsp=} [properties] Properties to set
+         */
+        function GameStartRsp(properties) {
+            if (properties)
+                for (var keys = Object.keys(properties), i = 0; i < keys.length; ++i)
+                    if (properties[keys[i]] != null)
+                        this[keys[i]] = properties[keys[i]];
+        }
+
+        /**
+         * GameStartRsp where.
+         * @member {gamereq.IRoomPlayerInfo|null|undefined} where
+         * @memberof gamereq.GameStartRsp
+         * @instance
+         */
+        GameStartRsp.prototype.where = null;
+
+        /**
+         * GameStartRsp mode.
+         * @member {number} mode
+         * @memberof gamereq.GameStartRsp
+         * @instance
+         */
+        GameStartRsp.prototype.mode = 0;
+
+        /**
+         * GameStartRsp randomseed.
+         * @member {number} randomseed
+         * @memberof gamereq.GameStartRsp
+         * @instance
+         */
+        GameStartRsp.prototype.randomseed = 0;
+
+        /**
+         * Creates a new GameStartRsp instance using the specified properties.
+         * @function create
+         * @memberof gamereq.GameStartRsp
+         * @static
+         * @param {gamereq.IGameStartRsp=} [properties] Properties to set
+         * @returns {gamereq.GameStartRsp} GameStartRsp instance
+         */
+        GameStartRsp.create = function create(properties) {
+            return new GameStartRsp(properties);
+        };
+
+        /**
+         * Encodes the specified GameStartRsp message. Does not implicitly {@link gamereq.GameStartRsp.verify|verify} messages.
+         * @function encode
+         * @memberof gamereq.GameStartRsp
+         * @static
+         * @param {gamereq.IGameStartRsp} message GameStartRsp message or plain object to encode
+         * @param {$protobuf.Writer} [writer] Writer to encode to
+         * @returns {$protobuf.Writer} Writer
+         */
+        GameStartRsp.encode = function encode(message, writer) {
+            if (!writer)
+                writer = $Writer.create();
+            if (message.where != null && Object.hasOwnProperty.call(message, "where"))
+                $root.gamereq.RoomPlayerInfo.encode(message.where, writer.uint32(/* id 1, wireType 2 =*/10).fork()).ldelim();
+            if (message.mode != null && Object.hasOwnProperty.call(message, "mode"))
+                writer.uint32(/* id 2, wireType 0 =*/16).uint32(message.mode);
+            if (message.randomseed != null && Object.hasOwnProperty.call(message, "randomseed"))
+                writer.uint32(/* id 3, wireType 0 =*/24).uint32(message.randomseed);
+            return writer;
+        };
+
+        /**
+         * Encodes the specified GameStartRsp message, length delimited. Does not implicitly {@link gamereq.GameStartRsp.verify|verify} messages.
+         * @function encodeDelimited
+         * @memberof gamereq.GameStartRsp
+         * @static
+         * @param {gamereq.IGameStartRsp} message GameStartRsp message or plain object to encode
+         * @param {$protobuf.Writer} [writer] Writer to encode to
+         * @returns {$protobuf.Writer} Writer
+         */
+        GameStartRsp.encodeDelimited = function encodeDelimited(message, writer) {
+            return this.encode(message, writer).ldelim();
+        };
+
+        /**
+         * Decodes a GameStartRsp message from the specified reader or buffer.
+         * @function decode
+         * @memberof gamereq.GameStartRsp
+         * @static
+         * @param {$protobuf.Reader|Uint8Array} reader Reader or buffer to decode from
+         * @param {number} [length] Message length if known beforehand
+         * @returns {gamereq.GameStartRsp} GameStartRsp
+         * @throws {Error} If the payload is not a reader or valid buffer
+         * @throws {$protobuf.util.ProtocolError} If required fields are missing
+         */
+        GameStartRsp.decode = function decode(reader, length) {
+            if (!(reader instanceof $Reader))
+                reader = $Reader.create(reader);
+            var end = length === undefined ? reader.len : reader.pos + length, message = new $root.gamereq.GameStartRsp();
+            while (reader.pos < end) {
+                var tag = reader.uint32();
+                switch (tag >>> 3) {
+                case 1:
+                    message.where = $root.gamereq.RoomPlayerInfo.decode(reader, reader.uint32());
+                    break;
+                case 2:
+                    message.mode = reader.uint32();
+                    break;
+                case 3:
+                    message.randomseed = reader.uint32();
+                    break;
+                default:
+                    reader.skipType(tag & 7);
+                    break;
+                }
+            }
+            return message;
+        };
+
+        /**
+         * Decodes a GameStartRsp message from the specified reader or buffer, length delimited.
+         * @function decodeDelimited
+         * @memberof gamereq.GameStartRsp
+         * @static
+         * @param {$protobuf.Reader|Uint8Array} reader Reader or buffer to decode from
+         * @returns {gamereq.GameStartRsp} GameStartRsp
+         * @throws {Error} If the payload is not a reader or valid buffer
+         * @throws {$protobuf.util.ProtocolError} If required fields are missing
+         */
+        GameStartRsp.decodeDelimited = function decodeDelimited(reader) {
+            if (!(reader instanceof $Reader))
+                reader = new $Reader(reader);
+            return this.decode(reader, reader.uint32());
+        };
+
+        /**
+         * Verifies a GameStartRsp message.
+         * @function verify
+         * @memberof gamereq.GameStartRsp
+         * @static
+         * @param {Object.<string,*>} message Plain object to verify
+         * @returns {string|null} `null` if valid, otherwise the reason why it is not
+         */
+        GameStartRsp.verify = function verify(message) {
+            if (typeof message !== "object" || message === null)
+                return "object expected";
+            if (message.where != null && message.hasOwnProperty("where")) {
+                var error = $root.gamereq.RoomPlayerInfo.verify(message.where);
+                if (error)
+                    return "where." + error;
+            }
+            if (message.mode != null && message.hasOwnProperty("mode"))
+                if (!$util.isInteger(message.mode))
+                    return "mode: integer expected";
+            if (message.randomseed != null && message.hasOwnProperty("randomseed"))
+                if (!$util.isInteger(message.randomseed))
+                    return "randomseed: integer expected";
+            return null;
+        };
+
+        /**
+         * Creates a GameStartRsp message from a plain object. Also converts values to their respective internal types.
+         * @function fromObject
+         * @memberof gamereq.GameStartRsp
+         * @static
+         * @param {Object.<string,*>} object Plain object
+         * @returns {gamereq.GameStartRsp} GameStartRsp
+         */
+        GameStartRsp.fromObject = function fromObject(object) {
+            if (object instanceof $root.gamereq.GameStartRsp)
+                return object;
+            var message = new $root.gamereq.GameStartRsp();
+            if (object.where != null) {
+                if (typeof object.where !== "object")
+                    throw TypeError(".gamereq.GameStartRsp.where: object expected");
+                message.where = $root.gamereq.RoomPlayerInfo.fromObject(object.where);
+            }
+            if (object.mode != null)
+                message.mode = object.mode >>> 0;
+            if (object.randomseed != null)
+                message.randomseed = object.randomseed >>> 0;
+            return message;
+        };
+
+        /**
+         * Creates a plain object from a GameStartRsp message. Also converts values to other types if specified.
+         * @function toObject
+         * @memberof gamereq.GameStartRsp
+         * @static
+         * @param {gamereq.GameStartRsp} message GameStartRsp
+         * @param {$protobuf.IConversionOptions} [options] Conversion options
+         * @returns {Object.<string,*>} Plain object
+         */
+        GameStartRsp.toObject = function toObject(message, options) {
+            if (!options)
+                options = {};
+            var object = {};
+            if (options.defaults) {
+                object.where = null;
+                object.mode = 0;
+                object.randomseed = 0;
+            }
+            if (message.where != null && message.hasOwnProperty("where"))
+                object.where = $root.gamereq.RoomPlayerInfo.toObject(message.where, options);
+            if (message.mode != null && message.hasOwnProperty("mode"))
+                object.mode = message.mode;
+            if (message.randomseed != null && message.hasOwnProperty("randomseed"))
+                object.randomseed = message.randomseed;
+            return object;
+        };
+
+        /**
+         * Converts this GameStartRsp to JSON.
+         * @function toJSON
+         * @memberof gamereq.GameStartRsp
+         * @instance
+         * @returns {Object.<string,*>} JSON object
+         */
+        GameStartRsp.prototype.toJSON = function toJSON() {
+            return this.constructor.toObject(this, $protobuf.util.toJSONOptions);
+        };
+
+        return GameStartRsp;
     })();
 
     gamereq.UserOperation = (function() {
@@ -1547,8 +1708,8 @@ $root.gamereq = (function() {
          * Properties of a UserOperation.
          * @memberof gamereq
          * @interface IUserOperation
-         * @property {gamereq.IRoomPlayerInfo|null} [where] UserOperation where
-         * @property {gamereq.IGameOperation|null} [ope] UserOperation ope
+         * @property {number|null} [playerno] UserOperation playerno
+         * @property {number|null} [opecode] UserOperation opecode
          */
 
         /**
@@ -1567,20 +1728,20 @@ $root.gamereq = (function() {
         }
 
         /**
-         * UserOperation where.
-         * @member {gamereq.IRoomPlayerInfo|null|undefined} where
+         * UserOperation playerno.
+         * @member {number} playerno
          * @memberof gamereq.UserOperation
          * @instance
          */
-        UserOperation.prototype.where = null;
+        UserOperation.prototype.playerno = 0;
 
         /**
-         * UserOperation ope.
-         * @member {gamereq.IGameOperation|null|undefined} ope
+         * UserOperation opecode.
+         * @member {number} opecode
          * @memberof gamereq.UserOperation
          * @instance
          */
-        UserOperation.prototype.ope = null;
+        UserOperation.prototype.opecode = 0;
 
         /**
          * Creates a new UserOperation instance using the specified properties.
@@ -1606,10 +1767,10 @@ $root.gamereq = (function() {
         UserOperation.encode = function encode(message, writer) {
             if (!writer)
                 writer = $Writer.create();
-            if (message.where != null && Object.hasOwnProperty.call(message, "where"))
-                $root.gamereq.RoomPlayerInfo.encode(message.where, writer.uint32(/* id 1, wireType 2 =*/10).fork()).ldelim();
-            if (message.ope != null && Object.hasOwnProperty.call(message, "ope"))
-                $root.gamereq.GameOperation.encode(message.ope, writer.uint32(/* id 2, wireType 2 =*/18).fork()).ldelim();
+            if (message.playerno != null && Object.hasOwnProperty.call(message, "playerno"))
+                writer.uint32(/* id 1, wireType 0 =*/8).uint32(message.playerno);
+            if (message.opecode != null && Object.hasOwnProperty.call(message, "opecode"))
+                writer.uint32(/* id 2, wireType 0 =*/16).uint32(message.opecode);
             return writer;
         };
 
@@ -1645,10 +1806,10 @@ $root.gamereq = (function() {
                 var tag = reader.uint32();
                 switch (tag >>> 3) {
                 case 1:
-                    message.where = $root.gamereq.RoomPlayerInfo.decode(reader, reader.uint32());
+                    message.playerno = reader.uint32();
                     break;
                 case 2:
-                    message.ope = $root.gamereq.GameOperation.decode(reader, reader.uint32());
+                    message.opecode = reader.uint32();
                     break;
                 default:
                     reader.skipType(tag & 7);
@@ -1685,16 +1846,12 @@ $root.gamereq = (function() {
         UserOperation.verify = function verify(message) {
             if (typeof message !== "object" || message === null)
                 return "object expected";
-            if (message.where != null && message.hasOwnProperty("where")) {
-                var error = $root.gamereq.RoomPlayerInfo.verify(message.where);
-                if (error)
-                    return "where." + error;
-            }
-            if (message.ope != null && message.hasOwnProperty("ope")) {
-                var error = $root.gamereq.GameOperation.verify(message.ope);
-                if (error)
-                    return "ope." + error;
-            }
+            if (message.playerno != null && message.hasOwnProperty("playerno"))
+                if (!$util.isInteger(message.playerno))
+                    return "playerno: integer expected";
+            if (message.opecode != null && message.hasOwnProperty("opecode"))
+                if (!$util.isInteger(message.opecode))
+                    return "opecode: integer expected";
             return null;
         };
 
@@ -1710,16 +1867,10 @@ $root.gamereq = (function() {
             if (object instanceof $root.gamereq.UserOperation)
                 return object;
             var message = new $root.gamereq.UserOperation();
-            if (object.where != null) {
-                if (typeof object.where !== "object")
-                    throw TypeError(".gamereq.UserOperation.where: object expected");
-                message.where = $root.gamereq.RoomPlayerInfo.fromObject(object.where);
-            }
-            if (object.ope != null) {
-                if (typeof object.ope !== "object")
-                    throw TypeError(".gamereq.UserOperation.ope: object expected");
-                message.ope = $root.gamereq.GameOperation.fromObject(object.ope);
-            }
+            if (object.playerno != null)
+                message.playerno = object.playerno >>> 0;
+            if (object.opecode != null)
+                message.opecode = object.opecode >>> 0;
             return message;
         };
 
@@ -1737,13 +1888,13 @@ $root.gamereq = (function() {
                 options = {};
             var object = {};
             if (options.defaults) {
-                object.where = null;
-                object.ope = null;
+                object.playerno = 0;
+                object.opecode = 0;
             }
-            if (message.where != null && message.hasOwnProperty("where"))
-                object.where = $root.gamereq.RoomPlayerInfo.toObject(message.where, options);
-            if (message.ope != null && message.hasOwnProperty("ope"))
-                object.ope = $root.gamereq.GameOperation.toObject(message.ope, options);
+            if (message.playerno != null && message.hasOwnProperty("playerno"))
+                object.playerno = message.playerno;
+            if (message.opecode != null && message.hasOwnProperty("opecode"))
+                object.opecode = message.opecode;
             return object;
         };
 
@@ -1761,25 +1912,284 @@ $root.gamereq = (function() {
         return UserOperation;
     })();
 
-    gamereq.GameFrame = (function() {
+    gamereq.GameFrameReq = (function() {
 
         /**
-         * Properties of a GameFrame.
+         * Properties of a GameFrameReq.
          * @memberof gamereq
-         * @interface IGameFrame
-         * @property {number|null} [frame] GameFrame frame
-         * @property {Array.<gamereq.IUserOperation>|null} [useropes] GameFrame useropes
+         * @interface IGameFrameReq
+         * @property {number|null} [roomid] GameFrameReq roomid
+         * @property {number|null} [userid] GameFrameReq userid
+         * @property {number|null} [frame] GameFrameReq frame
+         * @property {gamereq.IUserOperation|null} [userope] GameFrameReq userope
          */
 
         /**
-         * Constructs a new GameFrame.
+         * Constructs a new GameFrameReq.
          * @memberof gamereq
-         * @classdesc Represents a GameFrame.
-         * @implements IGameFrame
+         * @classdesc Represents a GameFrameReq.
+         * @implements IGameFrameReq
          * @constructor
-         * @param {gamereq.IGameFrame=} [properties] Properties to set
+         * @param {gamereq.IGameFrameReq=} [properties] Properties to set
          */
-        function GameFrame(properties) {
+        function GameFrameReq(properties) {
+            if (properties)
+                for (var keys = Object.keys(properties), i = 0; i < keys.length; ++i)
+                    if (properties[keys[i]] != null)
+                        this[keys[i]] = properties[keys[i]];
+        }
+
+        /**
+         * GameFrameReq roomid.
+         * @member {number} roomid
+         * @memberof gamereq.GameFrameReq
+         * @instance
+         */
+        GameFrameReq.prototype.roomid = 0;
+
+        /**
+         * GameFrameReq userid.
+         * @member {number} userid
+         * @memberof gamereq.GameFrameReq
+         * @instance
+         */
+        GameFrameReq.prototype.userid = 0;
+
+        /**
+         * GameFrameReq frame.
+         * @member {number} frame
+         * @memberof gamereq.GameFrameReq
+         * @instance
+         */
+        GameFrameReq.prototype.frame = 0;
+
+        /**
+         * GameFrameReq userope.
+         * @member {gamereq.IUserOperation|null|undefined} userope
+         * @memberof gamereq.GameFrameReq
+         * @instance
+         */
+        GameFrameReq.prototype.userope = null;
+
+        /**
+         * Creates a new GameFrameReq instance using the specified properties.
+         * @function create
+         * @memberof gamereq.GameFrameReq
+         * @static
+         * @param {gamereq.IGameFrameReq=} [properties] Properties to set
+         * @returns {gamereq.GameFrameReq} GameFrameReq instance
+         */
+        GameFrameReq.create = function create(properties) {
+            return new GameFrameReq(properties);
+        };
+
+        /**
+         * Encodes the specified GameFrameReq message. Does not implicitly {@link gamereq.GameFrameReq.verify|verify} messages.
+         * @function encode
+         * @memberof gamereq.GameFrameReq
+         * @static
+         * @param {gamereq.IGameFrameReq} message GameFrameReq message or plain object to encode
+         * @param {$protobuf.Writer} [writer] Writer to encode to
+         * @returns {$protobuf.Writer} Writer
+         */
+        GameFrameReq.encode = function encode(message, writer) {
+            if (!writer)
+                writer = $Writer.create();
+            if (message.roomid != null && Object.hasOwnProperty.call(message, "roomid"))
+                writer.uint32(/* id 1, wireType 0 =*/8).uint32(message.roomid);
+            if (message.userid != null && Object.hasOwnProperty.call(message, "userid"))
+                writer.uint32(/* id 2, wireType 0 =*/16).uint32(message.userid);
+            if (message.frame != null && Object.hasOwnProperty.call(message, "frame"))
+                writer.uint32(/* id 3, wireType 0 =*/24).uint32(message.frame);
+            if (message.userope != null && Object.hasOwnProperty.call(message, "userope"))
+                $root.gamereq.UserOperation.encode(message.userope, writer.uint32(/* id 4, wireType 2 =*/34).fork()).ldelim();
+            return writer;
+        };
+
+        /**
+         * Encodes the specified GameFrameReq message, length delimited. Does not implicitly {@link gamereq.GameFrameReq.verify|verify} messages.
+         * @function encodeDelimited
+         * @memberof gamereq.GameFrameReq
+         * @static
+         * @param {gamereq.IGameFrameReq} message GameFrameReq message or plain object to encode
+         * @param {$protobuf.Writer} [writer] Writer to encode to
+         * @returns {$protobuf.Writer} Writer
+         */
+        GameFrameReq.encodeDelimited = function encodeDelimited(message, writer) {
+            return this.encode(message, writer).ldelim();
+        };
+
+        /**
+         * Decodes a GameFrameReq message from the specified reader or buffer.
+         * @function decode
+         * @memberof gamereq.GameFrameReq
+         * @static
+         * @param {$protobuf.Reader|Uint8Array} reader Reader or buffer to decode from
+         * @param {number} [length] Message length if known beforehand
+         * @returns {gamereq.GameFrameReq} GameFrameReq
+         * @throws {Error} If the payload is not a reader or valid buffer
+         * @throws {$protobuf.util.ProtocolError} If required fields are missing
+         */
+        GameFrameReq.decode = function decode(reader, length) {
+            if (!(reader instanceof $Reader))
+                reader = $Reader.create(reader);
+            var end = length === undefined ? reader.len : reader.pos + length, message = new $root.gamereq.GameFrameReq();
+            while (reader.pos < end) {
+                var tag = reader.uint32();
+                switch (tag >>> 3) {
+                case 1:
+                    message.roomid = reader.uint32();
+                    break;
+                case 2:
+                    message.userid = reader.uint32();
+                    break;
+                case 3:
+                    message.frame = reader.uint32();
+                    break;
+                case 4:
+                    message.userope = $root.gamereq.UserOperation.decode(reader, reader.uint32());
+                    break;
+                default:
+                    reader.skipType(tag & 7);
+                    break;
+                }
+            }
+            return message;
+        };
+
+        /**
+         * Decodes a GameFrameReq message from the specified reader or buffer, length delimited.
+         * @function decodeDelimited
+         * @memberof gamereq.GameFrameReq
+         * @static
+         * @param {$protobuf.Reader|Uint8Array} reader Reader or buffer to decode from
+         * @returns {gamereq.GameFrameReq} GameFrameReq
+         * @throws {Error} If the payload is not a reader or valid buffer
+         * @throws {$protobuf.util.ProtocolError} If required fields are missing
+         */
+        GameFrameReq.decodeDelimited = function decodeDelimited(reader) {
+            if (!(reader instanceof $Reader))
+                reader = new $Reader(reader);
+            return this.decode(reader, reader.uint32());
+        };
+
+        /**
+         * Verifies a GameFrameReq message.
+         * @function verify
+         * @memberof gamereq.GameFrameReq
+         * @static
+         * @param {Object.<string,*>} message Plain object to verify
+         * @returns {string|null} `null` if valid, otherwise the reason why it is not
+         */
+        GameFrameReq.verify = function verify(message) {
+            if (typeof message !== "object" || message === null)
+                return "object expected";
+            if (message.roomid != null && message.hasOwnProperty("roomid"))
+                if (!$util.isInteger(message.roomid))
+                    return "roomid: integer expected";
+            if (message.userid != null && message.hasOwnProperty("userid"))
+                if (!$util.isInteger(message.userid))
+                    return "userid: integer expected";
+            if (message.frame != null && message.hasOwnProperty("frame"))
+                if (!$util.isInteger(message.frame))
+                    return "frame: integer expected";
+            if (message.userope != null && message.hasOwnProperty("userope")) {
+                var error = $root.gamereq.UserOperation.verify(message.userope);
+                if (error)
+                    return "userope." + error;
+            }
+            return null;
+        };
+
+        /**
+         * Creates a GameFrameReq message from a plain object. Also converts values to their respective internal types.
+         * @function fromObject
+         * @memberof gamereq.GameFrameReq
+         * @static
+         * @param {Object.<string,*>} object Plain object
+         * @returns {gamereq.GameFrameReq} GameFrameReq
+         */
+        GameFrameReq.fromObject = function fromObject(object) {
+            if (object instanceof $root.gamereq.GameFrameReq)
+                return object;
+            var message = new $root.gamereq.GameFrameReq();
+            if (object.roomid != null)
+                message.roomid = object.roomid >>> 0;
+            if (object.userid != null)
+                message.userid = object.userid >>> 0;
+            if (object.frame != null)
+                message.frame = object.frame >>> 0;
+            if (object.userope != null) {
+                if (typeof object.userope !== "object")
+                    throw TypeError(".gamereq.GameFrameReq.userope: object expected");
+                message.userope = $root.gamereq.UserOperation.fromObject(object.userope);
+            }
+            return message;
+        };
+
+        /**
+         * Creates a plain object from a GameFrameReq message. Also converts values to other types if specified.
+         * @function toObject
+         * @memberof gamereq.GameFrameReq
+         * @static
+         * @param {gamereq.GameFrameReq} message GameFrameReq
+         * @param {$protobuf.IConversionOptions} [options] Conversion options
+         * @returns {Object.<string,*>} Plain object
+         */
+        GameFrameReq.toObject = function toObject(message, options) {
+            if (!options)
+                options = {};
+            var object = {};
+            if (options.defaults) {
+                object.roomid = 0;
+                object.userid = 0;
+                object.frame = 0;
+                object.userope = null;
+            }
+            if (message.roomid != null && message.hasOwnProperty("roomid"))
+                object.roomid = message.roomid;
+            if (message.userid != null && message.hasOwnProperty("userid"))
+                object.userid = message.userid;
+            if (message.frame != null && message.hasOwnProperty("frame"))
+                object.frame = message.frame;
+            if (message.userope != null && message.hasOwnProperty("userope"))
+                object.userope = $root.gamereq.UserOperation.toObject(message.userope, options);
+            return object;
+        };
+
+        /**
+         * Converts this GameFrameReq to JSON.
+         * @function toJSON
+         * @memberof gamereq.GameFrameReq
+         * @instance
+         * @returns {Object.<string,*>} JSON object
+         */
+        GameFrameReq.prototype.toJSON = function toJSON() {
+            return this.constructor.toObject(this, $protobuf.util.toJSONOptions);
+        };
+
+        return GameFrameReq;
+    })();
+
+    gamereq.GameFrameNtf = (function() {
+
+        /**
+         * Properties of a GameFrameNtf.
+         * @memberof gamereq
+         * @interface IGameFrameNtf
+         * @property {number|null} [frame] GameFrameNtf frame
+         * @property {Array.<gamereq.IUserOperation>|null} [useropes] GameFrameNtf useropes
+         */
+
+        /**
+         * Constructs a new GameFrameNtf.
+         * @memberof gamereq
+         * @classdesc Represents a GameFrameNtf.
+         * @implements IGameFrameNtf
+         * @constructor
+         * @param {gamereq.IGameFrameNtf=} [properties] Properties to set
+         */
+        function GameFrameNtf(properties) {
             this.useropes = [];
             if (properties)
                 for (var keys = Object.keys(properties), i = 0; i < keys.length; ++i)
@@ -1788,47 +2198,47 @@ $root.gamereq = (function() {
         }
 
         /**
-         * GameFrame frame.
+         * GameFrameNtf frame.
          * @member {number} frame
-         * @memberof gamereq.GameFrame
+         * @memberof gamereq.GameFrameNtf
          * @instance
          */
-        GameFrame.prototype.frame = 0;
+        GameFrameNtf.prototype.frame = 0;
 
         /**
-         * GameFrame useropes.
+         * GameFrameNtf useropes.
          * @member {Array.<gamereq.IUserOperation>} useropes
-         * @memberof gamereq.GameFrame
+         * @memberof gamereq.GameFrameNtf
          * @instance
          */
-        GameFrame.prototype.useropes = $util.emptyArray;
+        GameFrameNtf.prototype.useropes = $util.emptyArray;
 
         /**
-         * Creates a new GameFrame instance using the specified properties.
+         * Creates a new GameFrameNtf instance using the specified properties.
          * @function create
-         * @memberof gamereq.GameFrame
+         * @memberof gamereq.GameFrameNtf
          * @static
-         * @param {gamereq.IGameFrame=} [properties] Properties to set
-         * @returns {gamereq.GameFrame} GameFrame instance
+         * @param {gamereq.IGameFrameNtf=} [properties] Properties to set
+         * @returns {gamereq.GameFrameNtf} GameFrameNtf instance
          */
-        GameFrame.create = function create(properties) {
-            return new GameFrame(properties);
+        GameFrameNtf.create = function create(properties) {
+            return new GameFrameNtf(properties);
         };
 
         /**
-         * Encodes the specified GameFrame message. Does not implicitly {@link gamereq.GameFrame.verify|verify} messages.
+         * Encodes the specified GameFrameNtf message. Does not implicitly {@link gamereq.GameFrameNtf.verify|verify} messages.
          * @function encode
-         * @memberof gamereq.GameFrame
+         * @memberof gamereq.GameFrameNtf
          * @static
-         * @param {gamereq.IGameFrame} message GameFrame message or plain object to encode
+         * @param {gamereq.IGameFrameNtf} message GameFrameNtf message or plain object to encode
          * @param {$protobuf.Writer} [writer] Writer to encode to
          * @returns {$protobuf.Writer} Writer
          */
-        GameFrame.encode = function encode(message, writer) {
+        GameFrameNtf.encode = function encode(message, writer) {
             if (!writer)
                 writer = $Writer.create();
             if (message.frame != null && Object.hasOwnProperty.call(message, "frame"))
-                writer.uint32(/* id 1, wireType 0 =*/8).int32(message.frame);
+                writer.uint32(/* id 1, wireType 0 =*/8).uint32(message.frame);
             if (message.useropes != null && message.useropes.length)
                 for (var i = 0; i < message.useropes.length; ++i)
                     $root.gamereq.UserOperation.encode(message.useropes[i], writer.uint32(/* id 2, wireType 2 =*/18).fork()).ldelim();
@@ -1836,38 +2246,38 @@ $root.gamereq = (function() {
         };
 
         /**
-         * Encodes the specified GameFrame message, length delimited. Does not implicitly {@link gamereq.GameFrame.verify|verify} messages.
+         * Encodes the specified GameFrameNtf message, length delimited. Does not implicitly {@link gamereq.GameFrameNtf.verify|verify} messages.
          * @function encodeDelimited
-         * @memberof gamereq.GameFrame
+         * @memberof gamereq.GameFrameNtf
          * @static
-         * @param {gamereq.IGameFrame} message GameFrame message or plain object to encode
+         * @param {gamereq.IGameFrameNtf} message GameFrameNtf message or plain object to encode
          * @param {$protobuf.Writer} [writer] Writer to encode to
          * @returns {$protobuf.Writer} Writer
          */
-        GameFrame.encodeDelimited = function encodeDelimited(message, writer) {
+        GameFrameNtf.encodeDelimited = function encodeDelimited(message, writer) {
             return this.encode(message, writer).ldelim();
         };
 
         /**
-         * Decodes a GameFrame message from the specified reader or buffer.
+         * Decodes a GameFrameNtf message from the specified reader or buffer.
          * @function decode
-         * @memberof gamereq.GameFrame
+         * @memberof gamereq.GameFrameNtf
          * @static
          * @param {$protobuf.Reader|Uint8Array} reader Reader or buffer to decode from
          * @param {number} [length] Message length if known beforehand
-         * @returns {gamereq.GameFrame} GameFrame
+         * @returns {gamereq.GameFrameNtf} GameFrameNtf
          * @throws {Error} If the payload is not a reader or valid buffer
          * @throws {$protobuf.util.ProtocolError} If required fields are missing
          */
-        GameFrame.decode = function decode(reader, length) {
+        GameFrameNtf.decode = function decode(reader, length) {
             if (!(reader instanceof $Reader))
                 reader = $Reader.create(reader);
-            var end = length === undefined ? reader.len : reader.pos + length, message = new $root.gamereq.GameFrame();
+            var end = length === undefined ? reader.len : reader.pos + length, message = new $root.gamereq.GameFrameNtf();
             while (reader.pos < end) {
                 var tag = reader.uint32();
                 switch (tag >>> 3) {
                 case 1:
-                    message.frame = reader.int32();
+                    message.frame = reader.uint32();
                     break;
                 case 2:
                     if (!(message.useropes && message.useropes.length))
@@ -1883,30 +2293,30 @@ $root.gamereq = (function() {
         };
 
         /**
-         * Decodes a GameFrame message from the specified reader or buffer, length delimited.
+         * Decodes a GameFrameNtf message from the specified reader or buffer, length delimited.
          * @function decodeDelimited
-         * @memberof gamereq.GameFrame
+         * @memberof gamereq.GameFrameNtf
          * @static
          * @param {$protobuf.Reader|Uint8Array} reader Reader or buffer to decode from
-         * @returns {gamereq.GameFrame} GameFrame
+         * @returns {gamereq.GameFrameNtf} GameFrameNtf
          * @throws {Error} If the payload is not a reader or valid buffer
          * @throws {$protobuf.util.ProtocolError} If required fields are missing
          */
-        GameFrame.decodeDelimited = function decodeDelimited(reader) {
+        GameFrameNtf.decodeDelimited = function decodeDelimited(reader) {
             if (!(reader instanceof $Reader))
                 reader = new $Reader(reader);
             return this.decode(reader, reader.uint32());
         };
 
         /**
-         * Verifies a GameFrame message.
+         * Verifies a GameFrameNtf message.
          * @function verify
-         * @memberof gamereq.GameFrame
+         * @memberof gamereq.GameFrameNtf
          * @static
          * @param {Object.<string,*>} message Plain object to verify
          * @returns {string|null} `null` if valid, otherwise the reason why it is not
          */
-        GameFrame.verify = function verify(message) {
+        GameFrameNtf.verify = function verify(message) {
             if (typeof message !== "object" || message === null)
                 return "object expected";
             if (message.frame != null && message.hasOwnProperty("frame"))
@@ -1925,26 +2335,26 @@ $root.gamereq = (function() {
         };
 
         /**
-         * Creates a GameFrame message from a plain object. Also converts values to their respective internal types.
+         * Creates a GameFrameNtf message from a plain object. Also converts values to their respective internal types.
          * @function fromObject
-         * @memberof gamereq.GameFrame
+         * @memberof gamereq.GameFrameNtf
          * @static
          * @param {Object.<string,*>} object Plain object
-         * @returns {gamereq.GameFrame} GameFrame
+         * @returns {gamereq.GameFrameNtf} GameFrameNtf
          */
-        GameFrame.fromObject = function fromObject(object) {
-            if (object instanceof $root.gamereq.GameFrame)
+        GameFrameNtf.fromObject = function fromObject(object) {
+            if (object instanceof $root.gamereq.GameFrameNtf)
                 return object;
-            var message = new $root.gamereq.GameFrame();
+            var message = new $root.gamereq.GameFrameNtf();
             if (object.frame != null)
-                message.frame = object.frame | 0;
+                message.frame = object.frame >>> 0;
             if (object.useropes) {
                 if (!Array.isArray(object.useropes))
-                    throw TypeError(".gamereq.GameFrame.useropes: array expected");
+                    throw TypeError(".gamereq.GameFrameNtf.useropes: array expected");
                 message.useropes = [];
                 for (var i = 0; i < object.useropes.length; ++i) {
                     if (typeof object.useropes[i] !== "object")
-                        throw TypeError(".gamereq.GameFrame.useropes: object expected");
+                        throw TypeError(".gamereq.GameFrameNtf.useropes: object expected");
                     message.useropes[i] = $root.gamereq.UserOperation.fromObject(object.useropes[i]);
                 }
             }
@@ -1952,15 +2362,15 @@ $root.gamereq = (function() {
         };
 
         /**
-         * Creates a plain object from a GameFrame message. Also converts values to other types if specified.
+         * Creates a plain object from a GameFrameNtf message. Also converts values to other types if specified.
          * @function toObject
-         * @memberof gamereq.GameFrame
+         * @memberof gamereq.GameFrameNtf
          * @static
-         * @param {gamereq.GameFrame} message GameFrame
+         * @param {gamereq.GameFrameNtf} message GameFrameNtf
          * @param {$protobuf.IConversionOptions} [options] Conversion options
          * @returns {Object.<string,*>} Plain object
          */
-        GameFrame.toObject = function toObject(message, options) {
+        GameFrameNtf.toObject = function toObject(message, options) {
             if (!options)
                 options = {};
             var object = {};
@@ -1979,225 +2389,17 @@ $root.gamereq = (function() {
         };
 
         /**
-         * Converts this GameFrame to JSON.
+         * Converts this GameFrameNtf to JSON.
          * @function toJSON
-         * @memberof gamereq.GameFrame
+         * @memberof gamereq.GameFrameNtf
          * @instance
          * @returns {Object.<string,*>} JSON object
          */
-        GameFrame.prototype.toJSON = function toJSON() {
+        GameFrameNtf.prototype.toJSON = function toJSON() {
             return this.constructor.toObject(this, $protobuf.util.toJSONOptions);
         };
 
-        return GameFrame;
-    })();
-
-    gamereq.MainGameFrame = (function() {
-
-        /**
-         * Properties of a MainGameFrame.
-         * @memberof gamereq
-         * @interface IMainGameFrame
-         * @property {Array.<gamereq.IGameFrame>|null} [frames] MainGameFrame frames
-         */
-
-        /**
-         * Constructs a new MainGameFrame.
-         * @memberof gamereq
-         * @classdesc Represents a MainGameFrame.
-         * @implements IMainGameFrame
-         * @constructor
-         * @param {gamereq.IMainGameFrame=} [properties] Properties to set
-         */
-        function MainGameFrame(properties) {
-            this.frames = [];
-            if (properties)
-                for (var keys = Object.keys(properties), i = 0; i < keys.length; ++i)
-                    if (properties[keys[i]] != null)
-                        this[keys[i]] = properties[keys[i]];
-        }
-
-        /**
-         * MainGameFrame frames.
-         * @member {Array.<gamereq.IGameFrame>} frames
-         * @memberof gamereq.MainGameFrame
-         * @instance
-         */
-        MainGameFrame.prototype.frames = $util.emptyArray;
-
-        /**
-         * Creates a new MainGameFrame instance using the specified properties.
-         * @function create
-         * @memberof gamereq.MainGameFrame
-         * @static
-         * @param {gamereq.IMainGameFrame=} [properties] Properties to set
-         * @returns {gamereq.MainGameFrame} MainGameFrame instance
-         */
-        MainGameFrame.create = function create(properties) {
-            return new MainGameFrame(properties);
-        };
-
-        /**
-         * Encodes the specified MainGameFrame message. Does not implicitly {@link gamereq.MainGameFrame.verify|verify} messages.
-         * @function encode
-         * @memberof gamereq.MainGameFrame
-         * @static
-         * @param {gamereq.IMainGameFrame} message MainGameFrame message or plain object to encode
-         * @param {$protobuf.Writer} [writer] Writer to encode to
-         * @returns {$protobuf.Writer} Writer
-         */
-        MainGameFrame.encode = function encode(message, writer) {
-            if (!writer)
-                writer = $Writer.create();
-            if (message.frames != null && message.frames.length)
-                for (var i = 0; i < message.frames.length; ++i)
-                    $root.gamereq.GameFrame.encode(message.frames[i], writer.uint32(/* id 1, wireType 2 =*/10).fork()).ldelim();
-            return writer;
-        };
-
-        /**
-         * Encodes the specified MainGameFrame message, length delimited. Does not implicitly {@link gamereq.MainGameFrame.verify|verify} messages.
-         * @function encodeDelimited
-         * @memberof gamereq.MainGameFrame
-         * @static
-         * @param {gamereq.IMainGameFrame} message MainGameFrame message or plain object to encode
-         * @param {$protobuf.Writer} [writer] Writer to encode to
-         * @returns {$protobuf.Writer} Writer
-         */
-        MainGameFrame.encodeDelimited = function encodeDelimited(message, writer) {
-            return this.encode(message, writer).ldelim();
-        };
-
-        /**
-         * Decodes a MainGameFrame message from the specified reader or buffer.
-         * @function decode
-         * @memberof gamereq.MainGameFrame
-         * @static
-         * @param {$protobuf.Reader|Uint8Array} reader Reader or buffer to decode from
-         * @param {number} [length] Message length if known beforehand
-         * @returns {gamereq.MainGameFrame} MainGameFrame
-         * @throws {Error} If the payload is not a reader or valid buffer
-         * @throws {$protobuf.util.ProtocolError} If required fields are missing
-         */
-        MainGameFrame.decode = function decode(reader, length) {
-            if (!(reader instanceof $Reader))
-                reader = $Reader.create(reader);
-            var end = length === undefined ? reader.len : reader.pos + length, message = new $root.gamereq.MainGameFrame();
-            while (reader.pos < end) {
-                var tag = reader.uint32();
-                switch (tag >>> 3) {
-                case 1:
-                    if (!(message.frames && message.frames.length))
-                        message.frames = [];
-                    message.frames.push($root.gamereq.GameFrame.decode(reader, reader.uint32()));
-                    break;
-                default:
-                    reader.skipType(tag & 7);
-                    break;
-                }
-            }
-            return message;
-        };
-
-        /**
-         * Decodes a MainGameFrame message from the specified reader or buffer, length delimited.
-         * @function decodeDelimited
-         * @memberof gamereq.MainGameFrame
-         * @static
-         * @param {$protobuf.Reader|Uint8Array} reader Reader or buffer to decode from
-         * @returns {gamereq.MainGameFrame} MainGameFrame
-         * @throws {Error} If the payload is not a reader or valid buffer
-         * @throws {$protobuf.util.ProtocolError} If required fields are missing
-         */
-        MainGameFrame.decodeDelimited = function decodeDelimited(reader) {
-            if (!(reader instanceof $Reader))
-                reader = new $Reader(reader);
-            return this.decode(reader, reader.uint32());
-        };
-
-        /**
-         * Verifies a MainGameFrame message.
-         * @function verify
-         * @memberof gamereq.MainGameFrame
-         * @static
-         * @param {Object.<string,*>} message Plain object to verify
-         * @returns {string|null} `null` if valid, otherwise the reason why it is not
-         */
-        MainGameFrame.verify = function verify(message) {
-            if (typeof message !== "object" || message === null)
-                return "object expected";
-            if (message.frames != null && message.hasOwnProperty("frames")) {
-                if (!Array.isArray(message.frames))
-                    return "frames: array expected";
-                for (var i = 0; i < message.frames.length; ++i) {
-                    var error = $root.gamereq.GameFrame.verify(message.frames[i]);
-                    if (error)
-                        return "frames." + error;
-                }
-            }
-            return null;
-        };
-
-        /**
-         * Creates a MainGameFrame message from a plain object. Also converts values to their respective internal types.
-         * @function fromObject
-         * @memberof gamereq.MainGameFrame
-         * @static
-         * @param {Object.<string,*>} object Plain object
-         * @returns {gamereq.MainGameFrame} MainGameFrame
-         */
-        MainGameFrame.fromObject = function fromObject(object) {
-            if (object instanceof $root.gamereq.MainGameFrame)
-                return object;
-            var message = new $root.gamereq.MainGameFrame();
-            if (object.frames) {
-                if (!Array.isArray(object.frames))
-                    throw TypeError(".gamereq.MainGameFrame.frames: array expected");
-                message.frames = [];
-                for (var i = 0; i < object.frames.length; ++i) {
-                    if (typeof object.frames[i] !== "object")
-                        throw TypeError(".gamereq.MainGameFrame.frames: object expected");
-                    message.frames[i] = $root.gamereq.GameFrame.fromObject(object.frames[i]);
-                }
-            }
-            return message;
-        };
-
-        /**
-         * Creates a plain object from a MainGameFrame message. Also converts values to other types if specified.
-         * @function toObject
-         * @memberof gamereq.MainGameFrame
-         * @static
-         * @param {gamereq.MainGameFrame} message MainGameFrame
-         * @param {$protobuf.IConversionOptions} [options] Conversion options
-         * @returns {Object.<string,*>} Plain object
-         */
-        MainGameFrame.toObject = function toObject(message, options) {
-            if (!options)
-                options = {};
-            var object = {};
-            if (options.arrays || options.defaults)
-                object.frames = [];
-            if (message.frames && message.frames.length) {
-                object.frames = [];
-                for (var j = 0; j < message.frames.length; ++j)
-                    object.frames[j] = $root.gamereq.GameFrame.toObject(message.frames[j], options);
-            }
-            return object;
-        };
-
-        /**
-         * Converts this MainGameFrame to JSON.
-         * @function toJSON
-         * @memberof gamereq.MainGameFrame
-         * @instance
-         * @returns {Object.<string,*>} JSON object
-         */
-        MainGameFrame.prototype.toJSON = function toJSON() {
-            return this.constructor.toObject(this, $protobuf.util.toJSONOptions);
-        };
-
-        return MainGameFrame;
+        return GameFrameNtf;
     })();
 
     return gamereq;

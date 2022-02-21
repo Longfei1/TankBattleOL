@@ -4,10 +4,10 @@
 
 using namespace boost::asio;
 
-ClientsManager::ClientsManager(SocketStatusCallback status_callback, SocketMsgCallback msg_callback, 
+ClientsManager::ClientsManager(ISocketHandler* socket_handler,
     int io_threads, SessionID min_session, SessionID max_session)
     : io_thread_num_(io_threads), session_generator_(min_session, max_session),
-    status_callback_(status_callback), msg_callback_(msg_callback)
+    socket_handler_(socket_handler)
 {
 }
 
@@ -38,15 +38,7 @@ SessionID ClientsManager::CreateClient()
                 ReturnSessionID(*pID);
                 delete pID;
             });
-        auto client = std::make_shared<AsioSockClient>(io_service_, idptr, 
-            [this](SocketStatus status, SessionID id)
-            {
-                OnSocketStatus(status, id);
-            },
-            [this](SessionID id, DataPtr dataptr, std::size_t size)
-            {
-                OnSocketMsg(id, dataptr, size);
-            });
+        auto client = std::make_shared<AsioSockClient>(io_service_, idptr, this);
 
         AddClient(client);
     }
@@ -86,7 +78,7 @@ void ClientsManager::SendData(SessionID session_id, const Byte* senddata, std::s
 
 bool ClientsManager::StartIOService()
 {
-    work_ = std::make_shared<io_service::work>(io_service_);//ÃÌº””¿æ√»ŒŒÒ
+    work_ = std::make_shared<io_service::work>(io_service_);//Ê∑ªÂä†Ê∞∏‰πÖ‰ªªÂä°
 
     for (int i = 0; i < io_thread_num_; i++)
     {
@@ -101,10 +93,10 @@ bool ClientsManager::StartIOService()
 bool ClientsManager::StopIOService()
 {
     work_ = nullptr;
-    io_service_.stop();//Õ£÷π∑˛ŒÒ
+    io_service_.stop();//ÂÅúÊ≠¢ÊúçÂä°
     for (auto& th : io_threads_)
     {
-        th.join();//µ»¥˝œﬂ≥ÃΩ· ¯
+        th.join();//Á≠âÂæÖÁ∫øÁ®ãÁªìÊùü
     }
     io_threads_.clear();
     return true;
@@ -145,16 +137,16 @@ void ClientsManager::OnSocketStatus(SocketStatus status, SessionID id)
         CloseClient(id);
     }
 
-    if (status_callback_)
+    if (socket_handler_)
     {
-        status_callback_(status, id);
+        socket_handler_->OnSocketStatus(status, id);
     }
 }
 
 void ClientsManager::OnSocketMsg(SessionID id, DataPtr dataptr, std::size_t size)
 {
-    if (msg_callback_)
+    if (socket_handler_)
     {
-        msg_callback_(id, dataptr, size);
+        socket_handler_->OnSocketMsg(id, dataptr, size);
     }
 }

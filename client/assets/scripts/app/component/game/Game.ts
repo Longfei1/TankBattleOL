@@ -11,6 +11,8 @@ import { GameStruct } from "../../define/GameStruct";
 import { AniDef } from "../../define/AniDef";
 import GameConfigModel from "../../model/GameConfigModel";
 import GameConnectModel from "../../model/GameConnectModel";
+import GameLogicModel from "../../model/GameLogicModel";
+import GameOpeControl from "../../define/GameOpeControl";
 
 const {ccclass, property} = cc._decorator;
 
@@ -58,16 +60,21 @@ export default class Game extends cc.Component {
 
     _resultPanel: cc.Node = null;
     _gameSuccessPanel: cc.Node = null;
+
+    _opeStart: GameOpeControl = null;
     
     onLoad() {
         this.panelGame.active = false;
         gameController = this;
         this.initListener();
 
-        GameDataModel.initGameData();
+        GameDataModel._enableOperate = false;
+        GameDataModel.resetGameData();
         GameDataModel.setMapUnit(this.nodeMapUnit.width, this.nodeMapUnit.height);
 
         this._bulletPool = new NodePool(this.pfbBullet, Bullet);
+
+        this._opeStart = new GameOpeControl(300, 50);
 
         if (GameDataModel.isGameDebugMode()) {
             this.textDebug.node.active = true;
@@ -78,7 +85,7 @@ export default class Game extends cc.Component {
 
         //单机模式下，断开网络连接。
         if (GameDataModel._playMode == GameDef.GAMEMODE_SINGLE_PLAYER || GameDataModel._playMode == GameDef.GAMEMODE_DOUBLE_PLAYER) {
-            GameConnectModel.disconnect();
+            GameConnectModel.disconnectServer();
         }
     }
 
@@ -86,6 +93,9 @@ export default class Game extends cc.Component {
         this.removeListener();
         this._bulletPool.clearNode();
         cc.director.getCollisionManager().enabled = false;
+
+        gameController = null;
+        GameLogicModel.exitGame();
     }
 
     start() {
@@ -101,13 +111,14 @@ export default class Game extends cc.Component {
     initListener() {
         GameInputModel.addKeyDownOnceListener(() => {
             //GameDataModel.resetGameData();
-            this.goToMainMenu();
+            if (GameDataModel.isModeOnline()) {
+
+            }
+            else {
+                this.goToMainMenu();
+            }
         }, null, this, PlayerDef.KEYMAP_COMMON.BACK);
-        GameInputModel.addKeyDownOnceListener(() => {
-            CommonFunc.playButtonSound();
-            this.onBtnStart();
-        }, null, this, PlayerDef.KEYMAP_COMMON.START);
-        if (GameDataModel.isGameDebugMode) {
+        if (GameDataModel.isGameDebugMode()) {
             GameInputModel.addKeyDownOnceListener(() => {
                 this.onTest();
             }, null, this, cc.macro.KEY.t);
@@ -126,7 +137,7 @@ export default class Game extends cc.Component {
     }
 
     evInitGameFinished() {
-        this.startGameStage(1);//从第一关开始
+        GameLogicModel.startGame();
     }
 
     startGameStage(stage: number) {
@@ -139,6 +150,8 @@ export default class Game extends cc.Component {
     }
 
     prepareGame() {
+        GameDataModel.resetGameStageData();
+
         gameController.node.emit(EventDef.EV_GAME_PREPARE_GAME);
     }
 
@@ -332,7 +345,12 @@ export default class Game extends cc.Component {
         }
     }
 
-    onBtnStart() {
+    onBtnStart(info: GameStruct.GameKeyInfo): boolean {
+        if (!info || !this._opeStart.effectInput(info)) {
+            return false;
+        }
+
+        CommonFunc.playButtonSound();
         if (GameDataModel.isModeEditMap()) {
             this.node.emit(EventDef.EV_MAP_EDIT_FINISHED);
             GameDataModel._playMode = -1;
@@ -359,6 +377,8 @@ export default class Game extends cc.Component {
                 }
             }
         }
+
+        return true;
     }
 
     playGainScoreAni(pos: cc.Vec2, score: number) {

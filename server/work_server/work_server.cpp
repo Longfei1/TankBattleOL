@@ -10,16 +10,7 @@ using namespace boost::asio;
 WorkServer::WorkServer(int port, int io_threads, int work_threads, std::string hello_data,
     SessionID min_session, SessionID max_session) : work_thread_num_(work_threads)
 {
-    socket_server_ = std::make_shared<AsioSockServer>(
-        [this](SocketStatus status, SessionID id) 
-        {
-            OnSocketStatus(status, id);
-        },
-        [this](SessionID id, DataPtr dataptr, std::size_t size)
-        {
-            OnSocketMsg(id, dataptr, size);
-        },
-        port, io_threads, std::move(hello_data), min_session, max_session);
+    socket_server_ = std::make_shared<AsioSockServer>(this, port, io_threads, std::move(hello_data), min_session, max_session);
 }
 
 bool WorkServer::Initialize()
@@ -29,7 +20,7 @@ bool WorkServer::Initialize()
         return false;
     }
 
-    //³õÊ¼»¯¹¤×÷Ïß³Ì
+    //åˆå§‹åŒ–å·¥ä½œçº¿ç¨‹
     if (!StartWorkService())
     {
         return false;
@@ -67,6 +58,34 @@ void WorkServer::SendRequest(ContextHeadPtr context_head, RequestPtr request)
     }
 }
 
+void WorkServer::SendResponse(ContextHeadPtr context_head, RequestPtr request)
+{
+	basereq::Request ret;
+	ret.set_request(request->request());
+	ret.set_need_echo(false);
+	if (request->need_echo())
+	{
+		ret.set_sequence(request->sequence());
+	}
+	else
+	{
+		ret.set_sequence(-1);//æœåŠ¡å‘é€çš„æ¶ˆæ¯ä¸éœ€è¦å®¢æˆ·ç«¯å“åº”ï¼Œåºåˆ—å·å¯ä»¥è¿”å›æ— æ•ˆå€¼
+	}
+
+	SendRequest(*context_head, ret);
+}
+
+void WorkServer::SendNotify(ContextHeadPtr context_head, google::protobuf::uint32 request_id)
+{
+	basereq::Request ret;
+	ret.set_request(request_id);
+	ret.set_need_echo(false);
+
+	ret.set_sequence(-1);//æœåŠ¡å‘é€çš„æ¶ˆæ¯ä¸éœ€è¦å®¢æˆ·ç«¯å“åº”ï¼Œåºåˆ—å·å¯ä»¥è¿”å›æ— æ•ˆå€¼
+
+	SendRequest(*context_head, ret);
+}
+
 void WorkServer::CloseConnection(SessionID id)
 {
     if (socket_server_)
@@ -102,7 +121,7 @@ void WorkServer::OnSocketConnect(ContextHeadPtr context_head, RequestPtr request
 {
     LOG_TRACE("session(%d) OnSocketConnect", context_head->session);
 
-    UpdateSessionPluse(context_head->session, time(nullptr));//Á¬½Ó³É¹¦ÄÜºó£¬¸üĞÂĞÄÌøÊ±¼ä
+    UpdateSessionPluse(context_head->session, time(nullptr));//è¿æ¥æˆåŠŸèƒ½åï¼Œæ›´æ–°å¿ƒè·³æ—¶é—´
 }
 
 void WorkServer::OnSocketValidated(ContextHeadPtr context_head, RequestPtr request)
@@ -119,7 +138,7 @@ void WorkServer::OnSocketClose(ContextHeadPtr context_head, RequestPtr request)
 
 bool WorkServer::StartWorkService()
 {
-    work_ = std::make_shared<io_service::work>(work_service_);//Ìí¼ÓÓÀ¾ÃÈÎÎñ
+    work_ = std::make_shared<io_service::work>(work_service_);//æ·»åŠ æ°¸ä¹…ä»»åŠ¡
 
     for (int i = 0; i < work_thread_num_; i++)
     {
@@ -135,10 +154,10 @@ bool WorkServer::StartWorkService()
 bool WorkServer::StopWorkService()
 {
     work_ = nullptr;
-    work_service_.stop();//Í£Ö¹·şÎñ
+    work_service_.stop();//åœæ­¢æœåŠ¡
     for (auto& th : work_threads_)
     {
-        th.join();//µÈ´ıÏß³Ì½áÊø
+        th.join();//ç­‰å¾…çº¿ç¨‹ç»“æŸ
     }
     work_threads_.clear();
     return true;
@@ -199,7 +218,7 @@ void WorkServer::StartPluseDetection()
             DetectPluse();
 
             timer->expires_from_now(boost::posix_time::seconds(PLUSE_TIMER_INTERVAL));
-            timer->async_wait(timer_func);//µİ¹éµ÷ÓÃ£¬¼ÌĞø¼ÆÊ±
+            timer->async_wait(timer_func);//é€’å½’è°ƒç”¨ï¼Œç»§ç»­è®¡æ—¶
         }
     };
 
@@ -223,7 +242,7 @@ void WorkServer::DetectPluse()
 
     for (auto s : invalid_sessions)
     {
-        CloseConnection(s);//¶Ï¿ªĞÄÌø³¬Ê±µÄÁ¬½Ó
+        CloseConnection(s);//æ–­å¼€å¿ƒè·³è¶…æ—¶çš„è¿æ¥
         RemoveSessionPluse(s);
     }
 }

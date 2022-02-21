@@ -5,14 +5,14 @@
 #include "common/utils/utils.h"
 
 class AsioSockClient;
-class ClientsManager : public boost::noncopyable
+class ClientsManager : public boost::noncopyable, public ISocketHandler
 {
 public:
     using SocketClientPtr = std::shared_ptr<AsioSockClient>;
     using SocketStatusCallback = std::function<void(SocketStatus, SessionID)>;
     using SocketMsgCallback = std::function<void(SessionID, DataPtr, std::size_t)>;
 public:
-    ClientsManager(SocketStatusCallback status_callback, SocketMsgCallback msg_callback, 
+    ClientsManager(ISocketHandler* socket_handler,
         int io_threads = SOCK_IO_THREAD_NUM, SessionID min_session = 1, SessionID max_session = SESSION_MAX_ID);
     ~ClientsManager() {}
 
@@ -37,23 +37,22 @@ private:
     void ClearClientsMap();
     void CloseClient(SocketClientPtr client);
 
-    void OnSocketStatus(SocketStatus status, SessionID id);//socket×´Ì¬»Øµ÷
-    void OnSocketMsg(SessionID id, DataPtr dataptr, std::size_t size);//socketÏûÏ¢»Øµ÷
+    virtual void OnSocketStatus(SocketStatus status, SessionID id) override;//socketçŠ¶æ€å›è°ƒ
+    virtual void OnSocketMsg(SessionID id, DataPtr dataptr, std::size_t size) override;//socketæ¶ˆæ¯å›è°ƒ
 private:
-    int io_thread_num_;//socketclient ioÏß³ÌÊı
-    std::vector<std::thread> io_threads_;//socketclient ioÏß³Ì
+    int io_thread_num_;//socketclient ioçº¿ç¨‹æ•°
+    std::vector<std::thread> io_threads_;//socketclient ioçº¿ç¨‹
     boost::asio::io_service io_service_;//socketclient ioservice
-    std::shared_ptr<boost::asio::io_service::work> work_;//¿ØÖÆioÏß³Ì²»ÍË³ö
+    std::shared_ptr<boost::asio::io_service::work> work_;//æ§åˆ¶ioçº¿ç¨‹ä¸é€€å‡º
 
     std::mutex session_gernerator_mtx_;
-    myutils::IDGenerator<SessionID> session_generator_;//sessionidÉú³ÉÆ÷
+    myutils::IDGenerator<SessionID> session_generator_;//sessionidç”Ÿæˆå™¨
 
     std::mutex session_map_mtx_;
-    std::unordered_map<SessionID, SocketClientPtr> clients_;//Á¬½Ó±í
+    std::unordered_map<SessionID, SocketClientPtr> clients_;//è¿æ¥è¡¨
 
-    //»Øµ÷º¯Êı
-    SocketStatusCallback status_callback_;
-    SocketMsgCallback msg_callback_;
+    //å›è°ƒ
+    ISocketHandler* socket_handler_;
 };
 
 inline SessionID ClientsManager::GenerateSessionID()

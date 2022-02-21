@@ -2,7 +2,7 @@
 
 int main(int argc, char* argv[])
 {
-    GameServer server(8888, 1, 2);//服务器为单核
+    GameServer server(8888, 1, 2);//鏈嶅姟鍣ㄤ负鍗曟牳
 
     if (server.Initialize())
     {

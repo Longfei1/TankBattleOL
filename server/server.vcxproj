@@ -81,13 +81,14 @@
     <LibraryPath>/usr/program/boost_1_74_0/lib;/usr/program/protobuf/lib;$(LibraryPath)</LibraryPath>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
-    <IncludePath>/root/code/projects/server;/root/program/boost/boost_1_74_0/include;/root/program/protobuf/include;$(IncludePath)</IncludePath>
-    <LibraryPath>/root/program/boost/boost_1_74_0/lib;/root/program/protobuf/lib;$(LibraryPath)</LibraryPath>
+    <IncludePath>/usr/code/projects/server;/usr/program/boost_1_74_0/include;/usr/program/protobuf-3.14.0/include;$(IncludePath)</IncludePath>
+    <LibraryPath>/usr/program/boost_1_74_0/lib;/usr/program/protobuf/lib;$(LibraryPath)</LibraryPath>
   </PropertyGroup>
   <ItemGroup>
     <ClCompile Include="..\common\log\log.cpp" />
     <ClCompile Include="..\common\utils\utils.cpp" />
     <ClCompile Include="game_server\game_server.cpp" />
+    <ClCompile Include="game_server\player.cpp" />
     <ClCompile Include="game_server\room.cpp" />
     <ClCompile Include="main.cpp" />
     <ClCompile Include="proto\basereq.pb.cc" />
@@ -104,6 +105,7 @@
     <ClInclude Include="game_server\game_def.h" />
     <ClInclude Include="game_server\game_req.h" />
     <ClInclude Include="game_server\game_server.h" />
+    <ClInclude Include="game_server\player.h" />
     <ClInclude Include="game_server\room.h" />
     <ClInclude Include="proto\basereq.pb.h" />
     <ClInclude Include="proto\gamereq.pb.h" />

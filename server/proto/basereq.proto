@@ -6,9 +6,9 @@ package basereq;
 
 message Request
 {
-	uint32 request = 1;//ÏûÏ¢ºÅ
-	bool need_echo = 2;//ÊÇ·ñĞèÒªÏìÓ¦
-	uint64 sequence = 3;//ÏûÏ¢ĞòÁĞºÅ£¨¿ÉÓÃÓÚÊµÏÖ¿Í»§¶ËµÄÏìÓ¦ÇëÇó£©
-	google.protobuf.Any data = 4;//ÏûÏ¢Êı¾İ(ÄÚÈİÓëÏûÏ¢ºÅÏà¹Ø)
+	uint32 request = 1;//æ¶ˆæ¯å·
+	bool need_echo = 2;//æ˜¯å¦éœ€è¦å“åº”
+	uint64 sequence = 3;//æ¶ˆæ¯åºåˆ—å·ï¼ˆå¯ç”¨äºå®ç°å®¢æˆ·ç«¯çš„å“åº”è¯·æ±‚ï¼‰
+	google.protobuf.Any data = 4;//æ¶ˆæ¯æ•°æ®(å†…å®¹ä¸æ¶ˆæ¯å·ç›¸å…³)
 }
 

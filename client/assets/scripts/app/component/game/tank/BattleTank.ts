@@ -647,11 +647,11 @@ export default class BattleTank extends BaseTank {
         let colNum = 4;
         let unitWidth = GameDataModel.getMapUnit().width;
 
-        if (scenePos.x % unitWidth != 0) {
+        if (scenePos.x % unitWidth !== 0) {
             colNum++;
         }
 
-        if (scenePos.y % unitWidth != 0) {
+        if (scenePos.y % unitWidth !== 0) {
             rowNum++;
         }
 

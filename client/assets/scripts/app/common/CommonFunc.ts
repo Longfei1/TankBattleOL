@@ -215,4 +215,10 @@ export default class CommonFunc {
             }
         });
     }
+
+    static excuteCallback(callback: Function, ...params) {
+        if (callback) {
+            return callback(...params);
+        }
+    }
 }
