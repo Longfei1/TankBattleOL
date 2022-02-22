@@ -61,7 +61,7 @@ public:
     using Socket = boost::asio::ip::tcp::socket;
 public:
     explicit ConnectSession(boost::asio::ip::tcp::socket&& socket
-        ) : session_id_(0), status_(SocketStatus::INIT), socket_(std::move(socket)), 
+        ) : session_id_(nullptr), status_(SocketStatus::INIT), socket_(std::move(socket)), 
         read_location(BUFFER), read_buffer_{}, read_size_(0)
     {
         static_assert(sizeof(ProtocalHead) < sizeof(ConnectSession::read_buffer_));//协议头不能大于读缓冲区
@@ -93,7 +93,7 @@ public:
     using Message = std::pair<std::size_t, DataPtr>;//<size, data>
 public:
     explicit WSConnectSession(boost::asio::ip::tcp::socket&& socket
-        ) : session_id_(0), status_(SocketStatus::INIT), 
+        ) : session_id_(nullptr), status_(SocketStatus::INIT), 
         socket_(std::move(socket))
     {
     }

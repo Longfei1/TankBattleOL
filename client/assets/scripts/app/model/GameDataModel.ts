@@ -21,6 +21,8 @@ class GameDataModel extends BaseModel {
     _currStage: number = 0;
     _localOpeCode: { [id: number] : number } = {};
     _lastGameFrame: gamereq.GameFrameNtf = null;
+
+    _gotoMenuPage: number = -1;
     
     //关卡相关数据
     private _scenerys: cc.Node[][] = [];

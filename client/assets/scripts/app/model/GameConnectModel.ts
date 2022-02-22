@@ -397,6 +397,10 @@ class GameConnectModel extends BaseModel {
     onRoomPlayerLeave(info: gamereq.RoomPlayerInfo) {
         let playerInfo = GameDataModel.getPlayerInfo(info.playerno);
         playerInfo.userID = 0;
+        playerInfo.ready = false;
+
+        let host = GameDataModel.getPlayerInfo(0);
+        host.ready = false;
     }
 
     //房间准备

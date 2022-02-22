@@ -79,6 +79,7 @@ private:
 
     boost::asio::deadline_timer frame_timer_;
     time_t frame_start_time_;
+    bool frame_running_;
 
     uint frame_no_;//帧编号
 
@@ -208,5 +209,6 @@ inline uint Room::GetGameMode()
 inline void Room::StartGameFrameTimer(time_t t)
 {
     frame_start_time_ = t;
+    frame_running_ = true;
     StartGameFrameTimer();
 }

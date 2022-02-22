@@ -126,6 +126,15 @@ export namespace GameDef {
         GUN,        //手枪
     }
 
+    export enum MenuPage {
+        MAIN,                   //主菜单
+        OFFLINE,                //单机模式
+        ONLINE,                 //联机模式
+        JOIN_ROOM,              //加入房间
+        ROOM,                   //房间界面
+        START_CHOOSE,           //开始选择
+    }
+
     export enum NetKeyDirection {
         NULL,
         UP,

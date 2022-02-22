@@ -398,7 +398,6 @@ void GameServer::OnLeaveRoom(ContextHeadPtr context_head, RequestPtr request)
 			else
 			{
 				//删除房间
-				room->ResetRoom();
 				remove_roomid = room->GetRoomID();
 
 				SendResponse(context_head, request, info);
@@ -408,16 +407,24 @@ void GameServer::OnLeaveRoom(ContextHeadPtr context_head, RequestPtr request)
 		{
 			room->RemovePlayer(my_playerno);
 
+			auto host = room->GetPlayerInfoByNO(0);
+			if (host) {
+				host->ready = false;
+			}
+
 			SendResponse(context_head, request, info);
 
 			room->NotifyRoomPlayer(GR_LEAVE_ROOM, info, userid);//通知有人离开
 		}
 
+		room->SetRoomStatus(ROOM_STATUS_READY);
+		room->SetGameMode(0);
 		room->StopGameFrameTimer();
 	}
 
     if (remove_roomid > 0)//前面互斥量作用域内不能移除房间，如果这样，lock_guard指向的互斥量可能被提前释放。
     {
+		room->ResetRoom();
         RemoveRoom(remove_roomid);
     }
 }

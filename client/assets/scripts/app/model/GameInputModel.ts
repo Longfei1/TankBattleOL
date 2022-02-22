@@ -8,7 +8,9 @@ enum InputMode {
 }
 
 class GameInputModel extends BaseModel {
-    _inputListeners: Observer[] = []
+    _inputListeners: Observer[] = [];
+
+    _inputHierarchy: any[][] = [];
 
     initModel() {
         cc.systemEvent.on(cc.SystemEvent.EventType.KEY_DOWN, this.onKeyDown, this);
@@ -59,7 +61,7 @@ class GameInputModel extends BaseModel {
     }
 
     /**
-     * 移除上下文的所有监听
+     * 移除上下文的所有监听（会移除对应的输入层级）
      * @param context 
      */
     removeInputListenerByContext(context: any) {
@@ -68,6 +70,7 @@ class GameInputModel extends BaseModel {
                 this._inputListeners.splice(i, 1);
             }
         } 
+        this.removeInputHierarchy(context);
     }
 
     /**
@@ -141,6 +144,9 @@ class GameInputModel extends BaseModel {
 
     private onKeyDown(event) {
         for (let observer of this._inputListeners) {
+            if (!this.isUpperInputHierarchy(observer.getContext())) {
+                continue;
+            }
             let bNotify = false;
             if (observer._inputkey == null || observer._inputkey == event.keyCode) {
                 let key = event.keyCode;
@@ -175,6 +181,9 @@ class GameInputModel extends BaseModel {
     private onKeyUp(event) {
         for (let observer of this._inputListeners) {
             let bNotify = false;
+            if (!this.isUpperInputHierarchy(observer.getContext())) {
+                continue;
+            }
             if (observer._inputkey == null || observer._inputkey == event.keyCode) {
                 let key = event.keyCode;
                 switch (observer._inputmode) {
@@ -197,6 +206,58 @@ class GameInputModel extends BaseModel {
                 }
             }
         }
+    }
+
+    /**
+     * 添加输入层级
+     * @param bNewHierarchy 新层级
+     * @param context 上下文
+     * @returns 
+     */
+    addInputHierarchy(bNewHierarchy: boolean, context: any) {
+        //去重
+        for (let i = 0; i < this._inputHierarchy.length; i++) {
+            if (this._inputHierarchy[i].indexOf(context) >= 0) {
+                return;
+            }
+        }
+
+        if (this._inputHierarchy.length === 0 || bNewHierarchy) {
+            this._inputHierarchy.push([context]);
+        }
+        else {
+            this._inputHierarchy[this._inputHierarchy.length - 1].push(context);
+        }
+    }
+
+    /**
+     * 移除输入层级
+     * @param context 上下文
+     */
+    removeInputHierarchy(context: any) {
+        for (let i = this._inputHierarchy.length - 1; i >= 0; i--) {
+            for (let j = this._inputHierarchy[i].length - 1; j >= 0; j--) {
+                if (this._inputHierarchy[i][j] === context) {
+                    this._inputHierarchy[i].splice(j, 1);
+                }
+            } 
+            if (this._inputHierarchy[i].length === 0) {
+                this._inputHierarchy.splice(i, 1);
+            }
+        } 
+    }
+
+    /**
+     * 判断是否是最上层的输入层级
+     * @param context 上下文 
+     */
+    isUpperInputHierarchy(context: any): boolean {
+        if (this._inputHierarchy.length > 0) {
+            if (this._inputHierarchy[this._inputHierarchy.length - 1].indexOf(context) >= 0) {
+                return true;
+            }
+        }
+        return false;
     }
 }
 
@@ -242,7 +303,11 @@ class Observer {
     }
 
     compare(context: any): boolean {
-        return context == this._context;
+        return context === this._context;
+    }
+
+    getContext(): any {
+        return this._context;
     }
 }
 

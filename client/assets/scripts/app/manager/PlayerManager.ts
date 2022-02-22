@@ -2,7 +2,6 @@ import GameDataModel from "../model/GameDataModel";
 import { GameDef } from "../define/GameDef";
 import PlayerTank from "../component/game/tank/PlayerTank";
 import { PlayerDef } from "../define/PlayerDef";
-import GameInputModel from "../model/GameInputModel";
 import MapEditTank from "../component/game/tank/MapEditTank";
 import { gameController } from "../component/game/Game";
 import { EventDef } from "../define/EventDef";

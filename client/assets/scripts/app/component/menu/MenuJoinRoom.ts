@@ -44,7 +44,7 @@ export default class MenuJoinRoom extends MenuChoose {
             return;
         }
         
-        this.handlerChoose.emit([this.menuItemValue[this._currChoose], this.editRoomNo.string]);
+        this.dispatchChooseEvent(this.editRoomNo.string);
     }
 
     onMoveUp() {

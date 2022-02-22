@@ -99,7 +99,7 @@ export class WSConnect {
         this._connected = false;
 
         this._connectHandler = null;
-        this._connectErrorHandler = null;
+        //this._connectErrorHandler = null;
     }
 
     public setSocketErrorHandler(handler: Function) {

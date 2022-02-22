@@ -8,22 +8,12 @@ import CommonFunc from "../../common/CommonFunc";
 import GameConnectModel from "../../model/GameConnectModel";
 import MenuChoose from "./MenuChoose";
 import { EventDef } from "../../define/EventDef";
-import Big from "../../../packages/bigjs/Big";
 import { GameProtocal } from "../../network/GameProtocal";
 import { gamereq } from "../../network/proto/gamereq";
 import MenuRoom from "./MenuRoom";
 import GameLogicModel from "../../model/GameLogicModel";
 
 const {ccclass, property} = cc._decorator;
-
-enum MenuPage {
-    MAIN,                   //主菜单
-    OFFLINE,                //单机模式
-    ONLINE,                 //联机模式
-    JOIN_ROOM,              //加入房间
-    ROOM,                   //房间界面
-    START_CHOOSE,           //开始选择
-}
 
 @ccclass
 export default class MainMenu extends cc.Component {
@@ -53,7 +43,15 @@ export default class MainMenu extends cc.Component {
 
         this.updateHighScore();
 
-        this.onTest();
+        GameDataModel._menuPage = GameDef.MenuPage.MAIN;
+        if (GameDataModel._gotoMenuPage > 0) {
+            this.showMenuPage(GameDataModel._gotoMenuPage);
+            GameDataModel._gotoMenuPage = -1;
+        }
+
+        if (GameDataModel.isGameDebugMode()) {
+            this.onTest();
+        }
     }
 
     onDestroy() {
@@ -94,7 +92,9 @@ export default class MainMenu extends cc.Component {
             this.onKeyBack();
         }, null, this, PlayerDef.KEYMAP_COMMON.BACK);
 
-        GameConnectModel.addEventListener(EventDef.EV_NTF_ROOM_START, this.onNtfRoomStart, this);
+        GameInputModel.addInputHierarchy(false, this);
+
+        GameConnectModel.addEventListener(EventDef.EV_MAINGAME_SOCKET_ERROR, this.onSocketError, this);
         GameConnectModel.addEventListener(EventDef.EV_NTF_MENU_BACK, this.onNtfMenuBack, this);
         GameConnectModel.addEventListener(EventDef.EV_NTF_GAME_START, this.onNtfGameStart, this);
     }
@@ -151,32 +151,38 @@ export default class MainMenu extends cc.Component {
     onKeyBack() {
         let currPage = GameDataModel._menuPage
         switch(currPage) {
-            case MenuPage.OFFLINE:
-                this.switchMenuPage(currPage, MenuPage.MAIN);
+            case GameDef.MenuPage.OFFLINE:
+                this.switchMenuPage(currPage, GameDef.MenuPage.MAIN);
                 break;
-            case MenuPage.ONLINE:
-                this.switchMenuPage(currPage, MenuPage.MAIN);
+            case GameDef.MenuPage.ONLINE:
+                this.switchMenuPage(currPage, GameDef.MenuPage.MAIN);
                 break;
-            case MenuPage.JOIN_ROOM:
-                this.switchMenuPage(currPage, MenuPage.ONLINE);
+            case GameDef.MenuPage.JOIN_ROOM:
+                this.switchMenuPage(currPage, GameDef.MenuPage.ONLINE);
                 break;
-            case MenuPage.ROOM:
+            case GameDef.MenuPage.ROOM:
                 GameConnectModel.sendLeaveRoom((ret: number, data) => {
                     if (ret === 0) {
-                        this.switchMenuPage(currPage, MenuPage.ONLINE);
+                        this.switchMenuPage(currPage, GameDef.MenuPage.ONLINE);
                     }
                 });
                 break;
-            case MenuPage.START_CHOOSE:
+            case GameDef.MenuPage.START_CHOOSE:
                 if (GameDataModel._netPlayerNO == 0) {
                     GameConnectModel.sendMenuBack((ret: number, data) => {
                         if (ret === 0) {
-                            this.switchMenuPage(currPage, MenuPage.ROOM);//返回房间准备界面
+                            this.switchMenuPage(currPage, GameDef.MenuPage.ROOM);//返回房间准备界面
                         }
                     })
                 }
                 else {
-
+                    CommonFunc.showChooseDialog("房主才能返回上一级菜单，返回将直接离开房间，你确定要离开房间吗？", null, () => {
+                        GameConnectModel.sendLeaveRoom((ret: number, data) => {
+                            if (ret === 0) {
+                                this.switchMenuPage(GameDataModel._menuPage, GameDef.MenuPage.ONLINE);//回到联机模式菜单
+                            }
+                        });
+                    }, null, null);
                 }
                 break;
             default:
@@ -216,9 +222,17 @@ export default class MainMenu extends cc.Component {
         GameDataModel._menuPage = to;
     }
 
+    showMenuPage(page: number) {
+        this.panelMenus[GameDataModel._menuPage].active = false;
+        this.panelMenus[page].active = true;
+
+        GameDataModel._menuPage = page;
+    }
+ 
     //开始游戏
     onStartGame() {
         cc.director.loadScene("Game");
+        GameDataModel._menuPage = -1;
     }
 
     updateHighScore() {
@@ -230,14 +244,14 @@ export default class MainMenu extends cc.Component {
         let currPage = GameDataModel._menuPage;
         switch (index) {
             case GameProtocal.MenuItemIdex.MODE_OFFLINE:
-                this.switchMenuPage(currPage, MenuPage.OFFLINE);
+                this.switchMenuPage(currPage, GameDef.MenuPage.OFFLINE);
                 console.log("单机模式");
                 break;
             case GameProtocal.MenuItemIdex.MODE_ONLINE:
                 console.log("联机模式");
                 this.connectServer((ret: boolean)=>{
                     if (ret) {
-                        this.switchMenuPage(currPage, MenuPage.ONLINE);
+                        this.switchMenuPage(currPage, GameDef.MenuPage.ONLINE);
                     }
                 });
                 break;
@@ -263,12 +277,12 @@ export default class MainMenu extends cc.Component {
                 GameConnectModel.sendCreateRoom((ret: number, data) => {
                     if (ret === 0) {
                         //创建成功
-                        this.switchMenuPage(currPage, MenuPage.ROOM);
+                        this.switchMenuPage(currPage, GameDef.MenuPage.ROOM);
                     }
                 });
                 break;
             case GameProtocal.MenuItemIdex.JOIN_ROOM:
-                this.switchMenuPage(currPage, MenuPage.JOIN_ROOM);
+                this.switchMenuPage(currPage, GameDef.MenuPage.JOIN_ROOM);
                 console.log("加入房间");
                 break;
             case GameProtocal.MenuItemIdex.JOIN:
@@ -280,46 +294,60 @@ export default class MainMenu extends cc.Component {
                 GameConnectModel.sendJoinRoom(parseInt(data), (ret: number, data) => {
                     if (ret === 0) {
                         //加入房间成功
-                        this.switchMenuPage(currPage, MenuPage.ROOM);
+                        this.switchMenuPage(currPage, GameDef.MenuPage.ROOM);
                     }
                 });
                 break;
             case GameProtocal.MenuItemIdex.START_GAME:
-                if (GameDataModel._netPlayerNO === 0) {
+                if (data === "StartGame") {
                     console.log("房间开始游戏");
                     GameConnectModel.sendRoomStart((ret: number, data) => {
                         if (ret === 0) {
-                            this.switchMenuPage(currPage, MenuPage.START_CHOOSE);
+                            this.switchMenuPage(currPage, GameDef.MenuPage.START_CHOOSE);
                         }
                     });
                 }
-                else {
-                    let playerInfo = GameDataModel.getPlayerInfo(GameDataModel._netPlayerNO);
-                    if (playerInfo.ready) {
-                        console.log("房间取消准备");
-                        GameConnectModel.sendRoomUnReady((ret: number, data) => {
-                            if (ret === 0) {
-                                let menuRoom = this.panelMenus[currPage].getComponent(MenuRoom);
-                                menuRoom.refreshView();
-                            }
-                        });
-                    }
-                    else {
-                        console.log("房间准备");
-                        GameConnectModel.sendRoomReady((ret: number, data) => {
-                            if (ret === 0) {
-                                let menuRoom = this.panelMenus[currPage].getComponent(MenuRoom);
-                                menuRoom.refreshView();
-                            }
-                        });
-                    }
+                else if (data === "UnReady") {
+                    console.log("房间取消准备");
+                    GameConnectModel.sendRoomUnReady((ret: number, data) => {
+                        if (ret === 0) {
+                            let menuRoom = this.panelMenus[currPage].getComponent(MenuRoom);
+                            menuRoom.refreshView();
+                        }
+                    });
                 }
+                else if (data === "Ready") {
+                    console.log("房间准备");
+                    GameConnectModel.sendRoomReady((ret: number, data) => {
+                        if (ret === 0) {
+                            let menuRoom = this.panelMenus[currPage].getComponent(MenuRoom);
+                            menuRoom.refreshView();
+                        }
+                    });
+                }
+                
                 break;
             case GameProtocal.MenuItemIdex.START_GAME_DIRECT:
                 console.log("直接开始游戏");
                 break;
             case GameProtocal.MenuItemIdex.MAP_EDIT_ONLINE:
                 console.log("开始地图编辑-联机");
+                break;
+            default:
+                break;
+        }
+    }
+
+    onMenuCustomEvent(page: number, data) {
+        switch (page) {
+            case GameDef.MenuPage.ROOM:
+                if (data === "NtfRoomStart") {
+                    this.switchMenuPage(GameDataModel._menuPage, GameDef.MenuPage.START_CHOOSE);
+                }
+            case GameDef.MenuPage.START_CHOOSE:
+                if (data === "LeaveRoom") {
+                    this.switchMenuPage(GameDataModel._menuPage, GameDef.MenuPage.ROOM);//返回房间界面
+                }
                 break;
             default:
                 break;
@@ -345,7 +373,7 @@ export default class MainMenu extends cc.Component {
             GameConnectModel.connectServer((ret, data) => {
                 this.showNetWaitTip(false);
                 if (ret === 1) {
-                    CommonFunc.showToast("连接服务器超时，请稍后再试！", 2)
+                    CommonFunc.showToast("连接服务器超时，请稍后再试！", 2);
                 }
                 
                 CommonFunc.excuteCallback(callback, ret === 0);
@@ -353,19 +381,19 @@ export default class MainMenu extends cc.Component {
         }
     }
 
-    //房间开始
-    onNtfRoomStart(info: gamereq.RoomPlayerInfo) {
-        if (GameDataModel._menuPage === MenuPage.ROOM) {
-            CommonFunc.playButtonSound();
-            this.switchMenuPage(GameDataModel._menuPage, MenuPage.START_CHOOSE);
+    //网络错误
+    onSocketError() {
+        if (this.isNetWaitTipShowing()) {
+            this.showNetWaitTip(false);
+            CommonFunc.showToast("登录服务器连接失败，请稍后再试！", 2);
         }
     }
 
     //菜单返回
     onNtfMenuBack(info: gamereq.RoomPlayerInfo) {
         let currPage = GameDataModel._menuPage;
-        if (currPage == MenuPage.START_CHOOSE) {
-            this.switchMenuPage(currPage, MenuPage.ROOM);//返回房间准备界面
+        if (currPage == GameDef.MenuPage.START_CHOOSE) {
+            this.switchMenuPage(currPage, GameDef.MenuPage.ROOM);//返回房间准备界面
         }
     }
 
@@ -382,6 +410,10 @@ export default class MainMenu extends cc.Component {
     }
 
     onTest() {
-        //GameConnectModel.sendLoginIn(null);
+        // CommonFunc.showChooseDialog("测试", "确定", () => {
+        //     console.log("确定");
+        // }, "取消", () => {
+        //     console.log("取消");
+        // });
     }
 }

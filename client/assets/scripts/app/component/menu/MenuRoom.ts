@@ -28,6 +28,7 @@ export default class MenuRoom extends MenuChoose {
         GameConnectModel.addEventListener(EventDef.EV_NTF_PLAYER_INFO, this.onNtfPlayerInfo, this);
         GameConnectModel.addEventListener(EventDef.EV_NTF_ROOM_READY, this.onNtfRoomReady, this);
         GameConnectModel.addEventListener(EventDef.EV_NTF_ROOM_UNREADY, this.onNtfRoomUnReady, this);
+        GameConnectModel.addEventListener(EventDef.EV_NTF_ROOM_START, this.onNtfRoomStart, this);
     }
 
     removeListener() {
@@ -61,7 +62,7 @@ export default class MenuRoom extends MenuChoose {
     }
 
     refreshMenu() {
-        if (GameDataModel._netPlayerNO == 0) {
+        if (GameDataModel._netPlayerNO === 0) {
             //房主
             this.imgReady.spriteFrame = this.atlasReady.getSpriteFrame("pic_startgame");
         }
@@ -124,5 +125,30 @@ export default class MenuRoom extends MenuChoose {
     //房间取消准备
     onNtfRoomUnReady(info: gamereq.RoomPlayerInfo) {
         this.refreshPlayer();
+    }
+
+    //房间开始
+    onNtfRoomStart(info: gamereq.RoomPlayerInfo) {
+        this.dispatchCustomEvent("NtfRoomStart");
+    }
+
+    onSelectItems() {
+        CommonFunc.playButtonSound();
+        
+        let value = "";
+        if (GameDataModel._netPlayerNO === 0) {
+            value = "StartGame";
+        }
+        else {
+            let playerInfo = GameDataModel.getPlayerInfo(GameDataModel._netPlayerNO);
+            if (playerInfo.ready) {
+                value = "UnReady";
+            }
+            else {
+                value = "Ready";
+            }
+        }
+
+        this.dispatchChooseEvent(value);
     }
 }

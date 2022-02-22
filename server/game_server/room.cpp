@@ -7,7 +7,7 @@ const uint kFrameInterval = 1000 / GAME_FRAMES_NUM;
 std::mutex Room::id_generator_mtx_;
 myutils::IDGenerator<uint> Room::id_generator_(1, UINT_MAX);
 Room::Room(uint room_id, boost::asio::io_service& service, GameServer* server) : game_server_(server), 
-	room_id_(room_id),frame_timer_(service), frame_start_time_(0), frame_no_(0), 
+	room_id_(room_id),frame_timer_(service), frame_start_time_(0), frame_running_(false), frame_no_(0),
 	status_(0), menu_index_(0), game_mode_(0)
 {
     ResetRoom();
@@ -88,11 +88,18 @@ void Room::StopGameFrameTimer()
 {
 	frame_timer_.cancel();
 
+	frame_start_time_ = 0;
+	frame_running_ = false;
 	ResetGameFrameInfo();
 }
 
 void Room::OnGameFrameSync()
 {
+	if (!frame_running_)
+	{
+		return;
+	}
+
 	auto frameno = GetFrameNO();
 	if (frameno != 0 || frame_ope_.size() == TOTAL_PLAYER
 		|| time(nullptr) - frame_start_time_ > FRAME_TIMEOUT_TIME)

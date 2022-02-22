@@ -8,6 +8,9 @@ export default class MenuChoose extends cc.Component {
     @property({ displayName: "面板层节点", type: cc.Node })
     nodePanel: cc.Node = null;
 
+    @property({ displayName: "菜单页值", type: cc.Integer })
+    menuPage: number = 0;
+
     @property({ displayName: "菜单选项节点", type: [cc.Node] })
     nodeMenuItems: cc.Node[] = [];
 
@@ -22,6 +25,9 @@ export default class MenuChoose extends cc.Component {
 
     @property({ displayName: "菜单项选中回调", type: cc.Component.EventHandler})
     handlerChoose: cc.Component.EventHandler = null;
+
+    @property({ displayName: "自定义回调", type: cc.Component.EventHandler})
+    handlerCustom: cc.Component.EventHandler = null;
 
     _cursor: cc.Node = null;
     _currChoose: number = 0;
@@ -72,7 +78,7 @@ export default class MenuChoose extends cc.Component {
     onSelectItems() {
         CommonFunc.playButtonSound();
         
-        this.handlerChoose.emit([this.menuItemValue[this._currChoose]]);
+        this.dispatchChooseEvent();
     }
 
     getIndexByMenuItemValue(value: number): number {
@@ -85,5 +91,13 @@ export default class MenuChoose extends cc.Component {
         }
 
         return index;
+    }
+
+    dispatchChooseEvent(data?) {
+        this.handlerChoose.emit([this.menuItemValue[this._currChoose], data]);
+    }
+
+    dispatchCustomEvent(data?) {
+        this.handlerCustom.emit([this.menuPage, data]);
     }
 }

@@ -32,6 +32,7 @@ export default class GameInputManager extends cc.Component {
 
     initListener() {
         GameInputModel.addKeyDownOnceListener(this.onKeyDown, this.onKeyUp, this);
+        GameInputModel.addInputHierarchy(false, this);
 
         GameLogicModel.addEventListener(EventDef.EV_GL_CAPTURE_OPERATION, this.evCaptureFrameOpe, this);
     }

@@ -13,6 +13,7 @@ import GameConfigModel from "../../model/GameConfigModel";
 import GameConnectModel from "../../model/GameConnectModel";
 import GameLogicModel from "../../model/GameLogicModel";
 import GameOpeControl from "../../define/GameOpeControl";
+import { gamereq } from "../../network/proto/gamereq";
 
 const {ccclass, property} = cc._decorator;
 
@@ -111,8 +112,15 @@ export default class Game extends cc.Component {
     initListener() {
         GameInputModel.addKeyDownOnceListener(() => {
             //GameDataModel.resetGameData();
+            CommonFunc.playButtonSound();
             if (GameDataModel.isModeOnline()) {
-
+                CommonFunc.showChooseDialog("你当前正在游戏中，退出将自动离开房间并返回主菜单，是否继续退出操作？", null, () => {
+                    GameConnectModel.sendLeaveRoom((ret: number, data) => {
+                        if (ret === 0) {
+                            this.goToMainMenu(); 
+                        }
+                    });
+                }, null, null);
             }
             else {
                 this.goToMainMenu();
@@ -123,9 +131,12 @@ export default class Game extends cc.Component {
                 this.onTest();
             }, null, this, cc.macro.KEY.t);
         }
+        GameInputModel.addInputHierarchy(false, this);
 
         this.node.on(EventDef.EV_GAME_INIT_FINISHED, this.evInitGameFinished, this)
         this.node.on(EventDef.EV_GAME_SHOW_DEBUG_TEXT, this.onDebugTextOut, this);
+
+        GameConnectModel.addEventListener(EventDef.EV_NTF_LEAVE_ROOM, this.onNtfLeaveRoom, this);
     }
 
     removeListener() {
@@ -147,6 +158,10 @@ export default class Game extends cc.Component {
         });
 
         this.prepareGame();
+
+        if (GameDataModel.isModeEditMap()) {
+            CommonFunc.showToast("地图编辑完成后，房主按下Enter键便可开始游戏！", 3);
+        }
     }
 
     prepareGame() {
@@ -429,5 +444,13 @@ export default class Game extends cc.Component {
             this._gameSuccessPanel.destroy();
             this._gameSuccessPanel = null;
         }
+    }
+
+    onNtfLeaveRoom(info: gamereq.RoomPlayerInfo) {
+        CommonFunc.showSureDialog(`由于${info.playerno + 1}号玩家离开房间，本次游戏被迫结束。（确认后将自动返回菜单界面）`, () => {
+            //返回房间界面
+            GameDataModel._gotoMenuPage = GameDef.MenuPage.ROOM;
+            this.goToMainMenu();
+        });
     }
 }

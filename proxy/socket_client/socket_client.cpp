@@ -33,10 +33,9 @@ void AsioSockClient::ConnectServer(std::string ip, int port, std::string hello_d
             self->port_ = port;
             self->hello_data_ = hello_data;
 
-            if (self->session_->status_ != SocketStatus::INIT)
+            if (self->session_->status_ != SocketStatus::INIT && self->session_->status_ != SocketStatus::CLOSED)
             {
                 self->CloseConnectSession();
-                self->session_->status_ = SocketStatus::INIT;
             }
 
             self->DoConnect();
@@ -45,7 +44,7 @@ void AsioSockClient::ConnectServer(std::string ip, int port, std::string hello_d
 
 void AsioSockClient::CloseConnection()
 {
-    LOG_TRACE("AsioSockClient::CloseConnection sessionid(%d)", session_->session_id_);
+    LOG_TRACE("AsioSockClient::CloseConnection sessionid(%d)", *session_->session_id_);
     auto self = shared_from_this();
     boost::asio::post(session_->socket_.get_executor(), [self]()
         {

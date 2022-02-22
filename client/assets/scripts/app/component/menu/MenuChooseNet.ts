@@ -25,6 +25,7 @@ export default class MenuChooseNet extends MenuChoose {
     initListener() {
         GameConnectModel.addEventListener(EventDef.EV_NTF_MENU_SWITCH, this.onNtfMenuSwitch, this);
         GameConnectModel.addEventListener(EventDef.EV_NTF_MENU_CHOOSE, this.onNtfMenuChoose, this);
+        GameConnectModel.addEventListener(EventDef.EV_NTF_LEAVE_ROOM, this.onNtfLeaveRoom, this);
     }
 
     removeListener() {
@@ -92,11 +93,17 @@ export default class MenuChooseNet extends MenuChoose {
     }
 
     onMenuChoose(info: gamereq.MenuChooseInfo) {
-        this.handlerChoose.emit([info.index]);
+        this.dispatchChooseEvent();
     }
 
     onNtfMenuChoose(info: gamereq.MenuChooseInfo) {
         CommonFunc.playButtonSound();
         this.onMenuChoose(info);
+    }
+
+    onNtfLeaveRoom(info: gamereq.RoomPlayerInfo) {
+        CommonFunc.showToast(`玩家${info.userid}离开房间`, 2);
+
+        this.dispatchCustomEvent("LeaveRoom");
     }
 }

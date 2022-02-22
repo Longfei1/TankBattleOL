@@ -64,6 +64,7 @@ export default class GameMapManager extends cc.Component {
         GameInputModel.addKeyDownOnceListener(() => {
             this.saveMapData();
         }, null, this, PlayerDef.KEYMAP_COMMON.SAVE);
+        GameInputModel.addInputHierarchy(false, this);
     }
 
     init() {
