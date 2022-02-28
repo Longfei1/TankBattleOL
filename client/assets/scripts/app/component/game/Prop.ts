@@ -4,8 +4,8 @@ import { GameDef } from "../../define/GameDef";
 import { gameController } from "./Game";
 import { EventDef } from "../../define/EventDef";
 import BattleTank from "./tank/BattleTank";
-import PlayerTank from "./tank/PlayerTank";
-import EnemyTank from "./tank/EnemyTank";
+import GameLogicModel from "../../model/GameLogicModel";
+import GameUnitComponent from "./GameUnitComponent";
 
 const { ccclass, property } = cc._decorator;
 
@@ -20,7 +20,7 @@ const PropImgName = {
 }
 
 @ccclass
-export default class Prop extends cc.Component {
+export default class Prop extends GameUnitComponent {
     @property({ displayName: "道具图片", type: cc.Sprite })
     imgProp: cc.Sprite = null;
 
@@ -28,22 +28,11 @@ export default class Prop extends cc.Component {
     atlasProp: cc.SpriteAtlas = null;
 
     _type: number = -1;
-    _destroyed: boolean = false;
-
+    
     _keepTime: number = 0;
 
-    setPosition(pos: cc.Vec2);
-    setPosition(rcInfo: GameStruct.RcInfo);
-    setPosition(pos: any) {
-        if (pos) {
-            if (pos.x != null && pos.y != null) {
-                this.node.setPosition(pos);
-            }
-            else if (pos.col != null && pos.row != null) {
-                this.node.setPosition(GameDataModel.matrixToScenePosition(pos));
-            }
-        }
-    }
+    _gained: boolean = false;
+    _gainPlayer: BattleTank = null;
 
     setType(type: number) {
         this._type = type;
@@ -68,38 +57,31 @@ export default class Prop extends cc.Component {
         this.onClilision(other, self);
     }
 
-    onClilision(other: cc.Collider, self: cc.Collider) {
-        if (other.node.group === GameDef.GROUP_NAME_TANK) {
-            if (GameDataModel.isValidCollision(other, self)) {
-                let com = other.node.getComponent(BattleTank);
-                if (!this._destroyed && com && com._team === GameDef.TeamType.PLAYER) {
-                    this._destroyed = true;
-                    gameController.node.emit(EventDef.EV_PROP_GAIN, other.node);
-                    gameController.node.emit(EventDef.EV_PROP_DESTROY);
-                }
+    onClilision(self: GameStruct.colliderInfo, other: GameStruct.colliderInfo) {
+        if (!this._gained && other.node.group === GameDef.GROUP_NAME_TANK) {
+            let com = other.node.getComponent(BattleTank);
+            if (com && com._team === GameDef.TeamType.PLAYER) {
+                this._gained = true;
+                this._gainPlayer = com;
             }
         }
     }
 
     reset() {
+        super.reset();
+
         this._type = -1;
-        this._destroyed = false;
         this._keepTime = 0;
 
-        this.node.stopAllActions();
-        this.unscheduleAllCallbacks();
-    }
+        this._gained = false;
+        this._gainPlayer = null;
 
-    onDestroy() {
-        this.reset();
+        this.node.stopAllActions();
+        GameLogicModel.unscheduleAll(this);
     }
 
     onEnable() {
         this.playTwinkleAni();
-    }
-
-    onDisable() {
-        this.reset();
     }
 
     playTwinkleAni() {
@@ -116,14 +98,19 @@ export default class Prop extends cc.Component {
     }
 
     startDisappearTimer() {
-        let time = this._keepTime;
+        GameLogicModel.scheduleOnce(()=>{
+            gameController.node.emit(EventDef.EV_PROP_DESTROY);
+        }, this, this._keepTime);
+    }
 
-        this.schedule(()=>{
-            time--;
+    onLogicLastFrameEvent() {
+        if (this._gained) {
+            gameController.node.emit(EventDef.EV_PROP_GAIN, this._gainPlayer.node);
+            gameController.node.emit(EventDef.EV_PROP_DESTROY);
+        }
+    }
 
-            if (time <= 0) {
-                this.node.removeFromParent(); //时间结束后，从父节点移除
-            }
-        }, 1)
+    getPropRect(): GameStruct.BigRect {
+        return new GameStruct.BigRect(this._logicPos.x, this._logicPos.y, this.imgProp.node.width, this.imgProp.node.height);
     }
 }

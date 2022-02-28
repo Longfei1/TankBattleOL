@@ -61,13 +61,16 @@ export namespace GameDef {
     //其他
     export const TANK_MOVE_MIN_VALUE            = 10; //坦克最小移动量（像素）
     export const TANK_MOVE_INTERVAL_FRAMES      = 3; //移动图片变化的间隔帧数
+    export const TANK_ICE_ADD_SPEED             = 40; //冰布景加移速 
     export const GAME_FPS                       = 60;
     export const PLAYER_LEVEL_PROTECT_ONCE_DEAD = 4; //玩家坦克可以抵挡一次死亡的等级
     export const PLAYER_LIFE_NUM                = 2; //玩家初始生命数量
     export const PROP_BONUS_SCORE               = 500; //道具奖励得分
     export const GAME_TOTAL_STAGE               = 20; //总关卡数
 
-    export const GAME_FPS_LOGIC                 = 15; //游戏逻辑帧数
+    export const GAME_FPS_LOGIC_NET             = 15; //游戏逻辑帧数（网络）
+    export const GAME_FPS_LOGIC_LOCAL           = 30; //游戏逻辑帧数 (本地)
+    export const GAME_FPS_PHYSICS               = 120; //物理帧数（需要为逻辑帧数的整数倍）
     export const GAME_TOTAL_PLAYER              = 2; //游戏人数
 
     //游戏元素层级

@@ -17,6 +17,9 @@ export namespace EventDef {
 
     export const EV_ENEMY_DEAD                         = "evenemydead";                     //敌军死亡
 
+    export const EV_BULLET_CREATE                      = "evbulletcreate";                  //子弹创建
+    export const EV_BULLET_DESTROY                     = "evbulletcreate";                  //子弹销毁
+
     export const EV_MAP_CREATE_SCENERY                 = "evmapeditcreatescenery";          //地图：创建布景
     export const EV_MAP_DESTROY_SCENERY                = "evmapdestroyscenery";             //地图：销毁布景
     export const EV_MAP_EDIT_FINISHED                  = "evmapeditfinished";               //地图：编辑完成
@@ -57,5 +60,10 @@ export namespace EventDef {
 
     //游戏逻辑驱动
     export const EV_GL_CAPTURE_OPERATION               = "evglcaptureoperation";            //采集操作
+    export const EV_GL_LAST_FRAME_EVENT                = "evgllastframeevent";              //处理上一帧延后的事件
     export const EV_GL_PLAYER_OPERATION                = "evglplayeroperation";             //玩家操作
+    export const EV_GL_AI_OPERATION                    = "evglaioperation";                 //AI操作
+    export const EV_GL_UPDATE                          = "evglupdate";                      //更新操作
+    export const EV_GL_LATE_UPDATE                     = "evgllateupdate";                  //延后更新操作（在碰撞检测后）
+
 }

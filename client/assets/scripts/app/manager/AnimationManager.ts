@@ -6,6 +6,7 @@ import { AniDef } from "../define/AniDef";
 import UniqueIdGenerator from "../common/UniqueIdGenerator";
 import CommonFunc from "../common/CommonFunc";
 import GameDataModel from "../model/GameDataModel";
+import GameLogicModel from "../model/GameLogicModel";
 
 const { ccclass, property } = cc._decorator;
 
@@ -42,7 +43,7 @@ export default class AnimationManager extends cc.Component {
     }
 
     onDestroy() {
-        //this.unscheduleAllCallbacks();
+        
     }
 
     initMembers() {
@@ -116,13 +117,14 @@ export default class AnimationManager extends cc.Component {
         //动画需要有默认的clip
         if (animation) {
             let aniID: number;
-            let scheduleFunc;
+            let scheduleID;
             let pause = false;
 
             aniID = this.addAniCallback({
                 stopFunction: () => {
-                    if (scheduleFunc) {
-                        this.unschedule(scheduleFunc);
+                    if (scheduleID) {
+                        GameLogicModel.unschedule(scheduleID);
+                        scheduleID = null;
                     }
 
                     if (cc.isValid(nodeAni)) {
@@ -140,42 +142,34 @@ export default class AnimationManager extends cc.Component {
                 }
             });
 
-            if (mode === AniDef.UnitAniMode.ONCE) {
-                animation.on("finished", (event) => {
-                    this.stopUnitAni(aniID);
-                    if (typeof (endCallback) === "function") {
-                        endCallback();
-                    }
-                });
+            // if (mode === AniDef.UnitAniMode.ONCE) {
+            //     animation.on("finished", (event) => {
+            //         this.stopUnitAni(aniID);
+            //         if (typeof (endCallback) === "function") {
+            //             endCallback();
+            //         }
+            //     });
 
-                let state = animation.play();
-                state.wrapMode = cc.WrapMode.Normal;
-                state.repeatCount = 1;
-            }
-            else if (mode === AniDef.UnitAniMode.LOOP) {
+            //     let state = animation.play();
+            //     state.wrapMode = cc.WrapMode.Normal;
+            //     state.repeatCount = 1;
+            // }
+            if (mode === AniDef.UnitAniMode.LOOP) {
                 let state = animation.play();
                 state.wrapMode = cc.WrapMode.Loop;
                 state.repeatCount = Infinity;
             }
             else if (mode === AniDef.UnitAniMode.TIMELIMIT) {
-                //这个模式下动画用循环播放模式，然后根据时间停止播放, 精度0.1s
-                let totalTime = 0; let interval = 0.1;
-                scheduleFunc = () => {
-                    if (!pause) {
-                        totalTime += interval;
-                        if (totalTime > time) {
-                            this.stopUnitAni(aniID);
-                            if (typeof (endCallback) === "function") {
-                                endCallback();
-                            }
-                        }
+                //这个模式下动画是否引用循环播放，取决于动画属性设置。
+                //根据时间停止播放，精度与逻辑帧数相关
+                scheduleID = GameLogicModel.scheduleOnce(() => {
+                    this.stopUnitAni(aniID);
+                    if (typeof (endCallback) === "function") {
+                        endCallback();
                     }
-                }
+                }, this, time);
 
-                this.schedule(scheduleFunc, interval, cc.macro.REPEAT_FOREVER);
-                let state = animation.play();
-                state.wrapMode = cc.WrapMode.Loop;
-                state.repeatCount = Infinity;
+                animation.play();
             }
 
             if (typeof (startCallback) === "function") {

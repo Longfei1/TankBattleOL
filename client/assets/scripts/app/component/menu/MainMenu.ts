@@ -12,6 +12,7 @@ import { GameProtocal } from "../../network/GameProtocal";
 import { gamereq } from "../../network/proto/gamereq";
 import MenuRoom from "./MenuRoom";
 import GameLogicModel from "../../model/GameLogicModel";
+import RandomDevice from "../../common/RandomDevice";
 
 const {ccclass, property} = cc._decorator;
 

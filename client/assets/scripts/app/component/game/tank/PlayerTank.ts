@@ -15,16 +15,6 @@ const { ccclass, property } = cc._decorator;
 export default class PlayerTank extends BattleTank {
 
     _moveAudioInfo: GameStruct.AudioInfo = null;
-    _bShooting: boolean = false;
-
-    reset() {
-        super.reset();
-        this._bShooting = false;
-    }
-
-    setShooting(bShoot: boolean) {
-        this._bShooting = bShoot;
-    }
 
     shoot() {
         if (super.shoot()) {
@@ -62,52 +52,28 @@ export default class PlayerTank extends BattleTank {
         }
     }
 
-    setMove(bMove: boolean, nDirection: number) {
-        let lastMove = this._isMove;
-
+    setMove(bMove: boolean, nDirection?: number) {
         super.setMove(bMove, nDirection);
 
-        if (lastMove !== this._isMove) {
-            if (this._isMove) {
-                this.playMoveSound();
-            }
-            else {
-                this.stopMoveSound();
-            }
+        if (this._isMove) {
+            this.playMoveSound();
+        }
+        else {
+            this.stopMoveSound();
         }
     }
 
     playMoveSound() {
-        this.stopMoveSound();
-        this._moveAudioInfo = AudioModel.playSound("sound/move", true);
+        if (!this._moveAudioInfo || !this._moveAudioInfo.audioID) {
+            this._moveAudioInfo = AudioModel.playSound("sound/move", true);
+        }
     }
 
     stopMoveSound() {
         if (this._moveAudioInfo != null && this._moveAudioInfo.audioID != null) {
             AudioModel.stopSound(this._moveAudioInfo);
+            this._moveAudioInfo = null;
         }
-    }
-
-    lateUpdate() {
-        //super.lateUpdate();
-
-        //
-        // if (GameDataModel.isGameDebugMode()) {
-        //     let directions = this.getAvailableMoveDirections();
-        //     let textInfo = {
-        //         [GameDef.DIRECTION_UP]: "上",
-        //         [GameDef.DIRECTION_DOWN]: "下",
-        //         [GameDef.DIRECTION_LEFT]: "左",
-        //         [GameDef.DIRECTION_RIGHT]: "右",
-        //     };
-
-        //     let info = "可移动方向\n";
-        //     for (let it of directions) {
-        //         info += textInfo[it];
-        //     }
-
-        //     gameController.node.emit(EventDef.EV_GAME_SHOW_DEBUG_TEXT, info);
-        // }
     }
 
     haveBuff(value: number) {
@@ -119,19 +85,8 @@ export default class PlayerTank extends BattleTank {
         return false;
     }
 
-    onHited(bulletNode: cc.Node) {
-        if (this.haveBuff(GameDef.TANK_BUFF_INVINCIBLE)) {
-            return;
-        }
-
-        if (this._tankLevel >= GameDef.PLAYER_LEVEL_PROTECT_ONCE_DEAD) {
-            this.setTankLevel(this._tankLevel - 1);
-            let playerInfo = GameDataModel.getPlayerInfo(this.id);
-            playerInfo.level = this._tankLevel;
-            return;
-        }
-
-        this.dead();
+    onClilisionProp(propNode: cc.Node) {
+        this._logicUpdate = false;
     }
 
     onLevelUp() {
@@ -177,10 +132,27 @@ export default class PlayerTank extends BattleTank {
         }
     }
 
-    update(dt) {
-        super.update(dt);
-        if (this.isTankVisible() && this._bShooting) {
-            this.shoot();
+    onLogicLastFrameEvent() {
+        if (this._hited && this.isTankVisible()) {
+            if (this.haveBuff(GameDef.TANK_BUFF_INVINCIBLE)) {
+                this._hited = false;
+                return;
+            }
+
+            if (this._tankLevel >= GameDef.PLAYER_LEVEL_PROTECT_ONCE_DEAD) {
+                this.setTankLevel(this._tankLevel - 1);
+                let playerInfo = GameDataModel.getPlayerInfo(this.id);
+                playerInfo.level = this._tankLevel;
+                this._hited = false;
+                return;
+            }
+
+            this.syncLogicPos();
+            this.dead();
+        }
+
+        if (!this._hited) {
+            this._logicUpdate = true;   
         }
     }
 }

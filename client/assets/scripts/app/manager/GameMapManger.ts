@@ -11,6 +11,7 @@ import { PlayerDef } from "../define/PlayerDef";
 import GameConfigModel from "../model/GameConfigModel";
 import HomeBase from "../component/game/HomeBase";
 import { AniDef } from "../define/AniDef";
+import GameLogicModel from "../model/GameLogicModel";
 
 const {ccclass, property} = cc._decorator;
 
@@ -38,9 +39,9 @@ export default class GameMapManager extends cc.Component {
     }
 
     onDestroy() {
-        this._sceneryPool.clearNode();
+        this.removeListener();
 
-        GameInputModel.removeInputListenerByContext(this);
+        this._sceneryPool.clearNode();
     }
 
     initListenner() {
@@ -59,12 +60,19 @@ export default class GameMapManager extends cc.Component {
             gameController.node.on(EventDef.EV_PROP_SPADE_START, this.evPropSpadeStart, this);
             gameController.node.on(EventDef.EV_PROP_SPADE_COUNT_DOWN, this.evPropSpadeCountDown, this);
             gameController.node.on(EventDef.EV_PROP_SPADE_END, this.evPropSpadeEnd, this);
+
+            GameLogicModel.addEventListener(EventDef.EV_GL_LAST_FRAME_EVENT, this.evLogicLastFrameEvent, this);
         }
 
         GameInputModel.addKeyDownOnceListener(() => {
             this.saveMapData();
         }, null, this, PlayerDef.KEYMAP_COMMON.SAVE);
         GameInputModel.addInputHierarchy(false, this);
+    }
+
+    removeListener() {
+        GameInputModel.removeInputListenerByContext(this);
+        GameLogicModel.removeEventListenerByContext(this);
     }
 
     init() {
@@ -161,7 +169,7 @@ export default class GameMapManager extends cc.Component {
                 let com = scenery.getComponent(Scenery);
                 com.reset();
                 com.setType(type);
-                scenery.setPosition(GameDataModel.matrixToScenePosition(GameDataModel.sceneryToMatrixPosition(sceneryPos)));
+                com.setLogicPosition(GameDataModel.sceneryToMatrixPosition(sceneryPos), true);
                 this._scenerys[sceneryPos.col][sceneryPos.row] = scenery;
             }
         }
@@ -201,7 +209,7 @@ export default class GameMapManager extends cc.Component {
     }
 
     evDestroyScenery(node: cc.Node) {
-        let sceneryPos = GameDataModel.sceneToSceneryPosition(node.getPosition());
+        let sceneryPos = GameDataModel.sceneToSceneryPosition(node.getComponent(Scenery).getLogicPosition());
         this.destroyScenery(sceneryPos);
     }
 
@@ -262,22 +270,27 @@ export default class GameMapManager extends cc.Component {
     resetHomeBase() {
         if (cc.isValid(this._homeBase)) {
             this._homeBase.destroy();
-            this._homeBase = null;
         }
+        this._homeBase = null;
+        GameDataModel._homeBase = null;
     }
 
     createHomeBase() {
         this.resetHomeBase();
         this._homeBase = cc.instantiate(this.pfbHomeBase);
-        this._homeBase.getComponent(HomeBase).setPosition(GameDef.PLACE_HOMEBASE);
+        let com = this._homeBase.getComponent(HomeBase);
+        com.reset();
+        com.setLogicPosition(GameDef.PLACE_HOMEBASE, true);
         this.panelGame.addChild(this._homeBase);
 
         this._homeBase.zIndex = GameDef.ZINDEX_HOMEBASE;
+
+        GameDataModel._homeBase = com;
     }
 
     //基地所在位置，不能存在其他布景元素
     checkHomeBase() {
-        if (this._homeBase) {
+        if (GameDataModel._homeBase) {
             this.destroySceneryAround(this.getHomeBaseSceneryPosition());
         }
     }
@@ -300,7 +313,7 @@ export default class GameMapManager extends cc.Component {
     }
 
     getHomeBaseSceneryPosition():GameStruct.RcInfo {
-        let matrixPox = GameDataModel.sceneToMatrixPosition(this._homeBase.getPosition());
+        let matrixPox = GameDataModel.sceneToMatrixPosition(GameDataModel._homeBase.getLogicPosition());
         return GameDataModel.matrixToSceneryPosition(matrixPox);
     }
 
@@ -314,7 +327,7 @@ export default class GameMapManager extends cc.Component {
     }
 
     isHomeBasePosition(sceneryPos: GameStruct.RcInfo) {
-        if (sceneryPos && this._homeBase) {
+        if (sceneryPos && GameDataModel._homeBase) {
             let homeBasePos = this.getHomeBaseSceneryPosition();
             let posAry = GameDataModel.getRectContainPosArray(homeBasePos, 2, 2);
             for (let pos of posAry) {
@@ -336,6 +349,7 @@ export default class GameMapManager extends cc.Component {
 
     evPropSpadeStart() {
         //铲子道具效果，产生钢布景围绕基地
+        this.stopPropSpadeEffectDisappearAni();
         this.createScenerysAroundHomeBase(GameDef.SceneryType.STEEL);
     }
 
@@ -383,7 +397,7 @@ export default class GameMapManager extends cc.Component {
 
     showPropSpadeEffectDisappearAni() {
         this._propSpadeEffectDisappearAniID = gameController.playUnitAniLoop(AniDef.UnitAniType.SPADE_EFFECT_DISAPPEAR,
-            this._homeBase);
+            GameDataModel._homeBase.node);
     }
 
     stopPropSpadeEffectDisappearAni() {
@@ -397,6 +411,23 @@ export default class GameMapManager extends cc.Component {
     evGameInitFinished() {
         if (GameDataModel.isModeEditMap()) {
             this.initGameMap();
+        }
+    }
+
+    evLogicLastFrameEvent() {
+        //布景
+        for (let i = 0; i < GameDef.SCENERYS_NODE_COL_NUM; i++) {
+            for (let j = 0; j < GameDef.SCENERYS_NODE_ROW_NUM; j++) {
+                if (this._scenerys[i][j]) {
+                    let com = this._scenerys[i][j].getComponent(Scenery);
+                    com.onLogicLastFrameEvent();
+                }
+            }
+        }
+
+        //基地
+        if (GameDataModel._homeBase) {
+            GameDataModel._homeBase.onLogicLastFrameEvent();
         }
     }
 }

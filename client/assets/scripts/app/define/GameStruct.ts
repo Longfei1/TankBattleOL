@@ -1,3 +1,5 @@
+import Big, { BigSource } from "../../packages/bigjs/Big";
+
 export namespace GameStruct {
     export class RcInfo {
         col: number;
@@ -39,6 +41,112 @@ export namespace GameStruct {
         }
     }
 
+    export class BigPos {
+        x: Big;
+        y: Big;
+
+        constructor(x?: any | BigSource, y?: BigSource) {
+            if (x && typeof x === 'object' && x instanceof BigPos) {
+                y = x.y;
+                x = x.x;
+            }
+
+            this.x = x ? Big(x) : Big(0);
+            this.y = y ? Big(y) : Big(0);
+        }
+
+        clone(): BigPos {
+            return new BigPos(this);
+        }
+    }
+
+    export class BigRect {
+        x: Big;
+        y: Big;
+        width: Big;
+        height: Big;
+
+        constructor(x?: any | BigSource, y?: BigSource, w?: BigSource, h?: BigSource){
+            if (x && typeof x === 'object' && x instanceof BigRect) {
+                y = x.y;
+                w = x.width;
+                h = x.height;
+                x = x.x;
+            }
+            this.x = x ? Big(x) : Big(0);
+            this.y = y ? Big(y) : Big(0);
+            this.width = w ? Big(w) : Big(0);
+            this.height = h ? Big(h) : Big(0);
+        }
+
+        clone(): BigRect {
+            return new BigRect(this);
+        }
+
+        //返回2个矩形重叠的部分。
+        intersection(rectB: BigRect) {
+            let axMin = this.x, ayMin = this.y, axMax = this.xMax, ayMax = this.yMax;
+            var bxMin = rectB.x, byMin = rectB.y, bxMax = rectB.xMax, byMax = rectB.yMax;
+            let x = axMin.lt(bxMin) ? bxMin : axMin;
+            let y = ayMin.lt(byMin) ? byMin : ayMin;
+            let width = (axMax.lt(bxMax) ? axMax : bxMax).minus(x);
+            let height = (ayMax.lt(byMax) ? ayMax : byMax).minus(y);
+            return new BigRect(x, y, width, height);
+        }
+
+        //当前矩形是否包含指定矩形。
+        containsRect(rect: BigRect): boolean {
+            return (this.x.lte(rect.x) 
+                && this.xMax.gte(rect.xMax)
+                && this.y.lte(rect.y) 
+                && this.yMax.gte(rect.yMax));
+        }
+
+        get xMin(): Big {
+            return Big(this.x);
+        }
+
+        set xMin(value: Big) {
+            this.width = this.width.plus(this.x).minus(value);
+            this.x = value;
+        }
+
+        get yMin(): Big {
+            return Big(this.y);
+        }
+
+        set yMin(value: Big) {
+            this.height = this.height.plus(this.y).minus(value);
+            this.y = value;
+        }
+
+        get xMax(): Big {
+            return this.x.plus(this.width);
+        }
+
+        set xMax(value: Big) {
+            this.width = value.minus(this.x);
+        }
+
+        get yMax(): Big {
+            return this.y.plus(this.height);
+        }
+
+        set yMax(value: Big) {
+            this.height = value.minus(this.y);
+
+        }
+
+        get center(): BigPos {
+            return new BigPos(this.width.mul(0.5).plus(this.x), this.height.mul(0.5).plus(this.y));
+        }
+
+        set center(value: BigPos) {
+            this.x = value.x.minus(this.width.mul(0.5));
+            this.y = value.y.minus(this.height.mul(0.5));
+        }
+    }
+
     //坦克属性，对应TankData.json配置
     export class TankAttributes {
         tankName: string;
@@ -57,7 +165,7 @@ export namespace GameStruct {
         shooterID: number;    //射击者编号
         powerLevel: number;   //威力等级
         team: number;         //所属队伍
-        pos: cc.Vec2;         //起始位置
+        pos: BigPos;          //起始位置
         direction: number;    //方向
         speed: number;        //速度
     }
@@ -121,7 +229,7 @@ export namespace GameStruct {
     export class GameRectInfo {
         group: string;
         type: number;
-        rect: cc.Rect;
+        rect: BigRect;
     }
 
     export class ShootNumInfo {
@@ -156,5 +264,10 @@ export namespace GameStruct {
         direction: GameKeyInfo;
         ok: GameKeyInfo;
         cancel: GameKeyInfo;
+    }
+
+    export class colliderInfo {
+        tag: number;
+        node: cc.Node;
     }
 }

@@ -7,7 +7,7 @@
   "premultiplyAlpha": false,
   "subMetas": {
     "player_life": {
-      "ver": "1.0.3",
+      "ver": "1.0.4",
       "uuid": "ac69114c-57b6-47fd-ab5b-8ae2c1b180ab",
       "rawTextureUuid": "0d1c982f-8d6b-4329-a297-443a0b8ad96f",
       "trimType": "auto",

@@ -1,11 +1,9 @@
-import { GameDef } from "../../../define/GameDef";
-import { GameStruct } from "../../../define/GameStruct";
-import GameDataModel from "../../../model/GameDataModel";
+import GameUnitComponent from "../GameUnitComponent";
 
 const {ccclass, property} = cc._decorator;
 
 @ccclass
-export default class BaseTank extends cc.Component {
+export default class BaseTank extends GameUnitComponent {
     @property({ displayName: "坦克图片", type: cc.Sprite })
     imgTank: cc.Sprite = null;
 
@@ -27,24 +25,7 @@ export default class BaseTank extends cc.Component {
     }
 
     reset() {
-
-    }
-
-    setPosition(pos: cc.Vec2);
-    setPosition(rcInfo: GameStruct.RcInfo);
-    setPosition(pos: any) {
-        if (pos) {
-            if (pos.x != null && pos.y != null) {
-                this.node.setPosition(pos);
-            }
-            else if (pos.col != null && pos.row != null) {
-                this.node.setPosition(GameDataModel.matrixToScenePosition(pos));
-            }
-        }
-    }
-
-    getPosition() {
-        this.node.getPosition();
+        super.reset();
     }
 
     getNodeAni() {

@@ -7,7 +7,7 @@
   "premultiplyAlpha": false,
   "subMetas": {
     "enemytank": {
-      "ver": "1.0.3",
+      "ver": "1.0.4",
       "uuid": "a32378ba-e46c-4251-9d22-7f235501812b",
       "rawTextureUuid": "843ca1fb-026b-4d78-879d-e99f13b62127",
       "trimType": "auto",

@@ -8,6 +8,7 @@ import { EventDef } from "../define/EventDef";
 import { google } from "../network/proto/basereq";
 import GameDataModel from "./GameDataModel";
 import { GameDef } from "../define/GameDef";
+import GameLogicModel from "./GameLogicModel";
 
 class GameConnectModel extends BaseModel {
     private _gameConnect: GameConnect = null;
@@ -531,6 +532,7 @@ class GameConnectModel extends BaseModel {
         else if (info.mode === GameProtocal.GameMode.GAME_MODE_MAP_EDIT) {
             GameDataModel._playMode = GameDef.GAMEMODE_MAP_EDIT_ONLINE;
         }
+        GameLogicModel.setRandomSeed(GameDataModel._netRandomSeed);
 
         this.emit(EventDef.EV_NTF_GAME_START, info);
     }

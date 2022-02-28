@@ -5,15 +5,13 @@ import GameInputModel from "../../model/GameInputModel";
 import { PlayerDef } from "../../define/PlayerDef";
 import CommonFunc from "../../common/CommonFunc";
 import AudioModel from "../../model/AudioModel";
-import NodePool from "../../common/NodePool";
-import Bullet from "./Bullet";
 import { GameStruct } from "../../define/GameStruct";
 import { AniDef } from "../../define/AniDef";
 import GameConfigModel from "../../model/GameConfigModel";
 import GameConnectModel from "../../model/GameConnectModel";
 import GameLogicModel from "../../model/GameLogicModel";
-import GameOpeControl from "../../define/GameOpeControl";
 import { gamereq } from "../../network/proto/gamereq";
+import GameOpeControl from "../../common/GameOpeControl";
 
 const {ccclass, property} = cc._decorator;
 
@@ -33,9 +31,6 @@ export default class Game extends cc.Component {
 
     @property({ displayName: "游戏地图最小元素单元", type: cc.Node })
     nodeMapUnit: cc.Node = null;
-
-    @property({ displayName: "子弹预制体", type: cc.Prefab })
-    pfbBullet: cc.Prefab = null;
 
     @property({ displayName: "调试信息标签", type: cc.Label })
     textDebug: cc.Label = null;
@@ -57,8 +52,6 @@ export default class Game extends cc.Component {
 
     _currLevel: number = 1;
 
-    _bulletPool: NodePool = null;
-
     _resultPanel: cc.Node = null;
     _gameSuccessPanel: cc.Node = null;
 
@@ -73,9 +66,7 @@ export default class Game extends cc.Component {
         GameDataModel.resetGameData();
         GameDataModel.setMapUnit(this.nodeMapUnit.width, this.nodeMapUnit.height);
 
-        this._bulletPool = new NodePool(this.pfbBullet, Bullet);
-
-        this._opeStart = new GameOpeControl(300, 50);
+        this._opeStart = new GameOpeControl(0.3, 0.05);
 
         if (GameDataModel.isGameDebugMode()) {
             this.textDebug.node.active = true;
@@ -92,8 +83,7 @@ export default class Game extends cc.Component {
 
     onDestroy() {
         this.removeListener();
-        this._bulletPool.clearNode();
-        cc.director.getCollisionManager().enabled = false;
+        //cc.director.getCollisionManager().enabled = false;
 
         gameController = null;
         GameLogicModel.exitGame();
@@ -147,6 +137,10 @@ export default class Game extends cc.Component {
         cc.director.loadScene("Menu");
     }
 
+    reloadGame() {
+        cc.director.loadScene("Game");
+    }
+
     evInitGameFinished() {
         GameLogicModel.startGame();
     }
@@ -160,7 +154,12 @@ export default class Game extends cc.Component {
         this.prepareGame();
 
         if (GameDataModel.isModeEditMap()) {
-            CommonFunc.showToast("地图编辑完成后，房主按下Enter键便可开始游戏！", 3);
+            if (GameDataModel.isModeOnline()) {
+                CommonFunc.showToast("地图编辑完成后，房主按下Enter键便可开始游戏！", 3);
+            }
+            else {
+                CommonFunc.showToast("地图编辑完成后，房主按下Enter后可返回菜单，继续选择单人或双人模式！", 3); 
+            }
         }
     }
 
@@ -200,14 +199,14 @@ export default class Game extends cc.Component {
         this.node.emit(EventDef.EV_GAME_STARTED); //其他模块执行开始逻辑
 
         GameDataModel._enableOperate = true; //打开控制开关
-        cc.director.getCollisionManager().enabled = true; //打开碰撞检测
+        //cc.director.getCollisionManager().enabled = true; //打开碰撞检测
     }
 
     //游戏结束，进入结算
     gameEnd() {
         GameDataModel._gameRunning = false;
         GameDataModel._enableOperate = false; //关闭控制开关
-        cc.director.getCollisionManager().enabled = false; //关闭碰撞检测
+        //cc.director.getCollisionManager().enabled = false; //关闭碰撞检测
 
         cc.audioEngine.stopAll();
 
@@ -221,33 +220,9 @@ export default class Game extends cc.Component {
         GameDataModel._gameOver = true;
         GameDataModel._enableOperate = false;
 
-        this.playUnitAniOnce(AniDef.UnitAniType.GAME_OVER, this.nodeGameCenter, null, null, () => {
+        this.playUnitAniInTime(AniDef.UnitAniType.GAME_OVER, this.nodeGameCenter, 2, null, null, () => {
             this.gameEnd();
         });
-    }
-
-    getNodeBullet(): cc.Node {
-        return this._bulletPool.getNode()
-    }
-
-    putNodeBullet(node) {
-        if (node) {
-            this._bulletPool.putNode(node);
-        }
-    }
-
-    onTankShoot(shootInfo: GameStruct.ShootInfo) { 
-        if (shootInfo) {
-            let bullet = this.getNodeBullet();
-            bullet.setPosition(this.panelGame.convertToNodeSpace(shootInfo.pos));
-            let com = bullet.getComponent(Bullet);
-            com.setType(shootInfo.type);
-            com._shooterID = shootInfo.shooterID;
-            com._team = shootInfo.team;
-            com._powerLevel = shootInfo.powerLevel;
-            com.setMove(shootInfo.speed, shootInfo.direction);
-            this.panelGame.addChild(bullet);
-        }
     }
 
     playUnitAni(aniInfo: GameStruct.AniInfo) {
@@ -256,21 +231,22 @@ export default class Game extends cc.Component {
         }
     }
 
-    playUnitAniOnce(type, node: cc.Node, params = null, startCallback = null, endCallback = null): number {
-        let aniInfo: GameStruct.AniInfo = {
-            node: node,
-            mode: AniDef.UnitAniMode.ONCE,
-            type: type,
-            time: 0,
-            startCallback: startCallback,
-            endCallback: endCallback,
-            aniID: null,
-            param: params,
-        }
-        this.playUnitAni(aniInfo);
+    //为确保动画渲染与逻辑帧一致，这个接口去掉
+    // playUnitAniOnce(type, node: cc.Node, params = null, startCallback = null, endCallback = null): number {
+    //     let aniInfo: GameStruct.AniInfo = {
+    //         node: node,
+    //         mode: AniDef.UnitAniMode.ONCE,
+    //         type: type,
+    //         time: 0,
+    //         startCallback: startCallback,
+    //         endCallback: endCallback,
+    //         aniID: null,
+    //         param: params,
+    //     }
+    //     this.playUnitAni(aniInfo);
 
-        return aniInfo.aniID
-    }
+    //     return aniInfo.aniID
+    // }
 
     playUnitAniLoop(type, node: cc.Node, params = null, startCallback = null, endCallback = null): number {
         let aniInfo: GameStruct.AniInfo = {
@@ -342,10 +318,6 @@ export default class Game extends cc.Component {
         }
     }
 
-    worldToGameScenePosition(pos: cc.Vec2): cc.Vec2 {
-        return this.panelGame.convertToNodeSpace(pos);
-    }
-
     showGameResult() {
         this.closeGameResult();
 
@@ -368,9 +340,18 @@ export default class Game extends cc.Component {
         CommonFunc.playButtonSound();
         if (GameDataModel.isModeEditMap()) {
             this.node.emit(EventDef.EV_MAP_EDIT_FINISHED);
-            GameDataModel._playMode = -1;
-            GameDataModel._useCustomMap = true;
-            this.goToMainMenu();
+
+            if (GameDataModel.isModeOnline()) {
+                GameDataModel._useCustomMap = true;
+                this.reloadGame();
+            }
+            else {
+                //单机模式下，退回菜单，重新选择单双人游戏
+                GameDataModel._playMode = -1;
+                GameDataModel._useCustomMap = true;
+                GameDataModel._gotoMenuPage = GameDef.MenuPage.OFFLINE;
+                this.goToMainMenu();
+            }
         }
         else {
             if (GameDataModel._gameRunning) {
@@ -379,7 +360,7 @@ export default class Game extends cc.Component {
                     cc.director.resume();
                     cc.audioEngine.resumeAll();
 
-                    this.node.emit(EventDef.EV_GAME_PAUSE);
+                    this.node.emit(EventDef.EV_GAME_RESUME);
                     this.nodePause.active = false;
                 }
                 else {
@@ -387,7 +368,7 @@ export default class Game extends cc.Component {
                     cc.director.pause();
                     cc.audioEngine.pauseAll();
 
-                    this.node.emit(EventDef.EV_GAME_RESUME);
+                    this.node.emit(EventDef.EV_GAME_PAUSE);
                     this.nodePause.active = true;
                 }
             }
@@ -404,13 +385,13 @@ export default class Game extends cc.Component {
 
     playTankBlastAni(pos: cc.Vec2, startCallback, endCallback) {
         if (pos) {
-            this.playUnitAniOnce(AniDef.UnitAniType.TANK_BLAST, this.panelAni, { pos: pos}, startCallback, endCallback);
+            this.playUnitAniInTime(AniDef.UnitAniType.TANK_BLAST, this.panelAni, 5.2, { pos: pos }, startCallback, endCallback);
         }
     }
 
     playBulletBlastAni(pos: cc.Vec2) {
         if (pos) {
-            this.playUnitAniOnce(AniDef.UnitAniType.BULLET_BLAST, this.panelAni, { pos: pos});
+            this.playUnitAniInTime(AniDef.UnitAniType.BULLET_BLAST, this.panelAni, 0.22, { pos: pos });
         }
     }
 

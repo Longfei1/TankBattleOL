@@ -1,5 +1,5 @@
+import { GameStruct } from "../define/GameStruct";
 import GameLogicModel from "../model/GameLogicModel";
-import { GameStruct } from "./GameStruct";
 
 export default class GameOpeControl {
     private keyInfo: GameStruct.GameKeyInfo;
@@ -9,11 +9,16 @@ export default class GameOpeControl {
     private lastEffectTime: number;//上一次生效时间(毫秒)
     private effectInterval: number;//生效间隔(毫秒)
 
+    /**
+     * 
+     * @param firstInterval 单位（秒）
+     * @param interval 单位（秒）
+     */
     constructor(firstInterval: number, interval: number) {
         this.firstEffectTime = 0;
-        this.firstEffectInterval = firstInterval;
+        this.firstEffectInterval = GameLogicModel.secondToMillisecond(firstInterval);
         this.lastEffectTime = 0;
-        this.effectInterval = interval;
+        this.effectInterval = GameLogicModel.secondToMillisecond(interval);
     }
 
     static getInputCode(info: GameStruct.GameKeyInfo): number {

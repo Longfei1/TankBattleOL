@@ -5,12 +5,15 @@ import { gameController } from "../Game";
 import { EventDef } from "../../../define/EventDef";
 import GameDataModel from "../../../model/GameDataModel";
 import Bullet from "../Bullet";
+import GameLogicModel from "../../../model/GameLogicModel";
+import { GameStruct } from "../../../define/GameStruct";
+import Big, { BigSource } from "../../../../packages/bigjs/Big";
 
 const { ccclass, property } = cc._decorator;
 
 //遇到障碍后，继续尝试朝该方向移动的时间区间。
-const TRY_MOVE_TIME_MIN = 0.2; 
-const TRY_MOVE_TIME_MAX = 0.6;       
+const TRY_MOVE_TIME_MIN = 200; //单位毫秒
+const TRY_MOVE_TIME_MAX = 600; //单位毫秒     
 
 @ccclass
 export default class EnemyTank extends BattleTank {
@@ -21,8 +24,10 @@ export default class EnemyTank extends BattleTank {
     _tryMoveStartTime: number = 0;
     _bTryMoving: boolean = false;
     _bTryShoot: boolean = false;
+    _bChangeDir: boolean = false;
 
-    _destroyedBy: number;
+    _hitedPower: number = 0;
+    _destroyedBy: number = -1;
 
     setRed(bRed: boolean) {
         this._bRed = bRed;
@@ -34,8 +39,10 @@ export default class EnemyTank extends BattleTank {
         this._bRed = false;
 
         this._tryMoveStartTime = 0;
+        this._tryMoveTime = 0;
         this._bTryMoving = false;
         this._bTryShoot = false;
+        this._bChangeDir = false;
         this._destroyedBy = -1;
     }
 
@@ -51,29 +58,12 @@ export default class EnemyTank extends BattleTank {
         super.born(cb);
     }
 
-    onHited(bulletNode: cc.Node) {
+    onHited(bulletNode: cc.Node, value: number) {
+        super.onHited(bulletNode, value);
+
         let com = bulletNode.getComponent(Bullet);
-        let bulletLevel = com._powerLevel;
-        let hitCount = bulletLevel == GameDef.BULLET_POWER_LEVEL_STELL ? 2 : 1; //被能击毁钢的子弹打中时，扣两次等级
-        if (this._bRed) {
-            this.setRed(false);
-
-            gameController.node.emit(EventDef.EV_PROP_CREATE); //产生道具
-
-            hitCount--;
-
-            if (hitCount === 0) {
-                return;
-            }
-        }
-
-        if (this._tankLevel > hitCount) {
-            this.setTankLevel(this._tankLevel - hitCount);
-            return;
-        }
-
+        this._hitedPower = com._powerLevel;
         this._destroyedBy = com._shooterID;
-        this.dead();
     }
 
     destroyNode() {
@@ -98,8 +88,8 @@ export default class EnemyTank extends BattleTank {
         return frameName;
     }
 
-    calcMove(dt) {
-        let moveDiff = 0;
+    calcMoveDistance(dt: BigSource): Big {
+        let moveDiff = Big(0);
         
         if (this._isMove) {
             let speed = this._moveSpeed;
@@ -107,12 +97,12 @@ export default class EnemyTank extends BattleTank {
                 speed += 20; //冰加移速
             }
 
-            moveDiff = speed * dt;
+            moveDiff = Big(speed).mul(dt);
         }
 
         if (CommonFunc.isBitSet(GameDataModel._propBuff, GameDef.PROP_BUFF_STATIC)) {
             //定时道具时间
-            moveDiff = 0;
+            moveDiff = Big(0);
         }
 
         return moveDiff;
@@ -143,6 +133,7 @@ export default class EnemyTank extends BattleTank {
         if (!bMove || nDirection !== this._moveDirection) {
             this._bTryMoving = false; //停止移动或换方向，重置尝试移动标志
             this._bTryShoot = false;
+            this._bChangeDir = false;
         }
 
         super.setMove(bMove, nDirection);
@@ -150,51 +141,48 @@ export default class EnemyTank extends BattleTank {
 
     //当前方向移动失败
     onMoveFailed() {
+        super.onMoveFailed();
+
         if (GameDataModel._gameOver) {
             return;
         }
 
-        let time = CommonFunc.getTimeStamp();
+        let time = GameLogicModel.getLogicTime();
         //障碍物不是边界时，尝试突破障碍物
         if (!this._bTryMoving && !this.isOutBoundaryDirction(this._moveDirection)) {
             let tryProbability = 0.6;
             if (this.isDirectionForwardHomeBase(this._moveDirection)) {
                 tryProbability = 0.85;
             }
-            if (CommonFunc.isInProbability(tryProbability)) {
+            if (GameLogicModel.isInProbability(tryProbability)) {
                 this._bTryMoving = true;
                 this._tryMoveStartTime = time;
-                this._tryMoveTime = CommonFunc.getRandomNumber(TRY_MOVE_TIME_MIN, TRY_MOVE_TIME_MAX);
-                this._bTryShoot = this.shoot(); //射击，尝试打破障碍后移动
+                this._tryMoveTime = GameLogicModel.getRandomInteger(TRY_MOVE_TIME_MIN, TRY_MOVE_TIME_MAX);
+                this._bTryShoot = true;
                 return;
             }
         }
 
-        if (this._bTryMoving && time - this._tryMoveStartTime < this._tryMoveTime * 1000) {
-            if (!this._bTryShoot) {
-                this._bTryShoot = this.shoot(); //射击，尝试打破障碍后移动
-            }
-            return;
+        if (!this._bTryMoving) {
+            this._bChangeDir = true;
         }
-
-        //超过尝试时间, 换方向移动
-        this.changeMoveDirectionEx(0.3);
     }
 
     onMoveSuccess() {
         this._bTryMoving = false;
         this._bTryShoot = false;
+        this._bChangeDir = false;
     }
 
     //行为控制定时器
     onBehaviorTimer() {
-        if (CommonFunc.isInProbability(0.15)) {
+        if (GameLogicModel.isInProbability(0.15)) {
             //给定概率下改变移动方向
 
             this.changeMoveDirectionEx(0.1);
         }
 
-        if (CommonFunc.isInProbability(0.3)) {
+        if (GameLogicModel.isInProbability(0.3)) {
             this.shoot();
         }
     }
@@ -224,7 +212,7 @@ export default class EnemyTank extends BattleTank {
             CommonFunc.filterArray(twoDirs.moveableDirs, [this._moveDirection]);
             CommonFunc.filterArray(twoDirs.tryDirs, [this._moveDirection]);
 
-            if (!CommonFunc.isInProbability(oppositeProbability)) {
+            if (!GameLogicModel.isInProbability(oppositeProbability)) {
                 //概率下，不向现在移动的反方向移动
                 let opsiteDirection = GameDataModel.getOppositeDirection(this._moveDirection);
                 CommonFunc.filterArray(twoDirs.moveableDirs, [opsiteDirection]);
@@ -240,7 +228,7 @@ export default class EnemyTank extends BattleTank {
         if (twoDirs.moveableDirs.length > 0) {
             if (twoDirs.tryDirs.length > 0) {
                 //按照概率选择移动方向
-                if (CommonFunc.isInProbability(0.75)) {
+                if (GameLogicModel.isInProbability(0.75)) {
                     movedirs = twoDirs.moveableDirs;
                 }
                 else {
@@ -259,7 +247,7 @@ export default class EnemyTank extends BattleTank {
         if (movedirs && movedirs.length > 0) {
             let weights = this.calcMoveDirectionWeight(movedirs);
 
-            let dir = CommonFunc.getRandomArrayValueWithWeight(movedirs, weights);
+            let dir = GameLogicModel.getRandomArrayValueWithWeight(movedirs, weights);
             if (dir != null) {
                 this.setMove(true, dir);
             }
@@ -284,22 +272,9 @@ export default class EnemyTank extends BattleTank {
 
     //该方向是否会导致越界
     isOutBoundaryDirction(dir: number) {
-        let pos = this.node.getPosition();
-        let distance = this._moveSpeed * (1 / GameDef.GAME_FPS);
-        let moveAreaRect: cc.Rect;
-        let width = GameDataModel.getTankWidth();
-        if (dir === GameDef.DIRECTION_UP) {
-            moveAreaRect = cc.rect(pos.x, pos.y + width, width, distance);
-        }
-        else if (dir === GameDef.DIRECTION_DOWN) {
-            moveAreaRect = cc.rect(pos.x, pos.y - distance, width, distance);
-        }
-        else if (dir === GameDef.DIRECTION_LEFT) {
-            moveAreaRect = cc.rect(pos.x - distance, pos.y, distance, width);
-        }
-        else if (dir === GameDef.DIRECTION_RIGHT) {
-            moveAreaRect = cc.rect(pos.x + width, pos.y, distance, width);
-        }
+        let pos = this._logicPos;
+        let distance = this.calcMoveDistance(Big(1).div(GameDef.GAME_FPS_PHYSICS));
+        let moveAreaRect = this.getMoveRect(pos, dir, distance);
 
         if (moveAreaRect) {
             if (!GameDataModel.isValidRect(moveAreaRect)) {
@@ -327,16 +302,16 @@ export default class EnemyTank extends BattleTank {
     }
 
     isDirectionForwardHomeBase(dir: number): boolean {
-        let tankPos = this.node.getPosition();
+        let tankPos = this._logicPos;
         let homeBasePos = GameDataModel.getHomeCenterScenePosition();
 
         let vertical = GameDef.DIRECTION_UP;
-        if (tankPos.y < homeBasePos.y) {
+        if (tankPos.y.lt(homeBasePos.y)) {
             vertical = GameDef.DIRECTION_DOWN;
         }
 
         let horizontal = GameDef.DIRECTION_LEFT;
-        if (tankPos.x < homeBasePos.x) {
+        if (tankPos.x.lt(homeBasePos.x)) {
             horizontal = GameDef.DIRECTION_RIGHT;
         }
 
@@ -345,6 +320,51 @@ export default class EnemyTank extends BattleTank {
         }
 
         return false;
+    }
+
+    onLogicLastFrameEvent() {
+        if (this._hited && this.isTankVisible()) {
+            let bulletLevel = this._hitedPower;
+            let hitCount = bulletLevel == GameDef.BULLET_POWER_LEVEL_STELL ? 2 : 1; //被能击毁钢的子弹打中时，扣两次等级
+            if (this._bRed) {
+                this.setRed(false);
+
+                gameController.node.emit(EventDef.EV_PROP_CREATE); //产生道具
+
+                hitCount--;
+
+                if (hitCount === 0) {
+                    this._hited = false;
+                    return;
+                }
+            }
+
+            if (this._tankLevel > hitCount) {
+                this.setTankLevel(this._tankLevel - hitCount);
+                this._hited = false;
+                return;
+            }
+
+            this.syncLogicPos();
+            this.dead();
+        }
+
+        if (!this._hited) {
+            this._logicUpdate = true;   
+        }
+
+        if (!this._hited && this.isTankVisible()) {
+            if (this._bTryShoot) {
+                this._bTryShoot = !this.shoot();
+            }
+            else if (this._bTryMoving && GameLogicModel.getLogicTime() - this._tryMoveStartTime >= this._tryMoveTime) {
+                //超过尝试时间, 换方向移动
+                this.changeMoveDirectionEx(0.3);
+            }
+            else if (this._bChangeDir) {
+                this.changeMoveDirectionEx(0.3);
+            }
+        }
     }
 
     //行为控制相关

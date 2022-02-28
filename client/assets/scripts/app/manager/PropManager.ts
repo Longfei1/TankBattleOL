@@ -7,86 +7,101 @@ import CommonFunc from "../common/CommonFunc";
 import GameDataModel from "../model/GameDataModel";
 import PlayerTank from "../component/game/tank/PlayerTank";
 import AudioModel from "../model/AudioModel";
+import GameLogicModel from "../model/GameLogicModel";
 
 const { ccclass, property } = cc._decorator;
 
 @ccclass
-export default class EnemyManager extends cc.Component {
+export default class PropManager extends cc.Component {
     @property({ displayName: "道具层", type: cc.Node })
     panelProp: cc.Node = null;
 
     @property({ displayName: "道具预制体", type: cc.Prefab })
     pfbProp: cc.Node = null;
 
-    _prop: cc.Node = null;
+    _nodeProp: cc.Node = null;
 
     _staticTime: number = 0;
     _homeProtectTime: number = 0;
 
     onLoad() {
-        this._prop = cc.instantiate(this.pfbProp);
+        this._nodeProp = cc.instantiate(this.pfbProp);
+        this._nodeProp.getComponent(Prop).reset();
 
         this.initListener();
     }
 
     reset() {
         GameDataModel._propBuff = 0;
-        if (this._prop && this._prop.getParent()) {
-            this._prop.removeFromParent();
+        if (GameDataModel._prop) {
+            GameDataModel._prop.reset();
+            GameDataModel._prop.node.removeFromParent();
+            GameDataModel._prop = null;
         }
 
         this.removeTimers();
     }
 
     onDestroy() {
-        //this.removeTimers();
+        this.removeListener();
+
+        this.removeTimers();
     }
 
     initListener() {
-        gameController.node.on(EventDef.EV_PROP_CREATE, this.evCreateProp, this);
-        gameController.node.on(EventDef.EV_PROP_DESTROY, this.evDestroyProp, this);
-        gameController.node.on(EventDef.EV_PROP_GAIN, this.evGainProp, this);
+        if (!GameDataModel.isModeEditMap()) {
+            gameController.node.on(EventDef.EV_PROP_CREATE, this.evCreateProp, this);
+            gameController.node.on(EventDef.EV_PROP_DESTROY, this.evDestroyProp, this);
+            gameController.node.on(EventDef.EV_PROP_GAIN, this.evGainProp, this);
 
-        gameController.node.on(EventDef.EV_GAME_PREPARE_GAME, this.evPrepareGame, this);
-        gameController.node.on(EventDef.EV_GAME_STARTED, this.evGameStarted, this);
-        gameController.node.on(EventDef.EV_GAME_ENDED, this.evGameEnd, this);
+            gameController.node.on(EventDef.EV_GAME_PREPARE_GAME, this.evPrepareGame, this);
+            gameController.node.on(EventDef.EV_GAME_STARTED, this.evGameStarted, this);
+            gameController.node.on(EventDef.EV_GAME_ENDED, this.evGameEnd, this);
 
-        //gameController.node.on(EventDef.EV_GAME_PAUSE, this.evGamePause, this);
-        //gameController.node.on(EventDef.EV_GAME_RESUME, this.evGameResume, this);
+            GameLogicModel.addEventListener(EventDef.EV_GL_LAST_FRAME_EVENT, this.evLogicLastFrameEvent, this);
+        }
+    }
+
+    removeListener() {
+        GameLogicModel.removeEventListenerByContext(this);
     }
 
     evCreateProp() {
-        if (this._prop) {
-            let type = this.getRandomPropType();
-            let pos = this.getRandomPropPosition()
+        if (GameDataModel._prop) {
+            GameDataModel._prop.reset();
+            GameDataModel._prop.node.removeFromParent();
+            GameDataModel._prop = null;
+        }
 
-            console.log("create prop, pos:", type, "pos:", pos);
-            if (type != null && pos) {
-                AudioModel.playSound("sound/prop_1");
+        let type = this.getRandomPropType();
+        let pos = this.getRandomPropPosition()
 
-                this._prop.removeFromParent();
-                this.panelProp.addChild(this._prop);
+        console.log("create prop, pos:", type, "pos:", pos);
+        if (type != null && pos) {
+            AudioModel.playSound("sound/prop_1");
 
-                let com = this._prop.getComponent(Prop);
-                com.reset();
+            GameDataModel._prop = this._nodeProp.getComponent(Prop);
+            this.panelProp.addChild(this._nodeProp);
 
-                //随机产生一个道具
+            //随机产生一个道具
 
-                com.setType(type);
-                com.setPosition(pos);
-            }
+            GameDataModel._prop.setType(type);
+            GameDataModel._prop.setLogicPosition(pos, true);
+            GameDataModel._prop.setTime(GameDef.PROP_SHOW_TIME);
         }
     }
 
     evDestroyProp() {
-        if (this._prop) {
-            this._prop.removeFromParent();
+        if (GameDataModel._prop) {
+            GameDataModel._prop.reset();
+            GameDataModel._prop.node.removeFromParent();
+            GameDataModel._prop = null;
         }
     }
 
     evGainProp(playerNode: cc.Node) {
-        if (this._prop && playerNode) {
-            let type = this._prop.getComponent(Prop)._type;
+        if (GameDataModel._prop && playerNode) {
+            let type = GameDataModel._prop._type;
             let playerTank = playerNode.getComponent(PlayerTank);
             let playerInfo = GameDataModel.getPlayerInfo(playerTank.id);
 
@@ -139,7 +154,7 @@ export default class EnemyManager extends cc.Component {
             }
 
             playerInfo.propNum++;
-            gameController.playGainScoreAni(this._prop.getPosition(), GameDef.PROP_BONUS_SCORE);
+            gameController.playGainScoreAni(GameDataModel._prop.node.getPosition(), GameDef.PROP_BONUS_SCORE);
         }
     }
 
@@ -158,7 +173,7 @@ export default class EnemyManager extends cc.Component {
     getRandomPropPosition(): GameStruct.RcInfo {
         let posAry = GameDataModel.getEmptyMatrixArray(4, 4, [GameDef.SceneryType.GRASS, GameDef.SceneryType.WALL, GameDef.SceneryType.ICE]);
         if (posAry.length > 0) {
-            return CommonFunc.getRandomArrayValue(posAry);
+            return GameLogicModel.getRandomArrayValue(posAry);
         }
         return null;
     }
@@ -175,11 +190,11 @@ export default class EnemyManager extends cc.Component {
         ];
 
         let weights = [8, 8, 10, 10, 10, 8, 5]
-        return CommonFunc.getRandomArrayValueWithWeight(propAary, weights);
+        return GameLogicModel.getRandomArrayValueWithWeight(propAary, weights);
     }
 
     startPropStatusTimer() {
-        this.schedule(()=>{
+        GameLogicModel.schedule(()=>{
             let buff = GameDataModel._propBuff;
             if (CommonFunc.isBitSet(buff, GameDef.PROP_BUFF_STATIC)) {
                 if (this._staticTime > 0) {
@@ -201,7 +216,7 @@ export default class EnemyManager extends cc.Component {
                     this.onPropSpadeStop();
                 }
             }
-        }, 1);
+        }, this, 1);
     }
 
     onPropClockStart(time: number) {
@@ -229,19 +244,17 @@ export default class EnemyManager extends cc.Component {
         gameController.node.emit(EventDef.EV_PROP_SPADE_END);
     }
 
-    evGamePause() {
-        this.removeTimers();
-    }
-
-    evGameResume() {
-        this.startTimers();
-    }
-
     startTimers() {
         this.startPropStatusTimer();
     }
 
     removeTimers() {
-        this.unscheduleAllCallbacks();
+        GameLogicModel.unscheduleAll(this);
+    }
+
+    evLogicLastFrameEvent() {
+        if (GameDataModel._prop) {
+            GameDataModel._prop.onLogicLastFrameEvent();
+        }
     }
  }

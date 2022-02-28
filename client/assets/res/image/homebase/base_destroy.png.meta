@@ -7,7 +7,7 @@
   "premultiplyAlpha": false,
   "subMetas": {
     "base_destroy": {
-      "ver": "1.0.3",
+      "ver": "1.0.4",
       "uuid": "42764a97-0290-47f0-be08-b5bdea5afc09",
       "rawTextureUuid": "5fc8ffb3-6378-440e-93b7-89346683c933",
       "trimType": "auto",

@@ -122,6 +122,9 @@
       },
       {
         "__id__": 110
+      },
+      {
+        "__id__": 111
       }
     ],
     "_prefab": null,
@@ -4701,9 +4704,6 @@
     "nodeMapUnit": {
       "__id__": 32
     },
-    "pfbBullet": {
-      "__uuid__": "c05a85d0-40aa-4056-ab62-ff30619ebbff"
-    },
     "textDebug": {
       "__id__": 99
     },
@@ -4723,6 +4723,22 @@
       "__uuid__": "1a3bf724-b496-4e37-b46e-beb8e7760e45"
     },
     "_id": "b18PzMLiBJEaDiLmU4oDlZ"
+  },
+  {
+    "__type__": "9c6610sNKpC9Ick+9K4k2bK",
+    "_name": "",
+    "_objFlags": 0,
+    "node": {
+      "__id__": 2
+    },
+    "_enabled": true,
+    "panelProp": {
+      "__id__": 28
+    },
+    "pfbProp": {
+      "__uuid__": "05c65b0e-2574-43d5-9fdd-6383d76d9772"
+    },
+    "_id": "52pYxc6yZGv5sUrlP9+4K6"
   },
   {
     "__type__": "7bca4zXM/lIR7UPVxFFGKLK",
@@ -4779,20 +4795,20 @@
     "_id": "3157xmjTFPO7rqEAUge2om"
   },
   {
-    "__type__": "f263aZkUIdEcK0Wq441mG2q",
+    "__type__": "9a15aMYWJpAI5dAuzCcUj8o",
     "_name": "",
     "_objFlags": 0,
     "node": {
       "__id__": 2
     },
     "_enabled": true,
-    "panelProp": {
-      "__id__": 28
+    "panelGame": {
+      "__id__": 26
     },
-    "pfbProp": {
-      "__uuid__": "05c65b0e-2574-43d5-9fdd-6383d76d9772"
+    "pfbBullet": {
+      "__uuid__": "c05a85d0-40aa-4056-ab62-ff30619ebbff"
     },
-    "_id": "9a2X4HnYdM2pAWptPvN/4k"
+    "_id": "86E4kWLgZHpIbf5G/9usj4"
   },
   {
     "__type__": "0f28f/futpGdau7A4oUV4/s",

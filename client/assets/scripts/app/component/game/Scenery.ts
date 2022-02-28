@@ -5,6 +5,7 @@ import Bullet from "./Bullet";
 import CommonFunc from "../../common/CommonFunc";
 import GameDataModel from "../../model/GameDataModel";
 import { GameStruct } from "../../define/GameStruct";
+import GameUnitComponent from "./GameUnitComponent";
 
 const { ccclass, property } = cc._decorator;
 
@@ -17,7 +18,7 @@ const SceneryZIndex = {
 }
 
 @ccclass
-export default class Scenery extends cc.Component {
+export default class Scenery extends GameUnitComponent {
 
     @property({ displayName: "布景节点", type: cc.Node })
     nodeScenery: cc.Node = null;
@@ -29,19 +30,8 @@ export default class Scenery extends cc.Component {
     atlasScenery: cc.SpriteAtlas = null;
 
     _type: number = GameDef.SceneryType.NULL;
-    _colliders: cc.Collider[] = [];
 
-    onLoad() {
-        this.init();
-    }
-
-    init() {
-        //碰撞体
-        let colliders = this.node.getComponents(cc.Collider);
-        for(let it of colliders) {
-            this._colliders[it.tag] = it;
-        }
-    }
+    _hitedIndex: number[] = [];
 
     setType(type: number) {
         this._type = type;
@@ -55,12 +45,12 @@ export default class Scenery extends cc.Component {
     }
 
     reset() {
+        super.reset();
+
+        this._hitedIndex = [];
+
         for (let it of this.imgScenerys) {
             it.node.active = true;
-        }
-
-        for (let it of this._colliders) {
-            it.enabled = true;
         }
     }
 
@@ -68,9 +58,6 @@ export default class Scenery extends cc.Component {
     destroyUnit(index: number) {
         if (this.imgScenerys[index]) {
             this.imgScenerys[index].node.active = false;
-        }
-        if (this._colliders[index]) {
-            this._colliders[index].enabled = false;
         }
 
         let haveVisible = false;
@@ -127,46 +114,45 @@ export default class Scenery extends cc.Component {
         return frame;
     }
 
-    onCollisionEnter(other: cc.Collider, self: cc.Collider) {
-        // if (other.node.group === GameDef.GROUP_NAME_BULLET) {
-            
-        // }
-    }
-
     //被子弹击中后处理函数，
-    onHited(pos: GameStruct.RcInfo, power: number) {
+    onHited(pos: GameStruct.RcInfo, power: number): boolean {
         if (!pos || !power) {
-            return;
+            return false;
+        }
+
+        if (this._hitedIndex.length === 4) {
+            return false;
         }
 
         let sceneryType = this.getType();
         if (sceneryType === GameDef.SceneryType.GRASS || sceneryType === GameDef.SceneryType.WATER || sceneryType === GameDef.SceneryType.ICE) {//水和草暂时不能销毁
-            return;
+            return false;
         }
         else if (sceneryType === GameDef.SceneryType.STEEL) {
             if (power < GameDef.BULLET_POWER_LEVEL_STELL) {
-                return;
+                return true;
             }
 
             //目前只有土墙需要按细分后的unit去销毁，钢墙可直接销毁。
-            gameController.node.emit(EventDef.EV_MAP_DESTROY_SCENERY, this.node);
+            this._hitedIndex = [0, 1, 2, 3];
+            return true;
         }
         else if (sceneryType === GameDef.SceneryType.WALL) {
-           let unitIndex = this.getUnitIndexByRcInfo(pos);
+            let unitIndex = this.getUnitIndexByRcInfo(pos);
 
-            //销毁unit
-            if (unitIndex >= 0) {
-                this.destroyUnit(unitIndex);
+            if (unitIndex >= 0 && this._hitedIndex.indexOf(unitIndex) < 0) {
+                this._hitedIndex.push(unitIndex);
+                return true;
             }
         }
+        return false;
     }
 
-    isOverlapWithRect(rect: cc.Rect): boolean {
+    isOverlapWithRect(rect: GameStruct.BigRect): boolean {
         if (rect) {
-            for (let img of this.imgScenerys) {
-                if (img.node.active) {
-                    let pos = gameController.worldToGameScenePosition(img.node.convertToWorldSpace(cc.v2(0, 0)));
-                    let imgRect = cc.rect(pos.x, pos.y, img.node.width, img.node.height)
+            for (let i = 0; i < this.imgScenerys.length; i++) {
+                if (this.imgScenerys[i].node.active) {
+                    let imgRect = this.getImgScenerysSceneRect(i);
                     
                     if (GameDataModel.isRectOverlap(rect, imgRect)) {//两个矩形有重合，相交不算
                         return true;
@@ -177,15 +163,32 @@ export default class Scenery extends cc.Component {
         return false;
     }
 
+    //获取布景图片的场景坐标
+    getImgScenerysSceneRect(index: number): GameStruct.BigRect {
+        let width = GameDataModel._mapUnit.width;
+        let height = GameDataModel._mapUnit.height;
+        if (index === 0) {
+            return new GameStruct.BigRect(this._logicPos.x, this._logicPos.y.plus(width), width, height);
+        }
+        else if (index === 1) {
+            return new GameStruct.BigRect(this._logicPos.x.plus(width), this._logicPos.y.plus(height), width, height);
+        }
+        else if (index === 2) {
+            return new GameStruct.BigRect(this._logicPos.x, this._logicPos.y, width, height);
+        }
+        else if (index === 3) {
+            return new GameStruct.BigRect(this._logicPos.x.plus(width), this._logicPos.y, width, height);
+        }
+    }
+
     //获取与指定区域重叠的所有子区域
-    getOverlapSceneryRects(rect: cc.Rect): GameStruct.GameRectInfo[] {
+    getOverlapSceneryRects(rect: GameStruct.BigRect): GameStruct.GameRectInfo[] {
         let ret: GameStruct.GameRectInfo[] = [];
 
         if (rect) {
-            for (let img of this.imgScenerys) {
-                if (img.node.active) {
-                    let pos = gameController.worldToGameScenePosition(img.node.convertToWorldSpace(cc.v2(0, 0)));
-                    let imgRect = cc.rect(pos.x, pos.y, img.node.width, img.node.height)
+            for (let i = 0; i < this.imgScenerys.length; i++) {
+                if (this.imgScenerys[i].node.active) {
+                    let imgRect = this.getImgScenerysSceneRect(i);
 
                     if (GameDataModel.isRectOverlap(rect, imgRect)) {//两个矩形有重合，相交不算
                         ret.push({group: GameDef.GROUP_NAME_SCENERY, type: this.getType(), rect: imgRect});
@@ -199,7 +202,7 @@ export default class Scenery extends cc.Component {
 
     getUnitIndexByRcInfo(pos: GameStruct.RcInfo) {
         let unitIndex = -1;
-        let nodeRcInfo = GameDataModel.sceneToMatrixPosition(this.node.position);
+        let nodeRcInfo = GameDataModel.sceneToMatrixPosition(this._logicPos);
         if (pos.equal(nodeRcInfo)) {
             unitIndex = 2;
         }
@@ -217,7 +220,7 @@ export default class Scenery extends cc.Component {
     }
 
     getRcInfoByUnitIndex(index: number): GameStruct.RcInfo{
-        let nodeRcInfo = GameDataModel.sceneToMatrixPosition(this.node.position);
+        let nodeRcInfo = GameDataModel.sceneToMatrixPosition(this._logicPos);
         let pos = null;
         if (index == 2) {
             pos = nodeRcInfo;
@@ -247,5 +250,11 @@ export default class Scenery extends cc.Component {
         }
 
         return ary;
+    }
+
+    onLogicLastFrameEvent() {
+        for (let i = 0; i < this._hitedIndex.length; i++) {
+            this.destroyUnit(this._hitedIndex[i]);
+        }
     }
 }

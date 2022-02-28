@@ -7,7 +7,7 @@
   "premultiplyAlpha": false,
   "subMetas": {
     "enemy_life": {
-      "ver": "1.0.3",
+      "ver": "1.0.4",
       "uuid": "67b2a1b8-ca23-43ea-92d1-e6b9caff2b51",
       "rawTextureUuid": "6b2e8495-d85f-4ad0-858e-6875a3253bf5",
       "trimType": "auto",

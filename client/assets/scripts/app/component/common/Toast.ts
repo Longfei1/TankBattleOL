@@ -14,7 +14,7 @@ export default class Toast extends cc.Component {
     start() {
         this.showTip();  
     }
-    
+
     init(param) {
         if (param) {
             this.txtTip.string = param.tipString ? param.tipString : "";//先设置字符串，start后才能获取到变化后的宽度（当前引擎版本bug）

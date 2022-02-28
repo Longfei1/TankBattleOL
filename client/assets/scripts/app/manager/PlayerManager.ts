@@ -10,7 +10,8 @@ import CommonFunc from "../common/CommonFunc";
 import GameConfigModel from "../model/GameConfigModel";
 import NodePool from "../common/NodePool";
 import GameLogicModel from "../model/GameLogicModel";
-import GameOpeControl from "../define/GameOpeControl";
+import GameOpeControl from "../common/GameOpeControl";
+import Big from "../../packages/bigjs/Big";
 
 const {ccclass, property} = cc._decorator;
 
@@ -40,9 +41,9 @@ export default class PlayerManager extends cc.Component {
         this._playerPool = new NodePool(this.pfbPlayer, PlayerTank);
 
         for (let i = 0; i < GameDef.GAME_TOTAL_PLAYER; i++) {
-            this._opeDirection[i] = new GameOpeControl(300, 50);
-            this._opeOk[i] = new GameOpeControl(300, 50);
-            this._opeCancel[i] = new GameOpeControl(300, 50);
+            this._opeDirection[i] = new GameOpeControl(0.3, 0.05);
+            this._opeOk[i] = new GameOpeControl(0.3, 0.05);
+            this._opeCancel[i] = new GameOpeControl(0.3, 0.05);
         }
     }
 
@@ -67,6 +68,10 @@ export default class PlayerManager extends cc.Component {
             gameController.node.on(EventDef.EV_GAME_RESUME, this.evGameResume, this);
 
             gameController.node.on(EventDef.EV_GAME_ENDED, this.evGameEnd, this);
+
+            //GameLogicModel.addEventListener(EventDef.EV_GL_UPDATE, this.evLogicUpdate, this);
+            GameLogicModel.addEventListener(EventDef.EV_GL_LATE_UPDATE, this.evLogicLateUpdate, this);
+            //GameLogicModel.addEventListener(EventDef.EV_GL_LAST_FRAME_EVENT, this.evLogicLastFrameEvent, this);
         }
     }
 
@@ -97,19 +102,18 @@ export default class PlayerManager extends cc.Component {
     }
 
     resetPlayer() {
-        CommonFunc.travelMap(this._players, (no: number, player: PlayerTank) => {
+        CommonFunc.travelMap(GameDataModel._playerTanks, (no: number, player: PlayerTank) => {
             if (cc.isValid(player.node)) {
                 this._playerPool.putNode(player.node);
             }
         });
 
-        this._players = {};
-        GameDataModel.clearPlayerTank();
+        GameDataModel._playerTanks = {};
 
         if (cc.isValid(this._mapEditer)) {
             this._mapEditer.node.destroy();
-            this._mapEditer = null;
         }
+        this._mapEditer = null;
     }
 
     createPlayer(id: number, attr: GameStruct.TankAttributes, bornPos: GameStruct.RcInfo) {
@@ -121,20 +125,18 @@ export default class PlayerManager extends cc.Component {
         playerCom.id = id;
         playerCom.setAttributes(attr);
         playerCom.setTankLevel(playerInfo.level);
-        playerCom.setPosition(bornPos);
+        playerCom.setLogicPosition(bornPos, true);
         playerCom.setMoveDirction(GameDef.DIRECTION_UP);
 
-        this._players[id] = playerCom;
-        GameDataModel.setPlayerTank(player);
+        GameDataModel._playerTanks[id] = playerCom;
 
         playerCom.born();
     }
 
     destroyPlayer(id: number) {
-        if (this._players[id]) {
-            this._playerPool.putNode(this._players[id].node);
-            delete this._players[id];
-            GameDataModel.removePlayerTank(id);
+        if (GameDataModel._playerTanks[id]) {
+            this._playerPool.putNode(GameDataModel._playerTanks[id].node);
+            delete GameDataModel._playerTanks[id];
         }
     }
 
@@ -142,168 +144,91 @@ export default class PlayerManager extends cc.Component {
         for (let i = 0; i < opes.length; i++) {
             let ope = opes[i];
 
-            if (this._opeDirection[ope.playerNO].effectInput(ope.direction)) {
-                let dir = GameDef.DIRECTION_UP;
-                let code = GameOpeControl.getInputCode(ope.direction);
-                if (code === GameDef.NetKeyDirection.LEFT) {
-                    dir = GameDef.DIRECTION_LEFT;
-                }
-                else if (code === GameDef.NetKeyDirection.DOWN) {
-                    dir = GameDef.DIRECTION_DOWN;
-                }
-                else if (code === GameDef.NetKeyDirection.RIGHT) {
-                    dir = GameDef.DIRECTION_RIGHT;
-                }
-                this.onPlayerMove(ope.playerNO, dir);
-            }
+            if (GameDataModel.isModeEditMap()) {
+                if (ope.playerNO === 0) {
+                    if (this._opeDirection[ope.playerNO].effectInput(ope.direction)) {
+                        let dir = this.getGameDirection(GameOpeControl.getInputCode(ope.direction));
+                        this.onMapEditerMove(dir);
+                    }
 
-            if (this._opeOk[ope.playerNO].effectInput(ope.ok)) {
-                this.onPlayerOkClickDown(ope.playerNO);
-            }
+                    if (this._opeOk[ope.playerNO].effectInput(ope.ok)) {
+                        this.onChangeScenery();
+                    }
 
-            if (this._opeCancel[ope.playerNO].effectInput(ope.cancel)) {
-                this.onPlayerCancelClickDown(ope.playerNO);
+                    if (this._opeCancel[ope.playerNO].effectInput(ope.cancel)) {
+                        this.onChangeEditMode();
+                    }
+                }
+            }
+            else {
+                let codeDir = GameOpeControl.getInputCode(ope.direction);
+                if (codeDir > 0) {
+                    let dir = this.getGameDirection(codeDir);
+                    this.onPlayerMove(ope.playerNO, dir);
+                }
+                else {
+                    this.onStopMove(ope.playerNO);
+                }
+
+                let codeOk = GameOpeControl.getInputCode(ope.ok);
+                let codeCancel = GameOpeControl.getInputCode(ope.cancel);
+                if (codeOk > 0 || codeCancel > 0) {
+                    if (GameDataModel._playerTanks[ope.playerNO]) {
+                        GameDataModel._playerTanks[ope.playerNO].shoot();
+                    }
+                }
             }
         }
     }
 
-    onKeyDown(event) {
-        if (!GameDataModel._enableOperate) {
-            return;
+    getGameDirection(netDirection: number) {
+        if (netDirection == GameDef.NetKeyDirection.UP) {
+            return GameDef.DIRECTION_UP;
         }
-        switch (event.keyCode) {
-            case PlayerDef.KEYMAP_PLAYER1.UP:
-                this.onPlayerMove(0, GameDef.DIRECTION_UP);
-                break;
-            case PlayerDef.KEYMAP_PLAYER1.LEFT:
-                this.onPlayerMove(0, GameDef.DIRECTION_LEFT);
-                break;
-            case PlayerDef.KEYMAP_PLAYER1.DOWN:
-                this.onPlayerMove(0, GameDef.DIRECTION_DOWN);
-                break;
-            case PlayerDef.KEYMAP_PLAYER1.RIGHT:
-                this.onPlayerMove(0, GameDef.DIRECTION_RIGHT);
-                break;
-            case PlayerDef.KEYMAP_PLAYER1.OK:
-                this.onPlayerOkClickDown(0);
-                break;
-            case PlayerDef.KEYMAP_PLAYER1.CANCEL:
-                this.onPlayerCancelClickDown(0);
-                break;
-            case PlayerDef.KEYMAP_PLAYER2.UP:
-                this.onPlayerMove(1, GameDef.DIRECTION_UP);
-                break;
-            case PlayerDef.KEYMAP_PLAYER2.LEFT:
-                this.onPlayerMove(1, GameDef.DIRECTION_LEFT);
-                break;
-            case PlayerDef.KEYMAP_PLAYER2.DOWN:
-                this.onPlayerMove(1, GameDef.DIRECTION_DOWN);
-                break;
-            case PlayerDef.KEYMAP_PLAYER2.RIGHT:
-                this.onPlayerMove(1, GameDef.DIRECTION_RIGHT);
-                break;
-            case PlayerDef.KEYMAP_PLAYER2.OK:
-                this.onPlayerOkClickDown(1);
-                break;
-            case PlayerDef.KEYMAP_PLAYER2.CANCEL:
-                this.onPlayerCancelClickDown(1);
-                break;
-            default:
-                break;
+        else if (netDirection === GameDef.NetKeyDirection.LEFT) {
+            return GameDef.DIRECTION_LEFT;
         }
+        else if (netDirection === GameDef.NetKeyDirection.DOWN) {
+            return GameDef.DIRECTION_DOWN;
+        }
+        else if (netDirection === GameDef.NetKeyDirection.RIGHT) {
+            return GameDef.DIRECTION_RIGHT;
+        }
+        return GameDef.DIRECTION_UP;
     }
 
-    onKeyUp(event) {
-        if (!GameDataModel._enableOperate) {
-            return;
+    onMapEditerMove(nDirection: number) {
+        CommonFunc.playButtonSound();
+
+        //地图编辑模式移动一格
+        let moveDiff;
+        let moveLength = GameDef.SCENERY_CONTAINS_RC;
+        if (nDirection === GameDef.DIRECTION_UP) {
+            moveDiff = new GameStruct.RcInfo(0, moveLength);
         }
-        switch (event.keyCode) {
-            case PlayerDef.KEYMAP_PLAYER1.UP:
-                this.onStopMove(0, GameDef.DIRECTION_UP);
-                break;
-            case PlayerDef.KEYMAP_PLAYER1.LEFT:
-                this.onStopMove(0, GameDef.DIRECTION_LEFT);
-                break;
-            case PlayerDef.KEYMAP_PLAYER1.DOWN:
-                this.onStopMove(0, GameDef.DIRECTION_DOWN);
-                break;
-            case PlayerDef.KEYMAP_PLAYER1.RIGHT:
-                this.onStopMove(0, GameDef.DIRECTION_RIGHT);
-                break;
-            case PlayerDef.KEYMAP_PLAYER2.UP:
-                this.onStopMove(1, GameDef.DIRECTION_UP);
-                break;
-            case PlayerDef.KEYMAP_PLAYER2.LEFT:
-                this.onStopMove(1, GameDef.DIRECTION_LEFT);
-                break;
-            case PlayerDef.KEYMAP_PLAYER2.DOWN:
-                this.onStopMove(1, GameDef.DIRECTION_DOWN);
-                break;
-            case PlayerDef.KEYMAP_PLAYER2.RIGHT:
-                this.onStopMove(1, GameDef.DIRECTION_RIGHT);
-                break;
-            default:
-                break;
+        else if (nDirection === GameDef.DIRECTION_LEFT){
+            moveDiff = new GameStruct.RcInfo(-moveLength, 0);
         }
+        else if (nDirection === GameDef.DIRECTION_DOWN){
+            moveDiff = new GameStruct.RcInfo(0, -moveLength);
+        }
+        else if (nDirection === GameDef.DIRECTION_RIGHT){
+            moveDiff = new GameStruct.RcInfo(moveLength, 0);
+        }
+
+        this._mapEditer.moveBy(moveDiff);
     }
 
     onPlayerMove(playerNo: number, nDirection: number) {
-        if (GameDataModel.isModeEditMap()) {
-            CommonFunc.playButtonSound();
-
-            //地图编辑模式移动一格
-            if (playerNo === 0) {
-                let moveDiff;
-                let moveLength = GameDef.SCENERY_CONTAINS_RC;
-                if (nDirection === GameDef.DIRECTION_UP) {
-                    moveDiff = new GameStruct.RcInfo(0, moveLength);
-                }
-                else if (nDirection === GameDef.DIRECTION_LEFT){
-                    moveDiff = new GameStruct.RcInfo(-moveLength, 0);
-                }
-                else if (nDirection === GameDef.DIRECTION_DOWN){
-                    moveDiff = new GameStruct.RcInfo(0, -moveLength);
-                }
-                else if (nDirection === GameDef.DIRECTION_RIGHT){
-                    moveDiff = new GameStruct.RcInfo(moveLength, 0);
-                }
-
-                this._mapEditer.moveBy(moveDiff);
-            }
-        }
-        else {
-            if (this._players[playerNo]) {
-                this._players[playerNo].setMove(true, nDirection);
-            }
+        if (GameDataModel._playerTanks[playerNo]) {
+            GameDataModel._playerTanks[playerNo].setMove(true, nDirection);
         }
     }
 
-    onStopMove(playerNo: number, nDirection: number) {
+    onStopMove(playerNo: number) {
         if (!GameDataModel.isModeEditMap()) {
-            if (this._players[playerNo]) {
-                this._players[playerNo].setMove(false, nDirection);
-            }
-        }
-    }
-
-    onPlayerOkClickDown(playerNo: number) {
-        if (GameDataModel.isModeEditMap() && playerNo === 0) {
-            this.onChangeScenery();
-        }
-        else {
-            if (this._players[playerNo]) {
-                this._players[playerNo].shoot();
-            }
-        }
-    }
-
-    onPlayerCancelClickDown(playerNo: number) {
-        if (GameDataModel.isModeEditMap() && playerNo === 0) {
-            this.onChangeEditMode();
-        }
-        else {
-            if (this._players[playerNo]) {
-                this._players[playerNo].shoot();
+            if (GameDataModel._playerTanks[playerNo]) {
+                GameDataModel._playerTanks[playerNo].setMove(false);
             }
         }
     }
@@ -319,11 +244,7 @@ export default class PlayerManager extends cc.Component {
     }
 
     evGameStarted() {
-        // CommonFunc.travelMap(this._players, (no: number, player: PlayerTank) => {
-        //     if (cc.isValid(player.node)) {
-        //         //player.onGetShieldStatus(GameDef.BORN_INVINCIBLE_TIME);
-        //     }
-        // });
+
     }
 
     evPlayerDead(no: number) {
@@ -363,8 +284,8 @@ export default class PlayerManager extends cc.Component {
     }
 
     evReduceBullet(id: number) {
-        if (this._players[id]) {
-            this._players[id].onShootHited();
+        if (GameDataModel._playerTanks[id]) {
+            GameDataModel._playerTanks[id].onShootHited();
         }
     }
 
@@ -402,10 +323,8 @@ export default class PlayerManager extends cc.Component {
     }
 
     stopAllPlayerMove() {
-        CommonFunc.travelMap(this._players, (no: number, player: PlayerTank) => {
-            if (cc.isValid(player.node)) {
-                player.setMove(false, player._moveDirection);
-            }
+        CommonFunc.travelMap(GameDataModel._playerTanks, (no: number, player: PlayerTank) => {
+            player.setMove(false, player._moveDirection);
         });
     }
 
@@ -413,5 +332,23 @@ export default class PlayerManager extends cc.Component {
         if (GameDataModel.isModeEditMap()) {
             this.initPlayers();
         }
+    }
+
+    evLogicUpdate(dt: Big) {
+        CommonFunc.travelMap(GameDataModel._playerTanks, (no: number, player: PlayerTank) => {
+            player.onLogicUpdate(dt);
+        });
+    }
+
+    evLogicLateUpdate() {
+        CommonFunc.travelMap(GameDataModel._playerTanks, (no: number, player: PlayerTank) => {
+            player.onLogicLateUpdate();
+        });
+    }
+
+    evLogicLastFrameEvent() {
+        CommonFunc.travelMap(GameDataModel._playerTanks, (no: number, player: PlayerTank) => {
+            player.onLogicLastFrameEvent();
+        });
     }
 }

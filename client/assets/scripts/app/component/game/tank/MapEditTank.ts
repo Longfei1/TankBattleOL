@@ -130,7 +130,7 @@ export default class MapEditTank extends BaseTank {
     setEditPosition(pos: GameStruct.RcInfo) {
         if (pos && this.isValidPosition(pos)) {
             this._editPos = pos;
-            this.setPosition(pos);
+            this.setLogicPosition(pos, true);
         }
     }
 

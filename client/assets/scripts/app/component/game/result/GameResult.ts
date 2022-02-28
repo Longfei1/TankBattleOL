@@ -1,6 +1,7 @@
 import { GameDef } from "../../../define/GameDef";
 import { GameStruct } from "../../../define/GameStruct";
 import GameDataModel from "../../../model/GameDataModel";
+import GameLogicModel from "../../../model/GameLogicModel";
 import GameStartAni from "../animation/GameStartAni";
 import { gameController } from "../Game";
 import PlayerResult from "./PlayerResult";
@@ -155,8 +156,8 @@ export default class GameResult extends cc.Component {
     //得分展示结束
     onScoreAniFinished() {
         //判断进入下一关或显示通关界面
-        this.scheduleOnce(() => {
+        GameLogicModel.scheduleOnce(() => {
             gameController.onGameResultShowFinished();
-        }, 3);
+        }, this, 3);
     }
 }

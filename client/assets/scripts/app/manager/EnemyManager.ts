@@ -8,9 +8,11 @@ import GameConfigModel from "../model/GameConfigModel";
 import { GameStruct } from "../define/GameStruct";
 import CommonFunc from "../common/CommonFunc";
 import { GameDef } from "../define/GameDef";
+import GameLogicModel from "../model/GameLogicModel";
+import Big from "../../packages/bigjs/Big";
 
-const ENEMY_ADD_INTERVAL = 1; //秒
-const ENEMY_BEHAVIOR_INTERVAL = 0.5; //秒
+const ENEMY_ADD_INTERVAL = 1000; //毫秒
+const ENEMY_BEHAVIOR_INTERVAL = 500; //毫秒
 
 const { ccclass, property } = cc._decorator;
 
@@ -24,12 +26,14 @@ export default class EnemyManager extends cc.Component {
 
     _idGenerator: UniqueIdGenerator = new UniqueIdGenerator(100, 11); //10以内的id预留给玩家使用
 
-    _enemyTanks: { [id: number]: EnemyTank } = {};
     _enemyPool: NodePool = null;
 
     _diffcultyData = null;
 
     _bornPlaceIndex: number = 0;
+
+    _enemyAddTime: number = 0;
+    _enemyBehaviorTime: number = 0;
 
     onLoad() {
         this.initListenner();
@@ -38,7 +42,7 @@ export default class EnemyManager extends cc.Component {
     }
 
     onDestroy() {
-        //this.removeTimers();
+        this.removeListener();
 
         this._enemyPool.clearNode();
     }
@@ -55,11 +59,17 @@ export default class EnemyManager extends cc.Component {
             //gameController.node.on(EventDef.EV_GAME_RESUME, this.evGameResume, this);
 
             gameController.node.on(EventDef.EV_PROP_BOMB, this.evPropBomb, this);
+
+            GameLogicModel.addEventListener(EventDef.EV_GL_AI_OPERATION, this.evAiOperation, this);
+
+            GameLogicModel.addEventListener(EventDef.EV_GL_UPDATE, this.evLogicUpdate, this);
+            GameLogicModel.addEventListener(EventDef.EV_GL_LATE_UPDATE, this.evLogicLateUpdate, this);
+            GameLogicModel.addEventListener(EventDef.EV_GL_LAST_FRAME_EVENT, this.evLogicLastFrameEvent, this);
         }
     }
 
     removeListener() {
-
+        GameLogicModel.removeEventListenerByContext(this);
     }
 
     reset() {
@@ -71,14 +81,13 @@ export default class EnemyManager extends cc.Component {
     }
 
     resetEnemy() {
-        CommonFunc.travelMap(this._enemyTanks, (id:number, enemy: EnemyTank) => {
+        CommonFunc.travelMap(GameDataModel._enemyTanks, (id:number, enemy: EnemyTank) => {
             if (cc.isValid(enemy.node)) {
                 this._enemyPool.putNode(enemy.node);
             }
         })
 
-        this._enemyTanks = {};
-        GameDataModel.clearEnemyTank();
+        GameDataModel._enemyTanks = {};
     }
 
     evPrepareGame() {
@@ -90,24 +99,25 @@ export default class EnemyManager extends cc.Component {
         //读取本关卡难度数据
         this._diffcultyData = GameConfigModel.getDifficultyData(stage);
 
+        this._enemyAddTime = GameLogicModel.getLogicTime();
+        this._enemyBehaviorTime = GameLogicModel.getLogicTime();
+
         //游戏开始，生成敌方坦克
-        let initNum = 3;
+        let initNum = 1;
         for (let i = 0; i < initNum; i++) {
             this.addOneEnemy();
         }
-
-        this.createTimers();
     }
 
     evGameEnded() {
-        this.removeTimers();
+        
     }
 
     evEnemyDead(id : number) {
-        if (this._enemyTanks[id]) {
-            if (this._enemyTanks[id]._destroyedBy >= 0) {
-                let playerInfo = GameDataModel.getPlayerInfo(this._enemyTanks[id]._destroyedBy);
-                playerInfo[this._enemyTanks[id]._tankName]++;
+        if (GameDataModel._enemyTanks[id]) {
+            if (GameDataModel._enemyTanks[id]._destroyedBy >= 0) {
+                let playerInfo = GameDataModel.getPlayerInfo(GameDataModel._enemyTanks[id]._destroyedBy);
+                playerInfo[GameDataModel._enemyTanks[id]._tankName]++;
             }else {
                 GameDataModel._propDestroyEnemyNum++;
             }
@@ -121,29 +131,21 @@ export default class EnemyManager extends cc.Component {
         }
 
         if (this.isGameEnd()) {
-            this.scheduleOnce(() => {
+            GameLogicModel.scheduleOnce(() => {
                 gameController.gameEnd();
-            }, 3);
+            }, this, 3);
         }
     }
 
     evReduceBullet(id: number) {
-        if (this._enemyTanks[id]) {
-            this._enemyTanks[id].onShootHited();
+        if (GameDataModel._enemyTanks[id]) {
+            GameDataModel._enemyTanks[id].onShootHited();
         }
-    }
-
-    evGamePause() {
-        this.removeTimers();
-    }
-
-    evGameResume() {
-        this.createTimers();
     }
 
     evPropBomb(playerNO: number) {
         //销毁全部敌军
-        CommonFunc.travelMap(this._enemyTanks, (id:number, enemy: EnemyTank) => {
+        CommonFunc.travelMap(GameDataModel._enemyTanks, (id:number, enemy: EnemyTank) => {
             enemy.dead(); 
         })
     }
@@ -157,27 +159,26 @@ export default class EnemyManager extends cc.Component {
         com.id = this._idGenerator.generateID();
         com.setAttributes(tankData[name]);
         com.setRed(bRed);
-        com.setPosition(pos);
+        com.setLogicPosition(pos, true);
         com.setMoveDirction(GameDef.DIRECTION_DOWN); 
 
-        this._enemyTanks[com.id] = com;
-        GameDataModel.setEnemyTank(tank);
+        GameDataModel._enemyTanks[com.id] = com;
 
         com.born();
     }
 
     destroyEnemyTank(id: number) {
-        if (this._enemyTanks[id]) {
-            this._enemyPool.putNode(this._enemyTanks[id].node);
-            delete this._enemyTanks[id];
-            GameDataModel.removeEnemyTank(id);
+        if (GameDataModel._enemyTanks[id]) {
+            this._enemyPool.putNode(GameDataModel._enemyTanks[id].node);
+            delete GameDataModel._enemyTanks[id];
+            this._idGenerator.returnID(id);
         }
     }
 
     //获取下次生成的坦克类型
     getNextTankName(): string {
         //先简单处理，使用随机类型。后续可通过设置关卡难度，设置不同坦克的数量。
-        return CommonFunc.getRandomArrayValue(GameDef.EnemyTankNames);
+        return GameLogicModel.getRandomArrayValue(GameDef.EnemyTankNames);
     }
 
     //获取下次生成的坦克位置
@@ -195,7 +196,7 @@ export default class EnemyManager extends cc.Component {
 
             let pos = GameDataModel.matrixToScenePosition(rc);
             let tankWidth = GameDataModel.getTankWidth();
-            let bornArea: cc.Rect = cc.rect(pos.x, pos.y, tankWidth, tankWidth);
+            let bornArea: GameStruct.BigRect = new GameStruct.BigRect(pos.x, pos.y, tankWidth, tankWidth);
             if (!GameDataModel.hasTankInRect(bornArea)) {
                 return rc;
             }
@@ -207,7 +208,7 @@ export default class EnemyManager extends cc.Component {
     //获取下次生成的坦克是否为红色
     getNextTankRed(): boolean {
         //先简单处理，使用随机类型。后续可通过设置关卡难度，设置复杂情况。
-        return CommonFunc.isInProbability(0.3);
+        return GameLogicModel.isInProbability(0.3);
     }
 
     incBornPlaceIndex() {
@@ -247,37 +248,50 @@ export default class EnemyManager extends cc.Component {
         return false;
     }
 
-    createTimers() {
-        this.removeTimers();
-
-        this.createEnemyAddTimer();
-        this.createEnemyBehaviorTimer();
-    }
-
-    removeTimers() {
-        this.unscheduleAllCallbacks();
-    }
-
-    createEnemyAddTimer() {
-        this.schedule(this.onEnemyAddTimer, ENEMY_ADD_INTERVAL);
-    }
-
-    onEnemyAddTimer() {
+    onEnemyAdd() {
         //尝试生成一名敌人
-        if (this.isNeedCreateEnemy()) {
+        if (this._diffcultyData && this.isNeedCreateEnemy()) {
             this.addOneEnemy();
         }
     }
 
-    createEnemyBehaviorTimer() {
-        this.schedule(this.onEnemyBehaviorTimer, ENEMY_BEHAVIOR_INTERVAL);
+    onEnemyBehavior() {
+        CommonFunc.travelMap(GameDataModel._enemyTanks, (id: number, enemy: EnemyTank) => {
+            enemy.onBehaviorTimer();
+        })
     }
 
-    onEnemyBehaviorTimer() {
-        CommonFunc.travelMap(this._enemyTanks, (id: number, enemy: EnemyTank) => {
-            if (cc.isValid(enemy.node)) {
-                enemy.onBehaviorTimer();
-            }
+    evAiOperation() {
+        let time = GameLogicModel.getLogicTime();
+
+        //定时生成AI
+        if (this._enemyAddTime + ENEMY_ADD_INTERVAL <= time) {
+            this.onEnemyAdd();
+            this._enemyAddTime = time;
+        }
+
+        //定时触发行为
+        if (this._enemyBehaviorTime + ENEMY_BEHAVIOR_INTERVAL <= time) {
+            this.onEnemyBehavior();
+            this._enemyBehaviorTime = time;
+        }
+    }
+
+    evLogicUpdate(dt: Big) {
+        CommonFunc.travelMap(GameDataModel._enemyTanks, (id: number, enemy: EnemyTank) => {
+            enemy.onLogicUpdate(dt);
+        })
+    }
+
+    evLogicLateUpdate() {
+        CommonFunc.travelMap(GameDataModel._enemyTanks, (id: number, enemy: EnemyTank) => {
+            enemy.onLogicLateUpdate();
+        })
+    }
+
+    evLogicLastFrameEvent() {
+        CommonFunc.travelMap(GameDataModel._enemyTanks, (id: number, enemy: EnemyTank) => {
+            enemy.onLogicLastFrameEvent();
         })
     }
 }

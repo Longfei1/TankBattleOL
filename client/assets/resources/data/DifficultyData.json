@@ -1,5 +1,5 @@
 { 
-    "1": {"EnemyMaxAliveNum": 4,"EnemyTotalNum": 20},
+    "1": {"EnemyMaxAliveNum": 1,"EnemyTotalNum": 20},
     "2": {"EnemyMaxAliveNum": 4,"EnemyTotalNum": 20},
     "3": {"EnemyMaxAliveNum": 4,"EnemyTotalNum": 20},
     "4": {"EnemyMaxAliveNum": 4,"EnemyTotalNum": 20},
