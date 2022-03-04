@@ -94,7 +94,7 @@ export default class EnemyTank extends BattleTank {
         if (this._isMove) {
             let speed = this._moveSpeed;
             if (this.isTankOnIceScenery()) {
-                speed += 20; //冰加移速
+                speed += GameDef.TANK_ICE_ADD_SPEED; //冰加移速
             }
 
             moveDiff = Big(speed).mul(dt);
@@ -152,7 +152,12 @@ export default class EnemyTank extends BattleTank {
         if (!this._bTryMoving && !this.isOutBoundaryDirction(this._moveDirection)) {
             let tryProbability = 0.6;
             if (this.isDirectionForwardHomeBase(this._moveDirection)) {
-                tryProbability = 0.85;
+                if (GameDataModel.isModeDoublePlayer()) {
+                    tryProbability = 0.85;
+                }
+                else {
+                    tryProbability = 0.7;
+                }
             }
             if (GameLogicModel.isInProbability(tryProbability)) {
                 this._bTryMoving = true;
@@ -292,7 +297,12 @@ export default class EnemyTank extends BattleTank {
         for (let i = 0; i < moveDirctions.length; i++) {
             let value = defaultValue;//初始权重
             if (this.isDirectionForwardHomeBase(moveDirctions[i])) {
-                value += 20;
+                if (GameDataModel.isModeDoublePlayer()) {
+                    value += 15;
+                }
+                else {
+                    value += 10;
+                }
             }
 
             weights.push(value);
@@ -305,9 +315,9 @@ export default class EnemyTank extends BattleTank {
         let tankPos = this._logicPos;
         let homeBasePos = GameDataModel.getHomeCenterScenePosition();
 
-        let vertical = GameDef.DIRECTION_UP;
+        let vertical = GameDef.DIRECTION_DOWN;
         if (tankPos.y.lt(homeBasePos.y)) {
-            vertical = GameDef.DIRECTION_DOWN;
+            vertical = GameDef.DIRECTION_UP;
         }
 
         let horizontal = GameDef.DIRECTION_LEFT;
@@ -322,8 +332,11 @@ export default class EnemyTank extends BattleTank {
         return false;
     }
 
+    //行为控制相关
+    //************************
+
     onLogicLastFrameEvent() {
-        if (this._hited && this.isTankVisible()) {
+        if (this._hited) {
             let bulletLevel = this._hitedPower;
             let hitCount = bulletLevel == GameDef.BULLET_POWER_LEVEL_STELL ? 2 : 1; //被能击毁钢的子弹打中时，扣两次等级
             if (this._bRed) {
@@ -367,6 +380,7 @@ export default class EnemyTank extends BattleTank {
         }
     }
 
-    //行为控制相关
-    //************************
+    isNeedUpdateMoveView():boolean {
+        return this._isMove && !CommonFunc.isBitSet(GameDataModel._propBuff, GameDef.PROP_BUFF_STATIC);
+    }
 }

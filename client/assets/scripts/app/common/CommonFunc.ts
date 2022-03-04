@@ -56,7 +56,7 @@ export default class CommonFunc {
      */
     static travelMap(map, travelFunc) {
         if (map) {
-            for (let key of Object.keys(map)) {
+            for (let key of Object.getOwnPropertyNames(map)) {
                 if (travelFunc(key, map[key])) {
                     break;
                 }
@@ -70,7 +70,7 @@ export default class CommonFunc {
      */
     static getMapSize(map) {
         if (map) {
-            return Object.keys(map).length;
+            return Object.getOwnPropertyNames(map).length;
         }
         
         return 0;

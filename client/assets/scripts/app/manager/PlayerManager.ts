@@ -51,6 +51,8 @@ export default class PlayerManager extends cc.Component {
         this.removeListener()
 
         this._playerPool.clearNode();
+
+        GameLogicModel.unscheduleAll(this);
     }
 
     initListener() {
@@ -69,9 +71,9 @@ export default class PlayerManager extends cc.Component {
 
             gameController.node.on(EventDef.EV_GAME_ENDED, this.evGameEnd, this);
 
-            //GameLogicModel.addEventListener(EventDef.EV_GL_UPDATE, this.evLogicUpdate, this);
+            GameLogicModel.addEventListener(EventDef.EV_GL_UPDATE, this.evLogicUpdate, this);
             GameLogicModel.addEventListener(EventDef.EV_GL_LATE_UPDATE, this.evLogicLateUpdate, this);
-            //GameLogicModel.addEventListener(EventDef.EV_GL_LAST_FRAME_EVENT, this.evLogicLastFrameEvent, this);
+            GameLogicModel.addEventListener(EventDef.EV_GL_LAST_FRAME_EVENT, this.evLogicLastFrameEvent, this);
         }
     }
 
@@ -119,7 +121,7 @@ export default class PlayerManager extends cc.Component {
     createPlayer(id: number, attr: GameStruct.TankAttributes, bornPos: GameStruct.RcInfo) {
         let playerInfo = GameDataModel.getPlayerInfo(id);
         let player = this._playerPool.getNode();
-        this.panelGame.addChild(player);
+        this.panelGame.addChild(player, 10 - id);
         let playerCom = player.getComponent(PlayerTank);
         playerCom.reset();
         playerCom.id = id;
@@ -254,11 +256,13 @@ export default class PlayerManager extends cc.Component {
         this.destroyPlayer(no);
 
         if (playerInfo.lifeNum > 0) {
-            playerInfo.lifeNum--;
-            playerInfo.liveStatus = true;
-            this.createPlayer(no, this.getTankAttributesById(no), this.getBornPlaceById(no));
-
-            gameController.node.emit(EventDef.EV_DISPLAY_UPDATE_PLAYER_LIFE);
+            GameLogicModel.scheduleOnce(() => {
+                playerInfo.lifeNum--;
+                playerInfo.liveStatus = true;
+                this.createPlayer(no, this.getTankAttributesById(no), this.getBornPlaceById(no));
+    
+                gameController.node.emit(EventDef.EV_DISPLAY_UPDATE_PLAYER_LIFE);
+            }, this, 0.52);
         }
 
         {
@@ -324,7 +328,7 @@ export default class PlayerManager extends cc.Component {
 
     stopAllPlayerMove() {
         CommonFunc.travelMap(GameDataModel._playerTanks, (no: number, player: PlayerTank) => {
-            player.setMove(false, player._moveDirection);
+            player.setMove(false);
         });
     }
 

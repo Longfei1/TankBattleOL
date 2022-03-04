@@ -64,13 +64,13 @@ export default class PlayerTank extends BattleTank {
     }
 
     playMoveSound() {
-        if (!this._moveAudioInfo || !this._moveAudioInfo.audioID) {
+        if (!this._moveAudioInfo) {
             this._moveAudioInfo = AudioModel.playSound("sound/move", true);
         }
     }
 
     stopMoveSound() {
-        if (this._moveAudioInfo != null && this._moveAudioInfo.audioID != null) {
+        if (this._moveAudioInfo) {
             AudioModel.stopSound(this._moveAudioInfo);
             this._moveAudioInfo = null;
         }
@@ -133,7 +133,7 @@ export default class PlayerTank extends BattleTank {
     }
 
     onLogicLastFrameEvent() {
-        if (this._hited && this.isTankVisible()) {
+        if (this._hited) {
             if (this.haveBuff(GameDef.TANK_BUFF_INVINCIBLE)) {
                 this._hited = false;
                 return;

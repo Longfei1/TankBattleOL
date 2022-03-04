@@ -62,11 +62,25 @@ void AsioSockServer::ShutDown()
         return;
     }
 
-    StopIOService();
-
     UnInitSocket();
 
-    ClearConnectSessionMap();
+    //清空连接
+    {
+        decltype(session_map_) tmp;
+        {
+            std::lock_guard<std::mutex> lock(session_map_mtx_);
+            tmp = session_map_;
+        }
+        {
+            for (auto& it : tmp)
+            {
+                CloseConnection(it.first, false);
+            }
+        }
+        ClearConnectSessionMap();
+    }
+    
+    StopIOService();
 }
 
 //void AsioSockServer::SetSocketStatusCallback(SocketStatusCallback callback)
@@ -107,15 +121,15 @@ void AsioSockServer::SendData(SessionID id, const Byte* senddata, std::size_t si
     }
 }
 
-void AsioSockServer::CloseConnection(SessionID id)
+void AsioSockServer::CloseConnection(SessionID id, bool dispatch_close_event)
 {
     LOG_TRACE("AsioSockServer::CloseConnection sessionid(%d)", id);
     auto session = GetConnectSession(id);
     if (session)
     {
-        boost::asio::post(session->socket_.get_executor(), [this, session]()
+        boost::asio::post(session->socket_.get_executor(), [this, session, dispatch_close_event]()
             {
-                CloseConnectSession(session, false);//外部接口关闭连接，不在分发socketclose消息事件
+                CloseConnectSession(session, dispatch_close_event);//外部接口关闭连接，可以根据参数决定是否触发socketclose消息事件
             });
     }
 }
@@ -134,7 +148,23 @@ bool AsioSockServer::InitSocket()
 
 bool AsioSockServer::UnInitSocket()
 {
-    socket_->close();
+    try
+    {
+        socket_->close();
+    }
+	catch (boost::system::system_error& error)
+	{
+	}
+
+    try
+    {
+        acceptor_->close();
+    }
+	catch (boost::system::system_error& error)
+	{
+
+	}
+
     return true;
 }
 
@@ -152,7 +182,7 @@ bool AsioSockServer::StartIOService()
 
 bool AsioSockServer::StopIOService()
 {
-    io_service_.stop();//停止服务
+    //io_service_.stop();//停止服务
     for (auto& th : io_threads_)
     {
         th.join();//等待IO线程结束
@@ -193,10 +223,18 @@ void AsioSockServer::OnAccept(const boost::system::error_code& error, boost::asi
         else
         {
             LOG_ERROR("OnAccept error, not have enough sessionid!");
+            try
+            {
+                socket.close();
+            }
+			catch (boost::system::system_error& error)
+			{
+
+			}
         }
         DoAccept();//继续监听连接
     }
-    else
+    else if (error != error::operation_aborted)
     {
         LOG_ERROR("OnAccept error, error(%d)", error);
     }
@@ -414,12 +452,21 @@ bool AsioSockServer::CheckIOState(ConSessionPtr session, const boost::system::er
 
 void AsioSockServer::CloseConnectSession(ConSessionPtr session, bool dispatch_event)
 {
+    LOG_INFO("AsioSockServer::CloseConnectSession session(%d)", *session->session_id_);
     if (session->status_ == SocketStatus::CLOSED)
     {
         return;
     }
 
-    session->socket_.close();
+    try
+    {
+        session->socket_.close();
+    }
+	catch (boost::system::system_error& error)
+	{
+		LOG_ERROR("AsioSockServer::CloseConnectSession %s", error.what());
+	}
+
     RemoveConnectSession(session);
     if (dispatch_event)
     {

@@ -22,10 +22,13 @@ export default class ChooseDialog extends cc.Component {
     @property({ displayName: "取消按钮文字", type: cc.Label })
     textCancel: cc.Label = null;
 
+    @property({ displayName: "箭头", type: cc.Node })
+    nodeArrow: cc.Node = null;
+
     _sureCallback: Function = null;
     _cancelCallback: Function = null;
 
-    _bSelectSure: boolean = false;
+    _bSelectSure: boolean = true;
 
     onLoad() {
         this.initListener();
@@ -95,12 +98,12 @@ export default class ChooseDialog extends cc.Component {
             this.textCancel.string = param.cancelString;
         }
 
-        this.onChangeSelect();
+        this.playSelectAni(this.nodeArrow);
     }
 
     playSelectAni(node: cc.Node) {
         node.scale = 1;
-        node.runAction(cc.repeatForever(cc.sequence(cc.scaleTo(0.7, 1.15), cc.scaleTo(0.5, 1))));
+        node.runAction(cc.repeatForever(cc.sequence(cc.scaleTo(0.7, 1.2), cc.scaleTo(0.5, 1))));
     }
 
     stopSelectAni(node: cc.Node) {
@@ -111,12 +114,10 @@ export default class ChooseDialog extends cc.Component {
     onChangeSelect() {
         this._bSelectSure = !this._bSelectSure;
         if (this._bSelectSure) {
-            this.playSelectAni(this.nodeSure);
-            this.stopSelectAni(this.nodeCancel);
+            this.nodeArrow.x = this.nodeSure.x;
         }
         else {
-            this.playSelectAni(this.nodeCancel);
-            this.stopSelectAni(this.nodeSure);
+            this.nodeArrow.x = this.nodeCancel.x;
         }
     }
 }

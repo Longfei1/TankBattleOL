@@ -47,6 +47,8 @@ export default class BattleTank extends BaseTank {
 
     private _tankID: number = -1;
 
+    _borning: boolean = true;
+
     DirectionSuffix = {
         0: "U",
         1: "L",
@@ -99,6 +101,8 @@ export default class BattleTank extends BaseTank {
         this._bulletNum = 0;
 
         this._lastShootTime = 0;
+
+        this._borning = true;
     }
 
     setAttributes(attributes: GameStruct.TankAttributes) {
@@ -206,6 +210,10 @@ export default class BattleTank extends BaseTank {
             return false;
         }
 
+        if (GameDataModel._gameOver) {
+            return false;
+        }
+
         let time = GameLogicModel.getLogicTime();
         if (time - this._lastShootTime < GameLogicModel.secondToMillisecond(this._shootCoolTime)) {
             return false;
@@ -227,6 +235,7 @@ export default class BattleTank extends BaseTank {
         gameController.playUnitAniInTime(AniDef.UnitAniType.BORN, this.getNodeAni(), 0.8, null, () => {
             //this.setTankVisible(false);
         }, () => {
+            this._borning = false;
             this.setTankVisible(true);
             
             if (typeof callback === "function") {
@@ -238,14 +247,16 @@ export default class BattleTank extends BaseTank {
     dead() {
         AudioModel.playSound("sound/blast");
 
-        this._isMove = false;
-        gameController.playTankBlastAni(this.getCenterPosition(), () => {
-            this.setTankVisible(false);
-        }, () => {
-            this.destroyNode();
-        });
+        this.setMove(false);
+        
+        gameController.playTankBlastAni(this.getCenterPosition());
+        
+        let score = this.getDestroyScore();
+        if (score > 0) {
+            gameController.playGainScoreAni(this.node.getPosition(), score);
+        }
 
-        gameController.playGainScoreAni(this.node.getPosition(), this.getDestroyScore());
+        this.destroyNode();
     }
 
     //被命中
@@ -569,7 +580,7 @@ export default class BattleTank extends BaseTank {
     }
 
     onLogicLastFrameEvent() {
-        if (this._hited && this.isTankVisible()) {
+        if (this._hited) {
             this.syncLogicPos();
             this.dead();
         }
@@ -580,6 +591,11 @@ export default class BattleTank extends BaseTank {
     }
 
     update(dt) {
+        if (GameLogicModel._netGameDxxw) {
+            this.node.setPosition(GameDataModel.bigPosToVec2(this._logicPos));
+            return;
+        }
+
         let dstPos = this._logicPos;
         let move = true;
         if (this._moveDirection === GameDef.DIRECTION_UP || this._moveDirection === GameDef.DIRECTION_DOWN) {
@@ -657,7 +673,7 @@ export default class BattleTank extends BaseTank {
             }
         }
 
-        if (this._isMove) {
+        if (this.isNeedUpdateMoveView()) {
             this.addImgLoopFrame();
             this.updateTankImg();
         }
@@ -671,11 +687,13 @@ export default class BattleTank extends BaseTank {
         if (other.node.group === GameDef.GROUP_NAME_BULLET) {
             let com = other.node.getComponent(Bullet);
             if (this._team !== com._team) {
-                if (!com._hited || (com._hitedGroup === GameDef.GROUP_NAME_BULLET && com._hitedValue === this.id)) {
+                if (!com._hited || (com._hitedGroup === GameDef.GROUP_NAME_TANK && com._hitedValue === this.id)) {
                     this.onHited(other.node, com.id);
                 }
             }
-            this._logicUpdate = false;
+            if (com._shooterID != this.id) {
+                this._logicUpdate = false;
+            }
         }
         else if (other.node.group === GameDef.GROUP_NAME_PROP) {
             this.onClilisionProp(other.node);
@@ -684,5 +702,9 @@ export default class BattleTank extends BaseTank {
 
     onClilisionProp(propNode: cc.Node) {
         
+    }
+
+    isNeedUpdateMoveView():boolean {
+        return this._isMove;
     }
 }

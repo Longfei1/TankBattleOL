@@ -33,12 +33,12 @@ export default class PropManager extends cc.Component {
 
     reset() {
         GameDataModel._propBuff = 0;
-        if (GameDataModel._prop) {
+        if (GameDataModel._prop && cc.isValid(GameDataModel._prop.node)) {
             GameDataModel._prop.reset();
             GameDataModel._prop.node.removeFromParent();
-            GameDataModel._prop = null;
         }
-
+        
+        GameDataModel._prop = null;
         this.removeTimers();
     }
 
@@ -70,8 +70,9 @@ export default class PropManager extends cc.Component {
         if (GameDataModel._prop) {
             GameDataModel._prop.reset();
             GameDataModel._prop.node.removeFromParent();
-            GameDataModel._prop = null;
         }
+
+        GameDataModel._prop = null;
 
         let type = this.getRandomPropType();
         let pos = this.getRandomPropPosition()
@@ -95,8 +96,8 @@ export default class PropManager extends cc.Component {
         if (GameDataModel._prop) {
             GameDataModel._prop.reset();
             GameDataModel._prop.node.removeFromParent();
-            GameDataModel._prop = null;
         }
+        GameDataModel._prop = null;
     }
 
     evGainProp(playerNode: cc.Node) {

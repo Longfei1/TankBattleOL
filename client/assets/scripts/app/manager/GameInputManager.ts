@@ -179,19 +179,21 @@ export default class GameInputManager extends cc.Component {
     getPlayerOpeCode(playerNO: number): number {
         let opeCode = 0;
 
-        //record使用高16位
-        opeCode += this._keyDirection[playerNO].status & 0x7;//低3位
-        opeCode += this._keyDirection[playerNO].record & 0x70000;
+        if (GameDataModel._enableOperate) {
+            //record使用高16位
+            opeCode += this._keyDirection[playerNO].status & 0x7;//低3位
+            opeCode += this._keyDirection[playerNO].record & 0x70000;
 
-        opeCode += this._keyOK[playerNO].status << 3;//低到高第4位
-        opeCode += this._keyOK[playerNO].record << 19;
+            opeCode += this._keyOK[playerNO].status << 3;//低到高第4位
+            opeCode += this._keyOK[playerNO].record << 19;
 
-        opeCode += this._keyCancel[playerNO].status << 4;//低到高第5位
-        opeCode += this._keyCancel[playerNO].record << 20;
+            opeCode += this._keyCancel[playerNO].status << 4;//低到高第5位
+            opeCode += this._keyCancel[playerNO].record << 20;
 
-        if (playerNO === 0) {
-            opeCode += this._keyStart.status << 5;//低到高第6位
-            opeCode += this._keyStart.record << 21;
+            if (playerNO === 0) {
+                opeCode += this._keyStart.status << 5;//低到高第6位
+                opeCode += this._keyStart.record << 21;
+            }
         }
 
         return opeCode;

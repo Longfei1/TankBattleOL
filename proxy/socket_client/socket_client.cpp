@@ -271,6 +271,7 @@ bool AsioSockClient::CheckIOState(const boost::system::error_code& error)
 {
     if (error)
     {
+        LOG_DEBUG("AsioSockClient::CheckIOState socket io error(%d)", error);
         if (error == error::operation_aborted)
         {
             return false;
@@ -280,7 +281,6 @@ bool AsioSockClient::CheckIOState(const boost::system::error_code& error)
         {
             LOG_DEBUG("AsioSockClient::CheckIOState socket close by server, sessionid:%d", *session_->session_id_);
         }
-        LOG_DEBUG("AsioSockClient::CheckIOState socket io error(%d)", error);
         CloseConnectSession();
 
         return false;
@@ -298,7 +298,15 @@ void AsioSockClient::CloseConnectSession(bool dispatch_event)
     }
 
     session_->status_ = SocketStatus::CLOSED;
-    session_->socket_.close();
+
+    try
+    {
+        session_->socket_.close();
+    }
+	catch (boost::system::system_error& error)
+	{
+		LOG_ERROR("AsioSockClient::CloseConnectSession %s", error.what());
+	}
 
     if (dispatch_event)
     {

@@ -1,4 +1,5 @@
 import { PlayerDef } from "../../define/PlayerDef";
+import GameResModel from "../../model/GameResModel";
 import GameDataModel from "../../model/GameDataModel";
 import { GameDef } from "../../define/GameDef";
 import AudioModel from "../../model/AudioModel";
@@ -37,6 +38,10 @@ export default class MainMenu extends cc.Component {
     onLoad() {
         cc.game.setFrameRate(GameDef.GAME_FPS);
         cc.audioEngine.stopAll();
+
+        if (cc.director.isPaused()) {
+            cc.director.resume();
+        }
         
         ModelManager.initModels();
 
@@ -96,6 +101,7 @@ export default class MainMenu extends cc.Component {
         GameInputModel.addInputHierarchy(false, this);
 
         GameConnectModel.addEventListener(EventDef.EV_MAINGAME_SOCKET_ERROR, this.onSocketError, this);
+        GameConnectModel.addEventListener(EventDef.EV_MAINGAME_REQUEST_TIMEOUT, this.onRequestTimeOut, this);
         GameConnectModel.addEventListener(EventDef.EV_NTF_MENU_BACK, this.onNtfMenuBack, this);
         GameConnectModel.addEventListener(EventDef.EV_NTF_GAME_START, this.onNtfGameStart, this);
     }
@@ -192,6 +198,10 @@ export default class MainMenu extends cc.Component {
     }
 
     switchMenuPage(from: number, to: number) {
+        if (from === to) {
+            return;
+        }
+
         let panelFrom = this.panelMenus[from];
         let panelTo = this.panelMenus[to];
 
@@ -366,27 +376,69 @@ export default class MainMenu extends cc.Component {
     }
 
     connectServer(callback: Function) {
-        if (GameConnectModel.isServerConnected()) {
-            CommonFunc.excuteCallback(callback, true);
-        }
-        else {
-            this.showNetWaitTip(true);
-            GameConnectModel.connectServer((ret, data) => {
-                this.showNetWaitTip(false);
-                if (ret === 1) {
-                    CommonFunc.showToast("连接服务器超时，请稍后再试！", 2);
-                }
+        this.showNetWaitTip(true);
+        GameConnectModel.connectServer((ret, data) => {
+            this.showNetWaitTip(false);
+            if (ret === 1) {
+                CommonFunc.showToast("连接服务器超时，请稍后再试！", 2);
+            }
+            else if (ret === 3) {
+                CommonFunc.excuteCallback(callback, true);
+            }
+            else if (ret === 0) {
+                let info: gamereq.LoginInRsp = data;
+                if (info.roomstatus === GameProtocal.RoomStatus.ROOM_STATUS_GAME) {
+                    CommonFunc.showChooseDialog("你正在一场游戏中，是否进行重连？（取消将离开房间）", null, () => {
+                        if (GameDataModel._netLogined) {
+                            if (info.gamemode === GameProtocal.GameMode.GAME_MODE_COMMON) {
+                                GameDataModel._playMode = GameDef.GAMEMODE_ONLINE_PLAY;
+                            }
                 
-                CommonFunc.excuteCallback(callback, ret === 0);
-            })
-        }
+                            GameLogicModel.setRandomSeed(info.randomseed);
+                
+                            GameLogicModel._netGameDxxw = true;
+
+                            console.log("大厅断线续玩，帧：", GameLogicModel._frameQueue[0].frame, 
+                            GameLogicModel._frameQueue[GameLogicModel._frameQueue.length - 1].frame);
+
+                            this.onStartGame();
+                        }
+                    }, null, () => {
+                        GameConnectModel.sendLeaveRoom((r: number, d) => {
+                            if (r === 0) {
+                                CommonFunc.excuteCallback(callback, true);
+                            }
+                        })
+                    });
+                }
+                else {
+                    CommonFunc.excuteCallback(callback, true);
+                }
+            }
+        });
     }
 
     //网络错误
     onSocketError() {
+        this.onNetError("网络连接异常");
+    }
+
+    //请求超时
+    onRequestTimeOut() {
+        GameConnectModel.disconnectServer();
+        this.onNetError("网络连接超时");
+    }
+
+    onNetError(tip: string) {
         if (this.isNetWaitTipShowing()) {
             this.showNetWaitTip(false);
             CommonFunc.showToast("登录服务器连接失败，请稍后再试！", 2);
+        }
+        else {
+            CommonFunc.showSureDialog(tip + "，请确保网络正常后，重新进入游戏！", () => {
+                GameDataModel.resetAllPlayerHallInfo();
+                this.switchMenuPage(GameDataModel._menuPage, GameDef.MenuPage.MAIN);
+            });
         }
     }
 

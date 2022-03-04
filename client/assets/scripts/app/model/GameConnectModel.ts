@@ -35,10 +35,13 @@ class GameConnectModel extends BaseModel {
         this._gameConnect.addNotifyHandler(GameProtocal.GR_MENU_BACK, this.onNtfMenuBack.bind(this)); 
         this._gameConnect.addNotifyHandler(GameProtocal.GR_GAME_START, this.onNtfGameStart.bind(this)); 
         this._gameConnect.addNotifyHandler(GameProtocal.GR_GAME_FRAME, this.onNtfGameFrame.bind(this)); 
+        this._gameConnect.addNotifyHandler(GameProtocal.GR_GAME_END, this.onNtfGameEnd.bind(this)); 
     }
 
     onSocketError() {
         console.log("GameConnectModel socket error!");
+        GameDataModel._netLogining = false;
+        GameDataModel._netLogined = false;
         this.emit(EventDef.EV_MAINGAME_SOCKET_ERROR);
     }
 
@@ -49,25 +52,50 @@ class GameConnectModel extends BaseModel {
 
     /**
      * 连接服务器
-     * @param callback 返回值：0-成功 1-连接失败 -2-登录失败 
+     * @param callback 返回值：0-成功 1-连接失败 2-登录失败 3-已经登录 4-连接中 5-登录中
      */
     connectServer(callback: Function) {
-       if (!this._gameConnect.isConnected()) {
-           this._gameConnect.connect(GameConfig.serverIP, GameConfig.serverPort, (ret) => {
+        if (this._gameConnect.isConnecting()) {
+            CommonFunc.excuteCallback(callback, 4);
+            return;
+        }
+        else if (GameDataModel._netLogining) {
+            CommonFunc.excuteCallback(callback, 5);
+            return;
+        }
+
+        let serverPort = GameConfig.serverReleasePort;
+        if (GameDataModel.isGameDebugMode()) {
+            serverPort = GameConfig.serverDebugPort;
+        }
+
+        if (!this._gameConnect.isConnected()) {
+            this._gameConnect.connect(GameConfig.serverIP, serverPort, (ret) => {
                 if (ret) {
                     console.log("connect server ok!");
 
                     //连接成功后，自动登录
-                    this.sendLoginIn((r:number , error?: any) => {
-                        CommonFunc.excuteCallback(callback, r === 0 ? 0 : 2, error);
+                    GameDataModel._netLogining = true;
+                    this.sendLoginIn((r:number , data?: any) => {
+                        GameDataModel._netLogining = false;
+                        GameDataModel._netLogined = r === 0;
+                        CommonFunc.excuteCallback(callback, GameDataModel._netLogined ? 0 : 2, data);
                     });
                 }
                 else {
                     console.log("connect server failed!");
                     CommonFunc.excuteCallback(callback, 1);
                 }
-           });
-       }
+            });
+        }
+        else if (!GameDataModel._netLogined) {
+            this.sendLoginIn((r:number , data?: any) => {
+                CommonFunc.excuteCallback(callback, r === 0 ? 0 : 2, data);
+            });
+        }
+        else {
+            CommonFunc.excuteCallback(callback, 3);
+        }
     }
 
     //断开服务连接
@@ -75,11 +103,21 @@ class GameConnectModel extends BaseModel {
         if (this._gameConnect.isConnected()) {
             this._gameConnect.disconnect();
         }
+        GameDataModel._netLogining = false;
+        GameDataModel._netLogined = false;
     }
 
     //服务是否连接
     isServerConnected(): boolean {
         return this._gameConnect.isConnected();
+    }
+
+    sendRequestWhenLogined(requestID: number, pbAnyPackage: GameProtocal.PbAnyPackage, needResponse: boolean = false, responseHandler: Function = null) {
+        this.connectServer((ret: number, data) => {
+            if (ret === 0 || ret === 3) {
+                this._gameConnect.sendRequest(requestID, pbAnyPackage, needResponse, responseHandler);
+            }
+        })
     }
 
     /***********************************消息请求start***********************************/
@@ -93,11 +131,11 @@ class GameConnectModel extends BaseModel {
 
         this._gameConnect.sendRequest(GameProtocal.GR_USER_LOGIN_IN, anyPackage, true, (requestid: number, pbAnyData: google.protobuf.Any) => {
             if (requestid === GameProtocal.UR_OPERATE_SUCCESS) {
-                let loginIn: gamereq.LoginIn = CommonFunc.pbAnyToObject(pbAnyData, gamereq.LoginIn);
+                let loginIn: gamereq.LoginInRsp = CommonFunc.pbAnyToObject(pbAnyData, gamereq.LoginInRsp);
 
                 this.onLoginInSuccess(loginIn);
 
-                CommonFunc.excuteCallback(callback, 0);
+                CommonFunc.excuteCallback(callback, 0, loginIn);
             }
             else if (requestid === GameProtocal.UR_OPERATE_FAILED) {
                 this.onRespondFailed(pbAnyData, callback);
@@ -116,7 +154,7 @@ class GameConnectModel extends BaseModel {
             obj: {userid: GameDataModel._netUserID},
         };
 
-        this._gameConnect.sendRequest(GameProtocal.GR_CREATE_ROOM, anyPackage, true, (requestid: number, pbAnyData: google.protobuf.Any) => {
+        this.sendRequestWhenLogined(GameProtocal.GR_CREATE_ROOM, anyPackage, true, (requestid: number, pbAnyData: google.protobuf.Any) => {
             if (requestid === GameProtocal.UR_OPERATE_SUCCESS) {
                 let info: gamereq.RoomPlayerInfo = CommonFunc.pbAnyToObject(pbAnyData, gamereq.RoomPlayerInfo);
 
@@ -148,7 +186,7 @@ class GameConnectModel extends BaseModel {
             obj: roomPlayerInfo,
         };
 
-        this._gameConnect.sendRequest(GameProtocal.GR_JOIN_ROOM, anyPackage, true, (requestid: number, pbAnyData: google.protobuf.Any) => {
+        this.sendRequestWhenLogined(GameProtocal.GR_JOIN_ROOM, anyPackage, true, (requestid: number, pbAnyData: google.protobuf.Any) => {
             if (requestid === GameProtocal.UR_OPERATE_SUCCESS) {
                 let info: gamereq.RoomPlayerInfo = CommonFunc.pbAnyToObject(pbAnyData, gamereq.RoomPlayerInfo);
 
@@ -177,7 +215,7 @@ class GameConnectModel extends BaseModel {
             obj: GameDataModel.getRoomPlayerInfo(),
         };
 
-        this._gameConnect.sendRequest(GameProtocal.GR_LEAVE_ROOM, anyPackage, true, (requestid: number, pbAnyData: google.protobuf.Any) => {
+        this.sendRequestWhenLogined(GameProtocal.GR_LEAVE_ROOM, anyPackage, true, (requestid: number, pbAnyData: google.protobuf.Any) => {
             if (requestid === GameProtocal.UR_OPERATE_SUCCESS) {
                 let info: gamereq.RoomPlayerInfo = CommonFunc.pbAnyToObject(pbAnyData, gamereq.RoomPlayerInfo);
 
@@ -204,7 +242,7 @@ class GameConnectModel extends BaseModel {
             obj: GameDataModel.getRoomPlayerInfo(),
         };
 
-        this._gameConnect.sendRequest(GameProtocal.GR_ROOM_READY, anyPackage, true, (requestid: number, pbAnyData: google.protobuf.Any) => {
+        this.sendRequestWhenLogined(GameProtocal.GR_ROOM_READY, anyPackage, true, (requestid: number, pbAnyData: google.protobuf.Any) => {
             if (requestid === GameProtocal.UR_OPERATE_SUCCESS) {
                 let info: gamereq.RoomPlayerInfo = CommonFunc.pbAnyToObject(pbAnyData, gamereq.RoomPlayerInfo);
 
@@ -229,7 +267,7 @@ class GameConnectModel extends BaseModel {
             obj: GameDataModel.getRoomPlayerInfo(),
         };
 
-        this._gameConnect.sendRequest(GameProtocal.GR_ROOM_UNREADY, anyPackage, true, (requestid: number, pbAnyData: google.protobuf.Any) => {
+        this.sendRequestWhenLogined(GameProtocal.GR_ROOM_UNREADY, anyPackage, true, (requestid: number, pbAnyData: google.protobuf.Any) => {
             if (requestid === GameProtocal.UR_OPERATE_SUCCESS) {
                 let info: gamereq.RoomPlayerInfo = CommonFunc.pbAnyToObject(pbAnyData, gamereq.RoomPlayerInfo);
 
@@ -254,7 +292,7 @@ class GameConnectModel extends BaseModel {
             obj: GameDataModel.getRoomPlayerInfo(),
         };
 
-        this._gameConnect.sendRequest(GameProtocal.GR_ROOM_START, anyPackage, true, (requestid: number, pbAnyData: google.protobuf.Any) => {
+        this.sendRequestWhenLogined(GameProtocal.GR_ROOM_START, anyPackage, true, (requestid: number, pbAnyData: google.protobuf.Any) => {
             if (requestid === GameProtocal.UR_OPERATE_SUCCESS) {
                 let info: gamereq.RoomPlayerInfo = CommonFunc.pbAnyToObject(pbAnyData, gamereq.RoomPlayerInfo);
 
@@ -282,7 +320,7 @@ class GameConnectModel extends BaseModel {
             },
         };
 
-        this._gameConnect.sendRequest(GameProtocal.GR_MENU_SWITCH, anyPackage, true, (requestid: number, pbAnyData: google.protobuf.Any) => {
+        this.sendRequestWhenLogined(GameProtocal.GR_MENU_SWITCH, anyPackage, true, (requestid: number, pbAnyData: google.protobuf.Any) => {
             if (requestid === GameProtocal.UR_OPERATE_SUCCESS) {
                 let info: gamereq.MenuSwitchInfo = CommonFunc.pbAnyToObject(pbAnyData, gamereq.MenuSwitchInfo);     
 
@@ -308,7 +346,7 @@ class GameConnectModel extends BaseModel {
             },
         };
 
-        this._gameConnect.sendRequest(GameProtocal.GR_MENU_CHOOSE, anyPackage, true, (requestid: number, pbAnyData: google.protobuf.Any) => {
+        this.sendRequestWhenLogined(GameProtocal.GR_MENU_CHOOSE, anyPackage, true, (requestid: number, pbAnyData: google.protobuf.Any) => {
             if (requestid === GameProtocal.UR_OPERATE_SUCCESS) {
                 let info: gamereq.MenuChooseInfo = CommonFunc.pbAnyToObject(pbAnyData, gamereq.MenuChooseInfo);     
 
@@ -331,7 +369,7 @@ class GameConnectModel extends BaseModel {
             obj: GameDataModel.getRoomPlayerInfo(),
         };
 
-        this._gameConnect.sendRequest(GameProtocal.GR_MENU_BACK, anyPackage, true, (requestid: number, pbAnyData: google.protobuf.Any) => {
+        this.sendRequestWhenLogined(GameProtocal.GR_MENU_BACK, anyPackage, true, (requestid: number, pbAnyData: google.protobuf.Any) => {
             if (requestid === GameProtocal.UR_OPERATE_SUCCESS) {
                 let info: gamereq.RoomPlayerInfo = CommonFunc.pbAnyToObject(pbAnyData, gamereq.RoomPlayerInfo);     
 
@@ -364,7 +402,29 @@ class GameConnectModel extends BaseModel {
             },
         };
 
-        this._gameConnect.sendRequest(GameProtocal.GR_GAME_FRAME, anyPackage, false);
+        this.sendRequestWhenLogined(GameProtocal.GR_GAME_FRAME, anyPackage, false);
+    }
+
+    //地图编辑完成
+    sendMapEditFinished() {
+        let anyPackage: GameProtocal.PbAnyPackage = {
+            typeUrl: "gamereq.RoomPlayerInfo",
+            pbHandler: gamereq.RoomPlayerInfo,
+            obj: GameDataModel.getRoomPlayerInfo(),
+        };
+
+        this.sendRequestWhenLogined(GameProtocal.GR_GAME_MAP_EDIT_FINISHED, anyPackage, false);
+    }
+
+    //游戏结束
+    sendGameEnd() {
+        let anyPackage: GameProtocal.PbAnyPackage = {
+            typeUrl: "gamereq.RoomPlayerInfo",
+            pbHandler: gamereq.RoomPlayerInfo,
+            obj: GameDataModel.getRoomPlayerInfo(),
+        };
+
+        this.sendRequestWhenLogined(GameProtocal.GR_GAME_END, anyPackage, false);
     }
 
     /***********************************消息请求end***********************************/
@@ -379,8 +439,23 @@ class GameConnectModel extends BaseModel {
     }
 
     //登录成功
-    onLoginInSuccess(loginInRsp: gamereq.LoginIn) {
+    onLoginInSuccess(loginInRsp: gamereq.LoginInRsp) {
         GameDataModel.setLoginInData(loginInRsp.userid, loginInRsp.timestamp);
+
+        GameDataModel._netRoomID = loginInRsp.roomid;
+
+        for (let i = 0; i < loginInRsp.players.length; i++) {
+            let player = GameDataModel.getPlayerInfo(i);
+
+            player.userID = loginInRsp.players[i].userid;
+            player.ready = loginInRsp.players[i].ready;
+
+            if (loginInRsp.players[i].userid === loginInRsp.userid) {
+                GameDataModel._netPlayerNO = i; 
+            }
+        }
+
+        GameLogicModel._frameQueue = loginInRsp.framerecord;
     }
 
     //房间玩家更新
@@ -396,9 +471,7 @@ class GameConnectModel extends BaseModel {
 
     //房间玩家离开
     onRoomPlayerLeave(info: gamereq.RoomPlayerInfo) {
-        let playerInfo = GameDataModel.getPlayerInfo(info.playerno);
-        playerInfo.userID = 0;
-        playerInfo.ready = false;
+        GameDataModel.resetPlayerHallInfo(info.playerno);
 
         let host = GameDataModel.getPlayerInfo(0);
         host.ready = false;
@@ -532,7 +605,7 @@ class GameConnectModel extends BaseModel {
         else if (info.mode === GameProtocal.GameMode.GAME_MODE_MAP_EDIT) {
             GameDataModel._playMode = GameDef.GAMEMODE_MAP_EDIT_ONLINE;
         }
-        GameLogicModel.setRandomSeed(GameDataModel._netRandomSeed);
+        GameLogicModel.setRandomSeed(info.randomseed);
 
         this.emit(EventDef.EV_NTF_GAME_START, info);
     }
@@ -542,6 +615,18 @@ class GameConnectModel extends BaseModel {
         let info: gamereq.GameFrameNtf = CommonFunc.pbAnyToObject(pbAnyData, gamereq.GameFrameNtf);
 
         this.emit(EventDef.EV_NTF_GAME_FRAME, info);
+    }
+
+    //游戏结束
+    onNtfGameEnd(pbAnyData: google.protobuf.Any) {
+        let info: gamereq.RoomPlayerInfo = CommonFunc.pbAnyToObject(pbAnyData, gamereq.RoomPlayerInfo);
+
+        for (let i = 0; i < GameDef.GAME_TOTAL_PLAYER; i++) {
+            let playerInfo = GameDataModel.getPlayerInfo(i);
+            playerInfo.ready = false;
+        }
+
+        this.emit(EventDef.EV_NTF_GAME_END, info);
     }
 
     /***********************************消息通知end***********************************/

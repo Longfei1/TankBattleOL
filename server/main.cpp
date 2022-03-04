@@ -2,7 +2,13 @@
 
 int main(int argc, char* argv[])
 {
-    GameServer server(8888, 1, 2);//服务器为单核
+	int server_port = 8888;
+
+#if NDEBUG
+	server_port = 9000;
+#endif
+
+    GameServer server(server_port, 1, 2);//服务器为单核
 
     if (server.Initialize())
     {

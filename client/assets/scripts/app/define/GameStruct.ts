@@ -224,6 +224,7 @@ export namespace GameStruct {
 
     export class AudioInfo {
         audioID: number;
+        stop: boolean;
     }
 
     export class GameRectInfo {

@@ -129,6 +129,7 @@ export default class MenuRoom extends MenuChoose {
 
     //房间开始
     onNtfRoomStart(info: gamereq.RoomPlayerInfo) {
+        CommonFunc.playButtonSound();
         this.dispatchCustomEvent("NtfRoomStart");
     }
 

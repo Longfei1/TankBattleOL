@@ -1,6 +1,7 @@
 import { GameDef } from "../../define/GameDef";
 import AudioModel from "../../model/AudioModel";
 import GameDataModel from "../../model/GameDataModel";
+import { gameController } from "./Game";
 
 const { ccclass, property } = cc._decorator;
 
@@ -17,6 +18,16 @@ export default class GameSuccess extends cc.Component {
         this.showScore();
 
         AudioModel.playMusic("sound/victory" ,true)
+
+        this.scheduleOnce(() => {
+            if (gameController) {
+                gameController.onGameSuccessTimeOut();
+            }
+        }, 140)
+    }
+
+    onDestroy() {
+        this.unscheduleAllCallbacks();
     }
 
     showHighScore() {

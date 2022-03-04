@@ -1,3 +1,4 @@
+import CommonFunc from "../../common/CommonFunc";
 import MenuChoose from "./MenuChoose";
 
 const {ccclass, property} = cc._decorator;
@@ -16,11 +17,16 @@ export default class MenuJoinRoom extends MenuChoose {
     }
 
     onEditRoomNoBegin() {
+        CommonFunc.playButtonSound();
         this.showEditTip(true);
     }
 
     onEditRoomNoEnd() {
+        CommonFunc.playButtonSound();
         this.showEditTip(false);
+
+        this._currChoose = this.nodeMenuItems.length - 1;
+        this.updateCursorPosition();
     }
 
     showEditTip(bEdit) {
@@ -44,6 +50,7 @@ export default class MenuJoinRoom extends MenuChoose {
             return;
         }
         
+        CommonFunc.playButtonSound();
         this.dispatchChooseEvent(this.editRoomNo.string);
     }
 

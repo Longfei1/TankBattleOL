@@ -8,7 +8,7 @@
 using namespace boost::asio;
 
 WorkServer::WorkServer(int port, int io_threads, int work_threads, std::string hello_data,
-    SessionID min_session, SessionID max_session) : work_thread_num_(work_threads)
+    SessionID min_session, SessionID max_session) : work_thread_num_(work_threads), pluse_timer_( work_service_)
 {
     socket_server_ = std::make_shared<AsioSockServer>(this, port, io_threads, std::move(hello_data), min_session, max_session);
 }
@@ -37,6 +37,8 @@ void WorkServer::ShutDown()
     {
         socket_server_->ShutDown();
     }
+
+    StopPluseDetection();
 
     StopWorkService();
 }
@@ -86,11 +88,11 @@ void WorkServer::SendNotify(ContextHeadPtr context_head, google::protobuf::uint3
 	SendRequest(*context_head, ret);
 }
 
-void WorkServer::CloseConnection(SessionID id)
+void WorkServer::CloseConnection(SessionID id, bool dispatch_event)
 {
     if (socket_server_)
     {
-        socket_server_->CloseConnection(id);
+        socket_server_->CloseConnection(id, dispatch_event);
     }
 
     RemoveSessionPluse(id);
@@ -154,7 +156,7 @@ bool WorkServer::StartWorkService()
 bool WorkServer::StopWorkService()
 {
     work_ = nullptr;
-    work_service_.stop();//停止服务
+    //work_service_.stop();//停止服务
     for (auto& th : work_threads_)
     {
         th.join();//等待线程结束
@@ -207,22 +209,27 @@ void WorkServer::OnSocketMsg(SessionID id, DataPtr dataptr, std::size_t size)
 
 void WorkServer::StartPluseDetection()
 {
-    auto timer = std::make_shared<deadline_timer>(work_service_, boost::posix_time::seconds(PLUSE_TIMER_INTERVAL));
-    
+    pluse_timer_.expires_from_now(boost::posix_time::seconds(PLUSE_TIMER_INTERVAL));
+
     static std::function<void(boost::system::error_code)> timer_func = nullptr;
 
-    timer_func = [this, timer](boost::system::error_code error)
+    timer_func = [this](boost::system::error_code error)
     {
         if (!error)
         {
             DetectPluse();
 
-            timer->expires_from_now(boost::posix_time::seconds(PLUSE_TIMER_INTERVAL));
-            timer->async_wait(timer_func);//递归调用，继续计时
+            pluse_timer_.expires_from_now(boost::posix_time::seconds(PLUSE_TIMER_INTERVAL));
+            pluse_timer_.async_wait(timer_func);//递归调用，继续计时
         }
     };
 
-    timer->async_wait(timer_func);
+    pluse_timer_.async_wait(timer_func);
+}
+
+void WorkServer::StopPluseDetection()
+{
+    pluse_timer_.cancel();
 }
 
 void WorkServer::DetectPluse()

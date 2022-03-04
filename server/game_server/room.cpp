@@ -7,8 +7,8 @@ const uint kFrameInterval = 1000 / GAME_FRAMES_NUM;
 std::mutex Room::id_generator_mtx_;
 myutils::IDGenerator<uint> Room::id_generator_(1, UINT_MAX);
 Room::Room(uint room_id, boost::asio::io_service& service, GameServer* server) : game_server_(server), 
-	room_id_(room_id),frame_timer_(service), frame_start_time_(0), frame_running_(false), frame_no_(0),
-	status_(0), menu_index_(0), game_mode_(0)
+	room_id_(room_id), frame_timer_(service), frame_start_time_(0), frame_running_(false), frame_pause_(true), 
+	frame_no_(0), random_seed_(0), status_(0), menu_index_(0), game_mode_(0), support_dxxw_(true)
 {
     ResetRoom();
 }
@@ -43,6 +43,7 @@ void Room::ResetRoom()
 	status_ = 0;
 	menu_index_ = 0;
 	game_mode_ = 0;
+	support_dxxw_ = true;
 }
 
 PlayerInfo* Room::GetPlayerInfoByID(uint user_id)
@@ -90,12 +91,27 @@ void Room::StopGameFrameTimer()
 
 	frame_start_time_ = 0;
 	frame_running_ = false;
+	frame_pause_ = true;
 	ResetGameFrameInfo();
+}
+
+void Room::SetGameFramePause(bool pause)
+{
+	if (pause)
+	{
+		frame_pause_ = pause;
+	}
+	else
+	{
+		frame_running_ = true;
+		frame_pause_ = false;
+		StartGameFrameTimer();
+	}
 }
 
 void Room::OnGameFrameSync()
 {
-	if (!frame_running_)
+	if (!frame_running_ || frame_pause_)
 	{
 		return;
 	}
@@ -108,7 +124,7 @@ void Room::OnGameFrameSync()
 		current_frame.set_frame(frameno);
 
 		OpeArray record{};
-		record.fill(0);
+		record.fill(UINT_MAX);//暂表示空操作
 
 		//写入当前帧所有玩家操作
 		for (auto& it : frame_ope_)

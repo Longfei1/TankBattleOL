@@ -23,9 +23,22 @@ bool ClientsManager::Initialize()
 
 void ClientsManager::ShutDown()
 {
-    StopIOService();
+    {
+        decltype(clients_) tmp;
+        {
+            std::lock_guard<std::mutex> lock(session_map_mtx_);
+            tmp = clients_;
+        }
 
-    ClearClientsMap();
+        for (auto& it : tmp)
+        {
+            CloseClient(it.second);
+        }
+
+        ClearClientsMap();
+    }
+
+    StopIOService();
 }
 
 SessionID ClientsManager::CreateClient()
@@ -93,7 +106,7 @@ bool ClientsManager::StartIOService()
 bool ClientsManager::StopIOService()
 {
     work_ = nullptr;
-    io_service_.stop();//停止服务
+    //io_service_.stop();//停止服务
     for (auto& th : io_threads_)
     {
         th.join();//等待线程结束
@@ -134,7 +147,11 @@ void ClientsManager::OnSocketStatus(SocketStatus status, SessionID id)
 {
     if (status == SocketStatus::CLOSED)
     {
-        CloseClient(id);
+        auto client = GetClient(id);
+        if (client)
+        {
+            RemoveClient(client);
+        }
     }
 
     if (socket_handler_)

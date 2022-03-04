@@ -13,6 +13,9 @@ export default class SureDialog extends cc.Component {
     @property({ displayName: "确定按钮", type: cc.Node })
     nodeSure: cc.Node = null;
 
+    @property({ displayName: "箭头", type: cc.Node })
+    nodeArrow: cc.Node = null;
+
     _sureCallback: Function = null;
 
     onLoad() {
@@ -57,11 +60,11 @@ export default class SureDialog extends cc.Component {
             this.txtTip.string = param.tipString;
         }
 
-        this.playSelectAni(this.nodeSure);
+        this.playSelectAni(this.nodeArrow);
     }
 
     playSelectAni(node: cc.Node) {
         node.scale = 1;
-        node.runAction(cc.repeatForever(cc.sequence(cc.scaleTo(0.7, 1.15), cc.scaleTo(0.5, 1))));
+        node.runAction(cc.repeatForever(cc.sequence(cc.scaleTo(0.7, 1.2), cc.scaleTo(0.5, 1))));
     }
 }

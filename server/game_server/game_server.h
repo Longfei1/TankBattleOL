@@ -41,8 +41,9 @@ protected:
     void OnMenuSwitch(ContextHeadPtr context_head, RequestPtr request);//菜单切换
     void OnMenuChoose(ContextHeadPtr context_head, RequestPtr request);//菜单选择
     void OnMenuBack(ContextHeadPtr context_head, RequestPtr request);//菜单返回
-
+    void OnGameMapEditFinished(ContextHeadPtr context_head, RequestPtr request);//地图编辑完成
     void OnGameFrame(ContextHeadPtr context_head, RequestPtr request);//游戏帧
+    void OnGameEnd(ContextHeadPtr context_head, RequestPtr request);//游戏结束
 
     bool GenerateUserID(uint &user_id);
 
@@ -60,6 +61,8 @@ protected:
 
     bool StartGameFrameService();
     bool StopGameFrameService();
+
+    void LeaveRoom(RoomPtr room, uint playerno, ContextHeadPtr context_head, RequestPtr request);
 private:
     time_t startup_time_;//服务启动时间
 

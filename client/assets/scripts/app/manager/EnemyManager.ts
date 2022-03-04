@@ -45,6 +45,8 @@ export default class EnemyManager extends cc.Component {
         this.removeListener();
 
         this._enemyPool.clearNode();
+
+        GameLogicModel.unscheduleAll(this);
     }
 
     initListenner() {
@@ -103,7 +105,7 @@ export default class EnemyManager extends cc.Component {
         this._enemyBehaviorTime = GameLogicModel.getLogicTime();
 
         //游戏开始，生成敌方坦克
-        let initNum = 1;
+        let initNum = 3;
         for (let i = 0; i < initNum; i++) {
             this.addOneEnemy();
         }
@@ -117,9 +119,7 @@ export default class EnemyManager extends cc.Component {
         if (GameDataModel._enemyTanks[id]) {
             if (GameDataModel._enemyTanks[id]._destroyedBy >= 0) {
                 let playerInfo = GameDataModel.getPlayerInfo(GameDataModel._enemyTanks[id]._destroyedBy);
-                playerInfo[GameDataModel._enemyTanks[id]._tankName]++;
-            }else {
-                GameDataModel._propDestroyEnemyNum++;
+                playerInfo.shootNumInfo[GameDataModel._enemyTanks[id]._tankName]++;
             }
         }
 
@@ -146,6 +146,7 @@ export default class EnemyManager extends cc.Component {
     evPropBomb(playerNO: number) {
         //销毁全部敌军
         CommonFunc.travelMap(GameDataModel._enemyTanks, (id:number, enemy: EnemyTank) => {
+            enemy._destroyedBy = playerNO;
             enemy.dead(); 
         })
     }
@@ -177,8 +178,7 @@ export default class EnemyManager extends cc.Component {
 
     //获取下次生成的坦克类型
     getNextTankName(): string {
-        //先简单处理，使用随机类型。后续可通过设置关卡难度，设置不同坦克的数量。
-        return GameLogicModel.getRandomArrayValue(GameDef.EnemyTankNames);
+        return GameLogicModel.getRandomArrayValueWithWeight(GameDef.EnemyTankNames, this._diffcultyData["EnemyNumWeight"]);
     }
 
     //获取下次生成的坦克位置

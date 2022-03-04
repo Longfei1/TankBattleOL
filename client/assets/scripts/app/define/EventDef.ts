@@ -18,7 +18,7 @@ export namespace EventDef {
     export const EV_ENEMY_DEAD                         = "evenemydead";                     //敌军死亡
 
     export const EV_BULLET_CREATE                      = "evbulletcreate";                  //子弹创建
-    export const EV_BULLET_DESTROY                     = "evbulletcreate";                  //子弹销毁
+    export const EV_BULLET_DESTROY                     = "evbulletdestory";                 //子弹销毁
 
     export const EV_MAP_CREATE_SCENERY                 = "evmapeditcreatescenery";          //地图：创建布景
     export const EV_MAP_DESTROY_SCENERY                = "evmapdestroyscenery";             //地图：销毁布景
@@ -57,6 +57,7 @@ export namespace EventDef {
     export const EV_NTF_MENU_BACK                      = "evntfmenuback";                   //菜单返回
     export const EV_NTF_GAME_START                     = "evntfgamestart";                  //游戏开始
     export const EV_NTF_GAME_FRAME                     = "evntfgameframe";                  //游戏帧数据
+    export const EV_NTF_GAME_END                       = "evntfgameend";                    //游戏结束
 
     //游戏逻辑驱动
     export const EV_GL_CAPTURE_OPERATION               = "evglcaptureoperation";            //采集操作

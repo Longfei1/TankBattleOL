@@ -7,7 +7,6 @@ import { GameConfig } from "../GameConfig";
 import EnemyTank from "../component/game/tank/EnemyTank";
 import PlayerTank from "../component/game/tank/PlayerTank";
 import GameConfigModel from "./GameConfigModel";
-import { gamereq } from "../network/proto/gamereq";
 import Big from "../../packages/bigjs/Big";
 import Bullet from "../component/game/Bullet";
 import Prop from "../component/game/Prop";
@@ -23,7 +22,8 @@ class GameDataModel extends BaseModel {
     _useCustomMap: boolean = false;
     _currStage: number = 0;
     _localOpeCode: { [id: number] : number } = {};
-    _lastGameFrame: gamereq.GameFrameNtf = null;
+    _pause: boolean = false;
+    _renderUpdated: boolean = true;
 
     _gotoMenuPage: number = -1;
     
@@ -38,9 +38,10 @@ class GameDataModel extends BaseModel {
     _propBuff: number = 0;
     _playerInfo: {[id: number] : GameStruct.PlayerInfo } = {};
     _gameRunning: boolean = false;
-    _propDestroyEnemyNum: number = 0;
 
     //网络相关数据
+    _netLogining: boolean = false;
+    _netLogined: boolean = false;
     _netUserID: number = 0; //用户ID
     _netTimestamp: number = 0; //服务器时间戳
     _netRoomID: number = 0; //房间号
@@ -72,6 +73,8 @@ class GameDataModel extends BaseModel {
         //this._useCustomMap = false;
         this._currStage = 1;
         this._enableOperate = false;
+        this._pause = false;
+        this._renderUpdated = true;
 
         this._propBuff = 0;
         
@@ -80,8 +83,10 @@ class GameDataModel extends BaseModel {
         this._scenerys = [];
         this._enemyTanks = {};
         this._playerTanks = {};
+        this._bullets = {};
+        this._prop = null;
+        this._homeBase = null;
         this._gameRunning = false;
-        this._propDestroyEnemyNum = 0;
     }
 
     createMapData() {
@@ -115,7 +120,8 @@ class GameDataModel extends BaseModel {
     }
 
     isModeDoublePlayer(): boolean {
-        if (this._playMode === GameDef.GAMEMODE_DOUBLE_PLAYER) {
+        if (this._playMode === GameDef.GAMEMODE_DOUBLE_PLAYER
+            || this._playMode === GameDef.GAMEMODE_ONLINE_PLAY) {
             return true;
         }
         return false;
@@ -234,8 +240,6 @@ class GameDataModel extends BaseModel {
 
     //重置游戏关卡数据
     resetGameStageData() {
-        this._propDestroyEnemyNum = 0;
-
         this.resetPlayerStageData(0);
         this.resetPlayerStageData(1);
     }
@@ -295,10 +299,6 @@ class GameDataModel extends BaseModel {
         return cc.v2(pos.x.toNumber(), pos.y.toNumber());
     }
 
-    isGamePause() {
-        return cc.director.isPaused();
-    }
-
     isValidMatrixPos(pos: GameStruct.RcInfo) {
         if (pos) {
             if (0 <= pos.col && pos.col <= GameDef.GAME_MAP_COL_NUM
@@ -344,7 +344,7 @@ class GameDataModel extends BaseModel {
     }
 
     getHomeCenterScenePosition(): GameStruct.BigPos {
-        let scenePos = this.matrixToScenePosition(new GameStruct.RcInfo(GameDef.PLACE_HOMEBASE.col + 2, GameDef.PLACE_HOMEBASE.row + 2)); 
+        let scenePos = this.matrixToScenePosition(new GameStruct.RcInfo(GameDef.PLACE_HOMEBASE.col + 2, GameDef.PLACE_HOMEBASE.row)); 
         return scenePos;
     }
 
@@ -806,7 +806,7 @@ class GameDataModel extends BaseModel {
             userid = this.getLocalStorageNumber("NetUserID");
             timestamp = this.getLocalStorageNumber("NetTimeStamp");
         }
-        return {userid, timestamp};
+        return {userid, timestamp, syncframe: this._netFrameNO + 1};
     }
 
     //获取房间玩家信息

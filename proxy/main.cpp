@@ -3,7 +3,15 @@
 
 int main(int argc, char* argv[])
 {
-    ProxyServer server("127.0.0.1", 8888, 8889, 1);//服务器为单核，io线程一个就行
+    int server_port = 8888;
+    int proxy_port = 8889;
+
+#if NDEBUG
+    server_port = 9000;
+    proxy_port = 9001;
+#endif
+
+    ProxyServer server("127.0.0.1", server_port, proxy_port, 1);//服务器为单核，io线程一个就行
 
     if (server.Initialize())
     {

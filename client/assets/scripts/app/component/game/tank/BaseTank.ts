@@ -20,10 +20,6 @@ export default class BaseTank extends GameUnitComponent {
 
     }
 
-    onDestroy() {
-        
-    }
-
     reset() {
         super.reset();
     }

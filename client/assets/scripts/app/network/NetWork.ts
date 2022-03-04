@@ -169,6 +169,10 @@ export class WSConnect {
     public isConnected(): boolean {
         return this._connected;
     }
+
+    public isConnecting(): boolean {
+        return this._connecting;
+    }
 };
 
 class RequestMsg {
@@ -178,7 +182,7 @@ class RequestMsg {
     handler: Function = null;
 }
 
-const PLUSE_INTERVAL = 30;//心跳发送间隔时长
+const PLUSE_INTERVAL = 10;//心跳发送间隔时长
 const TIME_REQUEST_TIMEOUT = 5;//消息发送超时时间
 
 export class GameConnect {
@@ -245,6 +249,13 @@ export class GameConnect {
         else {
             return false;
         }
+    }
+
+    isConnecting(): boolean {
+        if (this._socket) {
+            return this._socket.isConnecting();
+        }
+        return false;
     }
 
     isConnected(): boolean {
@@ -412,7 +423,6 @@ export class GameConnect {
         //请求超时时，只触发超时回调。（暂时设计为：不调用超时消息对应的回调函数，外部直接进行重连操作）
         if (this._timeOutHandler) {
             this._timeOutHandler();
-            this.clearData();
         }
     }
 }

@@ -15,16 +15,43 @@ import GameConnectModel from "./GameConnectModel";
 import GameDataModel from "./GameDataModel";
 
 class GameLogicModel extends BaseModel {
-
-    _localFrameTimer = null;
-
     _randomDevice: RandomDevice = new RandomDevice();
     _tiemSchedule: TimeSchedule = new TimeSchedule();
+
+    _logicTime: number = 0;
+
+    _localFrameTimer = null;
+    _localFrameNo: number = 0;
+
+    _frameHandleTimer = null;
+    _frameQueue: any[] = [];//gamereq.GameFrameNtf[]
+
+    _netGameDxxw: boolean = false;//游戏断线续玩
 
     initModel() {
         super.initModel();
 
-        GameConnectModel.addEventListener(EventDef.EV_NTF_GAME_FRAME, this.onGameFrame, this);
+        GameConnectModel.addEventListener(EventDef.EV_NTF_GAME_FRAME, this.onNtfGameFrame, this);
+    }
+
+    reset() {
+        this.stopLocalFrameTimer();
+        this.stopFrameHandleTimer();
+
+        this._tiemSchedule.clear();
+
+        this._logicTime = 0;
+
+        if (!this._netGameDxxw) {
+            this._frameQueue = [];
+        }
+
+        this._localFrameNo = 0;
+
+        GameDataModel._netFrameNO = -1;
+        for (let i = 0; i < GameDef.GAME_TOTAL_PLAYER; i++) {
+            GameDataModel._localOpeCode[i] = 0;
+        }
     }
 
     //开始游戏
@@ -33,34 +60,30 @@ class GameLogicModel extends BaseModel {
             return;
         }
 
-        GameDataModel._netFrameNO = -1;
+        this.reset();
+        
         if (GameDataModel.isModeOnline()) {
-            //发送空的第0帧，代表准备完成
-            GameConnectModel.sendGameFrame(0);
+            if (!this._netGameDxxw) {
+                //发送空的第0帧，代表准备完成
+                GameConnectModel.sendGameFrame(0);
+            }
         }
         else {
             //非联机模式
-            let opes = [];
-            for (let i = 0; i < GameDef.GAME_TOTAL_PLAYER; i++) {
-                opes.push({ playerno: i, opecode: 0});
-            }
-
-            this.onGameFrame(gamereq.GameFrameNtf.create({
-                frame: 0,
-                useropes: opes,
-            }));
-
             this.setRandomSeed(CommonFunc.getTimeStamp());
 
-            //开启本地帧定时器，推动逻辑帧运行。
+            //开启本地帧定时器，承当帧服务器角色
             this.startLocalFrameTimer();
         }
+
+        //开启帧处理
+        this.startFrameHandleTimer();
     }
 
     //退出游戏
     exitGame() {
-        this.stopLocalFrameTimer();
-        this._tiemSchedule.clear();
+        this._netGameDxxw = false;
+        this.reset();
     }
 
     setRandomSeed(seed: number) {
@@ -68,18 +91,32 @@ class GameLogicModel extends BaseModel {
         this._randomDevice.setSeed(seed);
     }
 
-    onGameFrame(info: gamereq.GameFrameNtf) {
+    onNtfGameFrame(info: gamereq.GameFrameNtf) {
+        if (GameDataModel._netLogined) {
+            this._frameQueue.push(info);
+        }
+    }
+
+    onGameFrame(info: gamereq.GameFrameNtf): number {
         if (!gameController) {
-            return;
+            return 1;
+        }
+
+        if (!GameDataModel._renderUpdated && !GameDataModel._pause) {
+            if (GameDataModel.isGameDebugMode()) {
+                //console.error(`render not updated! frame:${info.frame}`);
+            }
+            return 1;
         }
 
         if (info.frame !== GameDataModel._netFrameNO + 1) {
-            console.error(`GameFrame Error Wait:${GameDataModel._netFrameNO} Receive:${info.frame}`);
-            return;
+            if (GameDataModel.isGameDebugMode()) {
+                console.error(`GameFrame Error Wait:${GameDataModel._netFrameNO + 1} Receive:${info.frame}`);
+            }
+            return 2;
         }
 
-        let lastFrame = GameDataModel._lastGameFrame;
-        GameDataModel._lastGameFrame = info;
+        GameDataModel._renderUpdated = false;
         GameDataModel._netFrameNO = info.frame;
 
         if (GameDataModel.isGameDebugMode()) {
@@ -124,48 +161,52 @@ class GameLogicModel extends BaseModel {
             }
 
             if (!gameController.onBtnStart(start)) {
-                //处理上1个逻辑帧延后的事件
-                this.emit(EventDef.EV_GL_LAST_FRAME_EVENT);
+                if (!GameDataModel._pause) {
+                    //处理上1个逻辑帧延后的事件
+                    this.emit(EventDef.EV_GL_LAST_FRAME_EVENT);
 
-                //执行定时器
-                this._tiemSchedule.onTimer();
+                    //执行定时器
+                    this._logicTime += this.getFrameInterval();
+                    this._tiemSchedule.onTimer();
 
-                //处理玩家操作
-                this.emit(EventDef.EV_GL_PLAYER_OPERATION, opes);
+                    //处理玩家操作
+                    this.emit(EventDef.EV_GL_PLAYER_OPERATION, opes);
 
-                //处理AI操作
-                this.emit(EventDef.EV_GL_AI_OPERATION);
+                    //处理AI操作
+                    this.emit(EventDef.EV_GL_AI_OPERATION);
 
-                //1个逻辑帧拆分多个物理帧，用于处理碰撞检测
-                let physicsFrames = GameDef.GAME_FPS_PHYSICS/this.getLogicFrameNum();
-                for (let i = 0; i < physicsFrames; i++) {
-                    let dt = Big(this.getFrameInterval()).div(physicsFrames).div(1000);//单位（秒）
+                    //1个逻辑帧拆分多个物理帧，用于处理碰撞检测
+                    let physicsFrames = GameDef.GAME_FPS_PHYSICS/this.getLogicFrameNum();
+                    for (let i = 0; i < physicsFrames; i++) {
+                        let dt = Big(this.getFrameInterval()).div(physicsFrames).div(1000);//单位（秒）
 
-                    //更新1个物理帧
-                    this.emit(EventDef.EV_GL_UPDATE, dt);
-                    
-                    //碰撞检测
-                    this.onCollisionDetection();
+                        //更新1个物理帧
+                        this.emit(EventDef.EV_GL_UPDATE, dt);
+                        
+                        //碰撞检测
+                        this.onCollisionDetection();
 
-                    this.emit(EventDef.EV_GL_LATE_UPDATE);
+                        this.emit(EventDef.EV_GL_LATE_UPDATE);
+                    }
                 }
             }
         }
 
         //采集操作数据，上传游戏帧
         this.emit(EventDef.EV_GL_CAPTURE_OPERATION);
-        if (GameDataModel.isModeOnline()) {
+        if (GameDataModel.isModeOnline() && !this._netGameDxxw) {
             GameConnectModel.sendGameFrame(GameDataModel._localOpeCode[0]);
         }
+        return 0;
     }
 
-    //启用帧定时器
+    //启用本地帧定时器
     startLocalFrameTimer() {
         this.stopLocalFrameTimer();
-        this._localFrameTimer = setInterval(this.onLocalGameFrame.bind(this), this.getFrameInterval());
+        this._localFrameTimer = setInterval(this.onLocalGameFrameTimer.bind(this), this.getFrameInterval());
     }
 
-    //停止帧定时器
+    //停止本地帧定时器
     stopLocalFrameTimer() {
         if (this._localFrameTimer) {
             clearInterval(this._localFrameTimer);
@@ -174,17 +215,51 @@ class GameLogicModel extends BaseModel {
     }
 
     //本地游戏帧处理
-    onLocalGameFrame() {
+    onLocalGameFrameTimer() {
         let opes = [];
         for (let i = 0; i < GameDef.GAME_TOTAL_PLAYER; i++) {
             opes.push({ playerno: i, opecode: GameDataModel._localOpeCode[i]});
         }
 
-        //统一调用网络帧处理函数
-        this.onGameFrame(gamereq.GameFrameNtf.create({
-            frame: GameDataModel._netFrameNO + 1,
+        //写入帧队列
+        this._frameQueue.push(gamereq.GameFrameNtf.create({
+            frame: this._localFrameNo,
             useropes: opes,
         }));
+
+        this._localFrameNo++;
+    }
+
+     //启用帧处理定时器
+    startFrameHandleTimer() {
+        this.stopFrameHandleTimer();
+        this._frameHandleTimer = setInterval(this.onGameFrameHandleTimer.bind(this));
+    }
+
+    //停止帧处理定时器
+    stopFrameHandleTimer() {
+        if (this._frameHandleTimer) {
+            clearInterval(this._frameHandleTimer);
+            this._frameHandleTimer = null;
+        }
+    }
+
+    onGameFrameHandleTimer() {
+        if (this._frameQueue.length > 0) {
+            let ret = this.onGameFrame(this._frameQueue[0]);
+            if (ret === 0) {
+                this._frameQueue.splice(0, 1);
+            }
+            else if (ret === 2) {
+                //帧号不一致
+            }
+        }
+        else {
+            //追帧完毕
+            if (this._netGameDxxw) {
+                this._netGameDxxw = false;
+            }
+        }
     }
 
     //获取逻辑帧数
@@ -203,7 +278,7 @@ class GameLogicModel extends BaseModel {
 
     //获取逻辑时间戳（毫秒），根据帧数来
     getLogicTime(): number {
-        return this.getFrameInterval() * (GameDataModel._netFrameNO + 1);
+        return this._logicTime;
     }
 
     //随机数[0,1)
@@ -242,7 +317,7 @@ class GameLogicModel extends BaseModel {
             
             let currLine = Big(0);
             for (let i = 0; i < weights.length; i++) {
-                currLine = currLine.add(weights[i]);
+                currLine = currLine.plus(weights[i]);
                 if (value.lt(currLine)) {
                     return ary[i];
                 }
@@ -254,7 +329,7 @@ class GameLogicModel extends BaseModel {
     sumNumberArrayToBig(ary: BigSource[]): Big {
         let total = Big(0);
         for (let it of ary) {
-            total = total.add(it);
+            total = total.plus(it);
         }
         return total;
     }
@@ -264,8 +339,6 @@ class GameLogicModel extends BaseModel {
      * @param rate 0-1的概率
      */
     isInProbability(rate: BigSource): boolean {
-        let r = this.randomNumber();
-        console.log("isInProbability", r.toNumber(), rate);
         if (this.randomNumber().lt(rate)) {
             return true;
         }
@@ -308,15 +381,17 @@ class GameLogicModel extends BaseModel {
             if (GameDataModel._prop) {
                 let propRect = GameDataModel._prop.getPropRect();
                 CommonFunc.travelMap(GameDataModel._playerTanks, (no: number, player: PlayerTank) => {
-                    let playerRect = player.getTankRect();
-                    if (GameDataModel.isRectOverlap(propRect, playerRect)) {
-                        this.dispatchCollision(GameDataModel._prop, player);
+                    if (!player._borning) {
+                        let playerRect = player.getTankRect();
+                        if (GameDataModel.isRectOverlap(propRect, playerRect)) {
+                            this.dispatchCollision(GameDataModel._prop, player);
+                        }
                     }
                 });
             }
             
             //子弹
-            let bulletKeys = Object.keys(GameDataModel._bullets);
+            let bulletKeys = Object.getOwnPropertyNames(GameDataModel._bullets);
             for (let i = 0; i < bulletKeys.length; i++) {
                 let rect1 = GameDataModel._bullets[bulletKeys[i]].getBulletRect();
 
@@ -330,17 +405,21 @@ class GameLogicModel extends BaseModel {
 
                 //子弹-玩家
                 CommonFunc.travelMap(GameDataModel._playerTanks, (no: number, player: PlayerTank) => {
-                    let tankRect: GameStruct.BigRect = player.getTankRect();
-                    if (GameDataModel.isRectOverlap(rect1, tankRect)) {
-                        this.dispatchCollision(GameDataModel._bullets[bulletKeys[i]], player);
+                    if (!player._borning) {
+                        let tankRect: GameStruct.BigRect = player.getTankRect();
+                        if (GameDataModel.isRectOverlap(rect1, tankRect)) {
+                            this.dispatchCollision(GameDataModel._bullets[bulletKeys[i]], player);
+                        }
                     }
                 });
 
                 //子弹-敌军
                 CommonFunc.travelMap(GameDataModel._enemyTanks, (id: number, enemy: EnemyTank) => {
-                    let tankRect: GameStruct.BigRect = enemy.getTankRect();
-                    if (GameDataModel.isRectOverlap(rect1, tankRect)) {
-                        this.dispatchCollision(GameDataModel._bullets[bulletKeys[i]], enemy);
+                    if (!enemy._borning) {
+                        let tankRect: GameStruct.BigRect = enemy.getTankRect();
+                        if (GameDataModel.isRectOverlap(rect1, tankRect)) {
+                            this.dispatchCollision(GameDataModel._bullets[bulletKeys[i]], enemy);
+                        }
                     }
                 });
 

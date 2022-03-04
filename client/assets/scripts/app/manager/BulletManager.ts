@@ -98,9 +98,9 @@ export default class BulletManager extends cc.Component {
             this._bulletPool.putNode(GameDataModel._bullets[id].node);
             delete GameDataModel._bullets[id];
             this._idGenerator.returnID(id);
-        }
 
-        gameController.node.emit(EventDef.EV_GAME_REDUCE_BULLET, shootID);
+            gameController.node.emit(EventDef.EV_GAME_REDUCE_BULLET, shootID);
+        }
     }
 
     evLogicUpdate(dt: Big) {

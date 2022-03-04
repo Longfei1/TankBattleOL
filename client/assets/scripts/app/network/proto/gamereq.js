@@ -26,6 +26,7 @@ $root.gamereq = (function() {
          * @interface ILoginIn
          * @property {number|null} [userid] LoginIn userid
          * @property {number|Long|null} [timestamp] LoginIn timestamp
+         * @property {number|null} [syncframe] LoginIn syncframe
          */
 
         /**
@@ -60,6 +61,14 @@ $root.gamereq = (function() {
         LoginIn.prototype.timestamp = $util.Long ? $util.Long.fromBits(0,0,true) : 0;
 
         /**
+         * LoginIn syncframe.
+         * @member {number} syncframe
+         * @memberof gamereq.LoginIn
+         * @instance
+         */
+        LoginIn.prototype.syncframe = 0;
+
+        /**
          * Creates a new LoginIn instance using the specified properties.
          * @function create
          * @memberof gamereq.LoginIn
@@ -87,6 +96,8 @@ $root.gamereq = (function() {
                 writer.uint32(/* id 1, wireType 0 =*/8).uint32(message.userid);
             if (message.timestamp != null && Object.hasOwnProperty.call(message, "timestamp"))
                 writer.uint32(/* id 2, wireType 0 =*/16).uint64(message.timestamp);
+            if (message.syncframe != null && Object.hasOwnProperty.call(message, "syncframe"))
+                writer.uint32(/* id 3, wireType 0 =*/24).uint32(message.syncframe);
             return writer;
         };
 
@@ -126,6 +137,9 @@ $root.gamereq = (function() {
                     break;
                 case 2:
                     message.timestamp = reader.uint64();
+                    break;
+                case 3:
+                    message.syncframe = reader.uint32();
                     break;
                 default:
                     reader.skipType(tag & 7);
@@ -168,6 +182,9 @@ $root.gamereq = (function() {
             if (message.timestamp != null && message.hasOwnProperty("timestamp"))
                 if (!$util.isInteger(message.timestamp) && !(message.timestamp && $util.isInteger(message.timestamp.low) && $util.isInteger(message.timestamp.high)))
                     return "timestamp: integer|Long expected";
+            if (message.syncframe != null && message.hasOwnProperty("syncframe"))
+                if (!$util.isInteger(message.syncframe))
+                    return "syncframe: integer expected";
             return null;
         };
 
@@ -194,6 +211,8 @@ $root.gamereq = (function() {
                     message.timestamp = object.timestamp;
                 else if (typeof object.timestamp === "object")
                     message.timestamp = new $util.LongBits(object.timestamp.low >>> 0, object.timestamp.high >>> 0).toNumber(true);
+            if (object.syncframe != null)
+                message.syncframe = object.syncframe >>> 0;
             return message;
         };
 
@@ -217,6 +236,7 @@ $root.gamereq = (function() {
                     object.timestamp = options.longs === String ? long.toString() : options.longs === Number ? long.toNumber() : long;
                 } else
                     object.timestamp = options.longs === String ? "0" : 0;
+                object.syncframe = 0;
             }
             if (message.userid != null && message.hasOwnProperty("userid"))
                 object.userid = message.userid;
@@ -225,6 +245,8 @@ $root.gamereq = (function() {
                     object.timestamp = options.longs === String ? String(message.timestamp) : message.timestamp;
                 else
                     object.timestamp = options.longs === String ? $util.Long.prototype.toString.call(message.timestamp) : options.longs === Number ? new $util.LongBits(message.timestamp.low >>> 0, message.timestamp.high >>> 0).toNumber(true) : message.timestamp;
+            if (message.syncframe != null && message.hasOwnProperty("syncframe"))
+                object.syncframe = message.syncframe;
             return object;
         };
 
@@ -240,6 +262,660 @@ $root.gamereq = (function() {
         };
 
         return LoginIn;
+    })();
+
+    gamereq.PlayerInfo = (function() {
+
+        /**
+         * Properties of a PlayerInfo.
+         * @memberof gamereq
+         * @interface IPlayerInfo
+         * @property {number|null} [playerno] PlayerInfo playerno
+         * @property {number|null} [userid] PlayerInfo userid
+         * @property {boolean|null} [ready] PlayerInfo ready
+         */
+
+        /**
+         * Constructs a new PlayerInfo.
+         * @memberof gamereq
+         * @classdesc Represents a PlayerInfo.
+         * @implements IPlayerInfo
+         * @constructor
+         * @param {gamereq.IPlayerInfo=} [properties] Properties to set
+         */
+        function PlayerInfo(properties) {
+            if (properties)
+                for (var keys = Object.keys(properties), i = 0; i < keys.length; ++i)
+                    if (properties[keys[i]] != null)
+                        this[keys[i]] = properties[keys[i]];
+        }
+
+        /**
+         * PlayerInfo playerno.
+         * @member {number} playerno
+         * @memberof gamereq.PlayerInfo
+         * @instance
+         */
+        PlayerInfo.prototype.playerno = 0;
+
+        /**
+         * PlayerInfo userid.
+         * @member {number} userid
+         * @memberof gamereq.PlayerInfo
+         * @instance
+         */
+        PlayerInfo.prototype.userid = 0;
+
+        /**
+         * PlayerInfo ready.
+         * @member {boolean} ready
+         * @memberof gamereq.PlayerInfo
+         * @instance
+         */
+        PlayerInfo.prototype.ready = false;
+
+        /**
+         * Creates a new PlayerInfo instance using the specified properties.
+         * @function create
+         * @memberof gamereq.PlayerInfo
+         * @static
+         * @param {gamereq.IPlayerInfo=} [properties] Properties to set
+         * @returns {gamereq.PlayerInfo} PlayerInfo instance
+         */
+        PlayerInfo.create = function create(properties) {
+            return new PlayerInfo(properties);
+        };
+
+        /**
+         * Encodes the specified PlayerInfo message. Does not implicitly {@link gamereq.PlayerInfo.verify|verify} messages.
+         * @function encode
+         * @memberof gamereq.PlayerInfo
+         * @static
+         * @param {gamereq.IPlayerInfo} message PlayerInfo message or plain object to encode
+         * @param {$protobuf.Writer} [writer] Writer to encode to
+         * @returns {$protobuf.Writer} Writer
+         */
+        PlayerInfo.encode = function encode(message, writer) {
+            if (!writer)
+                writer = $Writer.create();
+            if (message.playerno != null && Object.hasOwnProperty.call(message, "playerno"))
+                writer.uint32(/* id 1, wireType 0 =*/8).uint32(message.playerno);
+            if (message.userid != null && Object.hasOwnProperty.call(message, "userid"))
+                writer.uint32(/* id 2, wireType 0 =*/16).uint32(message.userid);
+            if (message.ready != null && Object.hasOwnProperty.call(message, "ready"))
+                writer.uint32(/* id 3, wireType 0 =*/24).bool(message.ready);
+            return writer;
+        };
+
+        /**
+         * Encodes the specified PlayerInfo message, length delimited. Does not implicitly {@link gamereq.PlayerInfo.verify|verify} messages.
+         * @function encodeDelimited
+         * @memberof gamereq.PlayerInfo
+         * @static
+         * @param {gamereq.IPlayerInfo} message PlayerInfo message or plain object to encode
+         * @param {$protobuf.Writer} [writer] Writer to encode to
+         * @returns {$protobuf.Writer} Writer
+         */
+        PlayerInfo.encodeDelimited = function encodeDelimited(message, writer) {
+            return this.encode(message, writer).ldelim();
+        };
+
+        /**
+         * Decodes a PlayerInfo message from the specified reader or buffer.
+         * @function decode
+         * @memberof gamereq.PlayerInfo
+         * @static
+         * @param {$protobuf.Reader|Uint8Array} reader Reader or buffer to decode from
+         * @param {number} [length] Message length if known beforehand
+         * @returns {gamereq.PlayerInfo} PlayerInfo
+         * @throws {Error} If the payload is not a reader or valid buffer
+         * @throws {$protobuf.util.ProtocolError} If required fields are missing
+         */
+        PlayerInfo.decode = function decode(reader, length) {
+            if (!(reader instanceof $Reader))
+                reader = $Reader.create(reader);
+            var end = length === undefined ? reader.len : reader.pos + length, message = new $root.gamereq.PlayerInfo();
+            while (reader.pos < end) {
+                var tag = reader.uint32();
+                switch (tag >>> 3) {
+                case 1:
+                    message.playerno = reader.uint32();
+                    break;
+                case 2:
+                    message.userid = reader.uint32();
+                    break;
+                case 3:
+                    message.ready = reader.bool();
+                    break;
+                default:
+                    reader.skipType(tag & 7);
+                    break;
+                }
+            }
+            return message;
+        };
+
+        /**
+         * Decodes a PlayerInfo message from the specified reader or buffer, length delimited.
+         * @function decodeDelimited
+         * @memberof gamereq.PlayerInfo
+         * @static
+         * @param {$protobuf.Reader|Uint8Array} reader Reader or buffer to decode from
+         * @returns {gamereq.PlayerInfo} PlayerInfo
+         * @throws {Error} If the payload is not a reader or valid buffer
+         * @throws {$protobuf.util.ProtocolError} If required fields are missing
+         */
+        PlayerInfo.decodeDelimited = function decodeDelimited(reader) {
+            if (!(reader instanceof $Reader))
+                reader = new $Reader(reader);
+            return this.decode(reader, reader.uint32());
+        };
+
+        /**
+         * Verifies a PlayerInfo message.
+         * @function verify
+         * @memberof gamereq.PlayerInfo
+         * @static
+         * @param {Object.<string,*>} message Plain object to verify
+         * @returns {string|null} `null` if valid, otherwise the reason why it is not
+         */
+        PlayerInfo.verify = function verify(message) {
+            if (typeof message !== "object" || message === null)
+                return "object expected";
+            if (message.playerno != null && message.hasOwnProperty("playerno"))
+                if (!$util.isInteger(message.playerno))
+                    return "playerno: integer expected";
+            if (message.userid != null && message.hasOwnProperty("userid"))
+                if (!$util.isInteger(message.userid))
+                    return "userid: integer expected";
+            if (message.ready != null && message.hasOwnProperty("ready"))
+                if (typeof message.ready !== "boolean")
+                    return "ready: boolean expected";
+            return null;
+        };
+
+        /**
+         * Creates a PlayerInfo message from a plain object. Also converts values to their respective internal types.
+         * @function fromObject
+         * @memberof gamereq.PlayerInfo
+         * @static
+         * @param {Object.<string,*>} object Plain object
+         * @returns {gamereq.PlayerInfo} PlayerInfo
+         */
+        PlayerInfo.fromObject = function fromObject(object) {
+            if (object instanceof $root.gamereq.PlayerInfo)
+                return object;
+            var message = new $root.gamereq.PlayerInfo();
+            if (object.playerno != null)
+                message.playerno = object.playerno >>> 0;
+            if (object.userid != null)
+                message.userid = object.userid >>> 0;
+            if (object.ready != null)
+                message.ready = Boolean(object.ready);
+            return message;
+        };
+
+        /**
+         * Creates a plain object from a PlayerInfo message. Also converts values to other types if specified.
+         * @function toObject
+         * @memberof gamereq.PlayerInfo
+         * @static
+         * @param {gamereq.PlayerInfo} message PlayerInfo
+         * @param {$protobuf.IConversionOptions} [options] Conversion options
+         * @returns {Object.<string,*>} Plain object
+         */
+        PlayerInfo.toObject = function toObject(message, options) {
+            if (!options)
+                options = {};
+            var object = {};
+            if (options.defaults) {
+                object.playerno = 0;
+                object.userid = 0;
+                object.ready = false;
+            }
+            if (message.playerno != null && message.hasOwnProperty("playerno"))
+                object.playerno = message.playerno;
+            if (message.userid != null && message.hasOwnProperty("userid"))
+                object.userid = message.userid;
+            if (message.ready != null && message.hasOwnProperty("ready"))
+                object.ready = message.ready;
+            return object;
+        };
+
+        /**
+         * Converts this PlayerInfo to JSON.
+         * @function toJSON
+         * @memberof gamereq.PlayerInfo
+         * @instance
+         * @returns {Object.<string,*>} JSON object
+         */
+        PlayerInfo.prototype.toJSON = function toJSON() {
+            return this.constructor.toObject(this, $protobuf.util.toJSONOptions);
+        };
+
+        return PlayerInfo;
+    })();
+
+    gamereq.LoginInRsp = (function() {
+
+        /**
+         * Properties of a LoginInRsp.
+         * @memberof gamereq
+         * @interface ILoginInRsp
+         * @property {number|null} [userid] LoginInRsp userid
+         * @property {number|Long|null} [timestamp] LoginInRsp timestamp
+         * @property {number|null} [roomid] LoginInRsp roomid
+         * @property {number|null} [roomstatus] LoginInRsp roomstatus
+         * @property {number|null} [menuindex] LoginInRsp menuindex
+         * @property {number|null} [gamemode] LoginInRsp gamemode
+         * @property {number|null} [randomseed] LoginInRsp randomseed
+         * @property {Array.<gamereq.IPlayerInfo>|null} [players] LoginInRsp players
+         * @property {Array.<gamereq.IGameFrameNtf>|null} [framerecord] LoginInRsp framerecord
+         */
+
+        /**
+         * Constructs a new LoginInRsp.
+         * @memberof gamereq
+         * @classdesc Represents a LoginInRsp.
+         * @implements ILoginInRsp
+         * @constructor
+         * @param {gamereq.ILoginInRsp=} [properties] Properties to set
+         */
+        function LoginInRsp(properties) {
+            this.players = [];
+            this.framerecord = [];
+            if (properties)
+                for (var keys = Object.keys(properties), i = 0; i < keys.length; ++i)
+                    if (properties[keys[i]] != null)
+                        this[keys[i]] = properties[keys[i]];
+        }
+
+        /**
+         * LoginInRsp userid.
+         * @member {number} userid
+         * @memberof gamereq.LoginInRsp
+         * @instance
+         */
+        LoginInRsp.prototype.userid = 0;
+
+        /**
+         * LoginInRsp timestamp.
+         * @member {number|Long} timestamp
+         * @memberof gamereq.LoginInRsp
+         * @instance
+         */
+        LoginInRsp.prototype.timestamp = $util.Long ? $util.Long.fromBits(0,0,true) : 0;
+
+        /**
+         * LoginInRsp roomid.
+         * @member {number} roomid
+         * @memberof gamereq.LoginInRsp
+         * @instance
+         */
+        LoginInRsp.prototype.roomid = 0;
+
+        /**
+         * LoginInRsp roomstatus.
+         * @member {number} roomstatus
+         * @memberof gamereq.LoginInRsp
+         * @instance
+         */
+        LoginInRsp.prototype.roomstatus = 0;
+
+        /**
+         * LoginInRsp menuindex.
+         * @member {number} menuindex
+         * @memberof gamereq.LoginInRsp
+         * @instance
+         */
+        LoginInRsp.prototype.menuindex = 0;
+
+        /**
+         * LoginInRsp gamemode.
+         * @member {number} gamemode
+         * @memberof gamereq.LoginInRsp
+         * @instance
+         */
+        LoginInRsp.prototype.gamemode = 0;
+
+        /**
+         * LoginInRsp randomseed.
+         * @member {number} randomseed
+         * @memberof gamereq.LoginInRsp
+         * @instance
+         */
+        LoginInRsp.prototype.randomseed = 0;
+
+        /**
+         * LoginInRsp players.
+         * @member {Array.<gamereq.IPlayerInfo>} players
+         * @memberof gamereq.LoginInRsp
+         * @instance
+         */
+        LoginInRsp.prototype.players = $util.emptyArray;
+
+        /**
+         * LoginInRsp framerecord.
+         * @member {Array.<gamereq.IGameFrameNtf>} framerecord
+         * @memberof gamereq.LoginInRsp
+         * @instance
+         */
+        LoginInRsp.prototype.framerecord = $util.emptyArray;
+
+        /**
+         * Creates a new LoginInRsp instance using the specified properties.
+         * @function create
+         * @memberof gamereq.LoginInRsp
+         * @static
+         * @param {gamereq.ILoginInRsp=} [properties] Properties to set
+         * @returns {gamereq.LoginInRsp} LoginInRsp instance
+         */
+        LoginInRsp.create = function create(properties) {
+            return new LoginInRsp(properties);
+        };
+
+        /**
+         * Encodes the specified LoginInRsp message. Does not implicitly {@link gamereq.LoginInRsp.verify|verify} messages.
+         * @function encode
+         * @memberof gamereq.LoginInRsp
+         * @static
+         * @param {gamereq.ILoginInRsp} message LoginInRsp message or plain object to encode
+         * @param {$protobuf.Writer} [writer] Writer to encode to
+         * @returns {$protobuf.Writer} Writer
+         */
+        LoginInRsp.encode = function encode(message, writer) {
+            if (!writer)
+                writer = $Writer.create();
+            if (message.userid != null && Object.hasOwnProperty.call(message, "userid"))
+                writer.uint32(/* id 1, wireType 0 =*/8).uint32(message.userid);
+            if (message.timestamp != null && Object.hasOwnProperty.call(message, "timestamp"))
+                writer.uint32(/* id 2, wireType 0 =*/16).uint64(message.timestamp);
+            if (message.roomid != null && Object.hasOwnProperty.call(message, "roomid"))
+                writer.uint32(/* id 3, wireType 0 =*/24).uint32(message.roomid);
+            if (message.roomstatus != null && Object.hasOwnProperty.call(message, "roomstatus"))
+                writer.uint32(/* id 4, wireType 0 =*/32).uint32(message.roomstatus);
+            if (message.menuindex != null && Object.hasOwnProperty.call(message, "menuindex"))
+                writer.uint32(/* id 5, wireType 0 =*/40).uint32(message.menuindex);
+            if (message.gamemode != null && Object.hasOwnProperty.call(message, "gamemode"))
+                writer.uint32(/* id 6, wireType 0 =*/48).uint32(message.gamemode);
+            if (message.randomseed != null && Object.hasOwnProperty.call(message, "randomseed"))
+                writer.uint32(/* id 7, wireType 0 =*/56).uint32(message.randomseed);
+            if (message.players != null && message.players.length)
+                for (var i = 0; i < message.players.length; ++i)
+                    $root.gamereq.PlayerInfo.encode(message.players[i], writer.uint32(/* id 8, wireType 2 =*/66).fork()).ldelim();
+            if (message.framerecord != null && message.framerecord.length)
+                for (var i = 0; i < message.framerecord.length; ++i)
+                    $root.gamereq.GameFrameNtf.encode(message.framerecord[i], writer.uint32(/* id 9, wireType 2 =*/74).fork()).ldelim();
+            return writer;
+        };
+
+        /**
+         * Encodes the specified LoginInRsp message, length delimited. Does not implicitly {@link gamereq.LoginInRsp.verify|verify} messages.
+         * @function encodeDelimited
+         * @memberof gamereq.LoginInRsp
+         * @static
+         * @param {gamereq.ILoginInRsp} message LoginInRsp message or plain object to encode
+         * @param {$protobuf.Writer} [writer] Writer to encode to
+         * @returns {$protobuf.Writer} Writer
+         */
+        LoginInRsp.encodeDelimited = function encodeDelimited(message, writer) {
+            return this.encode(message, writer).ldelim();
+        };
+
+        /**
+         * Decodes a LoginInRsp message from the specified reader or buffer.
+         * @function decode
+         * @memberof gamereq.LoginInRsp
+         * @static
+         * @param {$protobuf.Reader|Uint8Array} reader Reader or buffer to decode from
+         * @param {number} [length] Message length if known beforehand
+         * @returns {gamereq.LoginInRsp} LoginInRsp
+         * @throws {Error} If the payload is not a reader or valid buffer
+         * @throws {$protobuf.util.ProtocolError} If required fields are missing
+         */
+        LoginInRsp.decode = function decode(reader, length) {
+            if (!(reader instanceof $Reader))
+                reader = $Reader.create(reader);
+            var end = length === undefined ? reader.len : reader.pos + length, message = new $root.gamereq.LoginInRsp();
+            while (reader.pos < end) {
+                var tag = reader.uint32();
+                switch (tag >>> 3) {
+                case 1:
+                    message.userid = reader.uint32();
+                    break;
+                case 2:
+                    message.timestamp = reader.uint64();
+                    break;
+                case 3:
+                    message.roomid = reader.uint32();
+                    break;
+                case 4:
+                    message.roomstatus = reader.uint32();
+                    break;
+                case 5:
+                    message.menuindex = reader.uint32();
+                    break;
+                case 6:
+                    message.gamemode = reader.uint32();
+                    break;
+                case 7:
+                    message.randomseed = reader.uint32();
+                    break;
+                case 8:
+                    if (!(message.players && message.players.length))
+                        message.players = [];
+                    message.players.push($root.gamereq.PlayerInfo.decode(reader, reader.uint32()));
+                    break;
+                case 9:
+                    if (!(message.framerecord && message.framerecord.length))
+                        message.framerecord = [];
+                    message.framerecord.push($root.gamereq.GameFrameNtf.decode(reader, reader.uint32()));
+                    break;
+                default:
+                    reader.skipType(tag & 7);
+                    break;
+                }
+            }
+            return message;
+        };
+
+        /**
+         * Decodes a LoginInRsp message from the specified reader or buffer, length delimited.
+         * @function decodeDelimited
+         * @memberof gamereq.LoginInRsp
+         * @static
+         * @param {$protobuf.Reader|Uint8Array} reader Reader or buffer to decode from
+         * @returns {gamereq.LoginInRsp} LoginInRsp
+         * @throws {Error} If the payload is not a reader or valid buffer
+         * @throws {$protobuf.util.ProtocolError} If required fields are missing
+         */
+        LoginInRsp.decodeDelimited = function decodeDelimited(reader) {
+            if (!(reader instanceof $Reader))
+                reader = new $Reader(reader);
+            return this.decode(reader, reader.uint32());
+        };
+
+        /**
+         * Verifies a LoginInRsp message.
+         * @function verify
+         * @memberof gamereq.LoginInRsp
+         * @static
+         * @param {Object.<string,*>} message Plain object to verify
+         * @returns {string|null} `null` if valid, otherwise the reason why it is not
+         */
+        LoginInRsp.verify = function verify(message) {
+            if (typeof message !== "object" || message === null)
+                return "object expected";
+            if (message.userid != null && message.hasOwnProperty("userid"))
+                if (!$util.isInteger(message.userid))
+                    return "userid: integer expected";
+            if (message.timestamp != null && message.hasOwnProperty("timestamp"))
+                if (!$util.isInteger(message.timestamp) && !(message.timestamp && $util.isInteger(message.timestamp.low) && $util.isInteger(message.timestamp.high)))
+                    return "timestamp: integer|Long expected";
+            if (message.roomid != null && message.hasOwnProperty("roomid"))
+                if (!$util.isInteger(message.roomid))
+                    return "roomid: integer expected";
+            if (message.roomstatus != null && message.hasOwnProperty("roomstatus"))
+                if (!$util.isInteger(message.roomstatus))
+                    return "roomstatus: integer expected";
+            if (message.menuindex != null && message.hasOwnProperty("menuindex"))
+                if (!$util.isInteger(message.menuindex))
+                    return "menuindex: integer expected";
+            if (message.gamemode != null && message.hasOwnProperty("gamemode"))
+                if (!$util.isInteger(message.gamemode))
+                    return "gamemode: integer expected";
+            if (message.randomseed != null && message.hasOwnProperty("randomseed"))
+                if (!$util.isInteger(message.randomseed))
+                    return "randomseed: integer expected";
+            if (message.players != null && message.hasOwnProperty("players")) {
+                if (!Array.isArray(message.players))
+                    return "players: array expected";
+                for (var i = 0; i < message.players.length; ++i) {
+                    var error = $root.gamereq.PlayerInfo.verify(message.players[i]);
+                    if (error)
+                        return "players." + error;
+                }
+            }
+            if (message.framerecord != null && message.hasOwnProperty("framerecord")) {
+                if (!Array.isArray(message.framerecord))
+                    return "framerecord: array expected";
+                for (var i = 0; i < message.framerecord.length; ++i) {
+                    var error = $root.gamereq.GameFrameNtf.verify(message.framerecord[i]);
+                    if (error)
+                        return "framerecord." + error;
+                }
+            }
+            return null;
+        };
+
+        /**
+         * Creates a LoginInRsp message from a plain object. Also converts values to their respective internal types.
+         * @function fromObject
+         * @memberof gamereq.LoginInRsp
+         * @static
+         * @param {Object.<string,*>} object Plain object
+         * @returns {gamereq.LoginInRsp} LoginInRsp
+         */
+        LoginInRsp.fromObject = function fromObject(object) {
+            if (object instanceof $root.gamereq.LoginInRsp)
+                return object;
+            var message = new $root.gamereq.LoginInRsp();
+            if (object.userid != null)
+                message.userid = object.userid >>> 0;
+            if (object.timestamp != null)
+                if ($util.Long)
+                    (message.timestamp = $util.Long.fromValue(object.timestamp)).unsigned = true;
+                else if (typeof object.timestamp === "string")
+                    message.timestamp = parseInt(object.timestamp, 10);
+                else if (typeof object.timestamp === "number")
+                    message.timestamp = object.timestamp;
+                else if (typeof object.timestamp === "object")
+                    message.timestamp = new $util.LongBits(object.timestamp.low >>> 0, object.timestamp.high >>> 0).toNumber(true);
+            if (object.roomid != null)
+                message.roomid = object.roomid >>> 0;
+            if (object.roomstatus != null)
+                message.roomstatus = object.roomstatus >>> 0;
+            if (object.menuindex != null)
+                message.menuindex = object.menuindex >>> 0;
+            if (object.gamemode != null)
+                message.gamemode = object.gamemode >>> 0;
+            if (object.randomseed != null)
+                message.randomseed = object.randomseed >>> 0;
+            if (object.players) {
+                if (!Array.isArray(object.players))
+                    throw TypeError(".gamereq.LoginInRsp.players: array expected");
+                message.players = [];
+                for (var i = 0; i < object.players.length; ++i) {
+                    if (typeof object.players[i] !== "object")
+                        throw TypeError(".gamereq.LoginInRsp.players: object expected");
+                    message.players[i] = $root.gamereq.PlayerInfo.fromObject(object.players[i]);
+                }
+            }
+            if (object.framerecord) {
+                if (!Array.isArray(object.framerecord))
+                    throw TypeError(".gamereq.LoginInRsp.framerecord: array expected");
+                message.framerecord = [];
+                for (var i = 0; i < object.framerecord.length; ++i) {
+                    if (typeof object.framerecord[i] !== "object")
+                        throw TypeError(".gamereq.LoginInRsp.framerecord: object expected");
+                    message.framerecord[i] = $root.gamereq.GameFrameNtf.fromObject(object.framerecord[i]);
+                }
+            }
+            return message;
+        };
+
+        /**
+         * Creates a plain object from a LoginInRsp message. Also converts values to other types if specified.
+         * @function toObject
+         * @memberof gamereq.LoginInRsp
+         * @static
+         * @param {gamereq.LoginInRsp} message LoginInRsp
+         * @param {$protobuf.IConversionOptions} [options] Conversion options
+         * @returns {Object.<string,*>} Plain object
+         */
+        LoginInRsp.toObject = function toObject(message, options) {
+            if (!options)
+                options = {};
+            var object = {};
+            if (options.arrays || options.defaults) {
+                object.players = [];
+                object.framerecord = [];
+            }
+            if (options.defaults) {
+                object.userid = 0;
+                if ($util.Long) {
+                    var long = new $util.Long(0, 0, true);
+                    object.timestamp = options.longs === String ? long.toString() : options.longs === Number ? long.toNumber() : long;
+                } else
+                    object.timestamp = options.longs === String ? "0" : 0;
+                object.roomid = 0;
+                object.roomstatus = 0;
+                object.menuindex = 0;
+                object.gamemode = 0;
+                object.randomseed = 0;
+            }
+            if (message.userid != null && message.hasOwnProperty("userid"))
+                object.userid = message.userid;
+            if (message.timestamp != null && message.hasOwnProperty("timestamp"))
+                if (typeof message.timestamp === "number")
+                    object.timestamp = options.longs === String ? String(message.timestamp) : message.timestamp;
+                else
+                    object.timestamp = options.longs === String ? $util.Long.prototype.toString.call(message.timestamp) : options.longs === Number ? new $util.LongBits(message.timestamp.low >>> 0, message.timestamp.high >>> 0).toNumber(true) : message.timestamp;
+            if (message.roomid != null && message.hasOwnProperty("roomid"))
+                object.roomid = message.roomid;
+            if (message.roomstatus != null && message.hasOwnProperty("roomstatus"))
+                object.roomstatus = message.roomstatus;
+            if (message.menuindex != null && message.hasOwnProperty("menuindex"))
+                object.menuindex = message.menuindex;
+            if (message.gamemode != null && message.hasOwnProperty("gamemode"))
+                object.gamemode = message.gamemode;
+            if (message.randomseed != null && message.hasOwnProperty("randomseed"))
+                object.randomseed = message.randomseed;
+            if (message.players && message.players.length) {
+                object.players = [];
+                for (var j = 0; j < message.players.length; ++j)
+                    object.players[j] = $root.gamereq.PlayerInfo.toObject(message.players[j], options);
+            }
+            if (message.framerecord && message.framerecord.length) {
+                object.framerecord = [];
+                for (var j = 0; j < message.framerecord.length; ++j)
+                    object.framerecord[j] = $root.gamereq.GameFrameNtf.toObject(message.framerecord[j], options);
+            }
+            return object;
+        };
+
+        /**
+         * Converts this LoginInRsp to JSON.
+         * @function toJSON
+         * @memberof gamereq.LoginInRsp
+         * @instance
+         * @returns {Object.<string,*>} JSON object
+         */
+        LoginInRsp.prototype.toJSON = function toJSON() {
+            return this.constructor.toObject(this, $protobuf.util.toJSONOptions);
+        };
+
+        return LoginInRsp;
     })();
 
     gamereq.ErrorInfo = (function() {
@@ -427,193 +1103,6 @@ $root.gamereq = (function() {
         };
 
         return ErrorInfo;
-    })();
-
-    gamereq.LoginOut = (function() {
-
-        /**
-         * Properties of a LoginOut.
-         * @memberof gamereq
-         * @interface ILoginOut
-         * @property {number|null} [userid] LoginOut userid
-         */
-
-        /**
-         * Constructs a new LoginOut.
-         * @memberof gamereq
-         * @classdesc Represents a LoginOut.
-         * @implements ILoginOut
-         * @constructor
-         * @param {gamereq.ILoginOut=} [properties] Properties to set
-         */
-        function LoginOut(properties) {
-            if (properties)
-                for (var keys = Object.keys(properties), i = 0; i < keys.length; ++i)
-                    if (properties[keys[i]] != null)
-                        this[keys[i]] = properties[keys[i]];
-        }
-
-        /**
-         * LoginOut userid.
-         * @member {number} userid
-         * @memberof gamereq.LoginOut
-         * @instance
-         */
-        LoginOut.prototype.userid = 0;
-
-        /**
-         * Creates a new LoginOut instance using the specified properties.
-         * @function create
-         * @memberof gamereq.LoginOut
-         * @static
-         * @param {gamereq.ILoginOut=} [properties] Properties to set
-         * @returns {gamereq.LoginOut} LoginOut instance
-         */
-        LoginOut.create = function create(properties) {
-            return new LoginOut(properties);
-        };
-
-        /**
-         * Encodes the specified LoginOut message. Does not implicitly {@link gamereq.LoginOut.verify|verify} messages.
-         * @function encode
-         * @memberof gamereq.LoginOut
-         * @static
-         * @param {gamereq.ILoginOut} message LoginOut message or plain object to encode
-         * @param {$protobuf.Writer} [writer] Writer to encode to
-         * @returns {$protobuf.Writer} Writer
-         */
-        LoginOut.encode = function encode(message, writer) {
-            if (!writer)
-                writer = $Writer.create();
-            if (message.userid != null && Object.hasOwnProperty.call(message, "userid"))
-                writer.uint32(/* id 1, wireType 0 =*/8).uint32(message.userid);
-            return writer;
-        };
-
-        /**
-         * Encodes the specified LoginOut message, length delimited. Does not implicitly {@link gamereq.LoginOut.verify|verify} messages.
-         * @function encodeDelimited
-         * @memberof gamereq.LoginOut
-         * @static
-         * @param {gamereq.ILoginOut} message LoginOut message or plain object to encode
-         * @param {$protobuf.Writer} [writer] Writer to encode to
-         * @returns {$protobuf.Writer} Writer
-         */
-        LoginOut.encodeDelimited = function encodeDelimited(message, writer) {
-            return this.encode(message, writer).ldelim();
-        };
-
-        /**
-         * Decodes a LoginOut message from the specified reader or buffer.
-         * @function decode
-         * @memberof gamereq.LoginOut
-         * @static
-         * @param {$protobuf.Reader|Uint8Array} reader Reader or buffer to decode from
-         * @param {number} [length] Message length if known beforehand
-         * @returns {gamereq.LoginOut} LoginOut
-         * @throws {Error} If the payload is not a reader or valid buffer
-         * @throws {$protobuf.util.ProtocolError} If required fields are missing
-         */
-        LoginOut.decode = function decode(reader, length) {
-            if (!(reader instanceof $Reader))
-                reader = $Reader.create(reader);
-            var end = length === undefined ? reader.len : reader.pos + length, message = new $root.gamereq.LoginOut();
-            while (reader.pos < end) {
-                var tag = reader.uint32();
-                switch (tag >>> 3) {
-                case 1:
-                    message.userid = reader.uint32();
-                    break;
-                default:
-                    reader.skipType(tag & 7);
-                    break;
-                }
-            }
-            return message;
-        };
-
-        /**
-         * Decodes a LoginOut message from the specified reader or buffer, length delimited.
-         * @function decodeDelimited
-         * @memberof gamereq.LoginOut
-         * @static
-         * @param {$protobuf.Reader|Uint8Array} reader Reader or buffer to decode from
-         * @returns {gamereq.LoginOut} LoginOut
-         * @throws {Error} If the payload is not a reader or valid buffer
-         * @throws {$protobuf.util.ProtocolError} If required fields are missing
-         */
-        LoginOut.decodeDelimited = function decodeDelimited(reader) {
-            if (!(reader instanceof $Reader))
-                reader = new $Reader(reader);
-            return this.decode(reader, reader.uint32());
-        };
-
-        /**
-         * Verifies a LoginOut message.
-         * @function verify
-         * @memberof gamereq.LoginOut
-         * @static
-         * @param {Object.<string,*>} message Plain object to verify
-         * @returns {string|null} `null` if valid, otherwise the reason why it is not
-         */
-        LoginOut.verify = function verify(message) {
-            if (typeof message !== "object" || message === null)
-                return "object expected";
-            if (message.userid != null && message.hasOwnProperty("userid"))
-                if (!$util.isInteger(message.userid))
-                    return "userid: integer expected";
-            return null;
-        };
-
-        /**
-         * Creates a LoginOut message from a plain object. Also converts values to their respective internal types.
-         * @function fromObject
-         * @memberof gamereq.LoginOut
-         * @static
-         * @param {Object.<string,*>} object Plain object
-         * @returns {gamereq.LoginOut} LoginOut
-         */
-        LoginOut.fromObject = function fromObject(object) {
-            if (object instanceof $root.gamereq.LoginOut)
-                return object;
-            var message = new $root.gamereq.LoginOut();
-            if (object.userid != null)
-                message.userid = object.userid >>> 0;
-            return message;
-        };
-
-        /**
-         * Creates a plain object from a LoginOut message. Also converts values to other types if specified.
-         * @function toObject
-         * @memberof gamereq.LoginOut
-         * @static
-         * @param {gamereq.LoginOut} message LoginOut
-         * @param {$protobuf.IConversionOptions} [options] Conversion options
-         * @returns {Object.<string,*>} Plain object
-         */
-        LoginOut.toObject = function toObject(message, options) {
-            if (!options)
-                options = {};
-            var object = {};
-            if (options.defaults)
-                object.userid = 0;
-            if (message.userid != null && message.hasOwnProperty("userid"))
-                object.userid = message.userid;
-            return object;
-        };
-
-        /**
-         * Converts this LoginOut to JSON.
-         * @function toJSON
-         * @memberof gamereq.LoginOut
-         * @instance
-         * @returns {Object.<string,*>} JSON object
-         */
-        LoginOut.prototype.toJSON = function toJSON() {
-            return this.constructor.toObject(this, $protobuf.util.toJSONOptions);
-        };
-
-        return LoginOut;
     })();
 
     gamereq.UserInfo = (function() {

@@ -2,6 +2,7 @@ import { GameDef } from "../../../define/GameDef";
 import { GameStruct } from "../../../define/GameStruct";
 import AudioModel from "../../../model/AudioModel";
 import GameDataModel from "../../../model/GameDataModel";
+import GameLogicModel from "../../../model/GameLogicModel";
 
 const { ccclass, property } = cc._decorator;
 
@@ -33,10 +34,6 @@ export default class PlayerResult extends cc.Component {
         this.showBonusScore();
     }
 
-    onDestroy() {
-        this.node.stopAllActions();
-    }
-
     //得分动画
     showTankScoreAni(enemyTankNO, callback: Function) {
         let actions = [];
@@ -50,42 +47,65 @@ export default class PlayerResult extends cc.Component {
         let showNum = 0;
         let showScore = 0;
 
-        let delay = cc.delayTime(0.15);
-        let showScoreFunc = cc.callFunc(() => {
+        let anis = [];
+        let putAni = (aniFunc: Function, dealy: number = 0) => {
+            anis.push({dealy: dealy, aniFunc: aniFunc});
+        }
+
+        //显示分数条
+        putAni(() => {
             this.textTankNum[enemyTankNO].node.active = true;
             this.textTankScore[enemyTankNO].node.active = true;
 
             this.playScoreSound();
             this.textTankNum[enemyTankNO].string = showNum.toString();
             this.textTankScore[enemyTankNO].string = showScore.toString();
-        });
+        }, 0.15);
 
-        let addScoreFunc = cc.callFunc(() => {
+        //分数增加
+        let addScoreFunc = () => {
             showNum++;
             showScore += avgScore;
 
             this.playScoreSound();
             this.textTankNum[enemyTankNO].string = showNum.toString();
             this.textTankScore[enemyTankNO].string = showScore.toString();
-        });
-
-        actions.push(delay);
-        actions.push(showScoreFunc);
+        };
         for (let i = 0; i < totoalNum; i++) {
-            actions.push(delay);
-            actions.push(addScoreFunc);
+            putAni(addScoreFunc, 0.15);
         }
     
         //结束回调
-        actions.push(cc.delayTime(0.5));
-        actions.push(cc.callFunc(() => {
+        putAni(() => {
             if (typeof callback === "function") {
                 callback(enemyTankNO);
             }
-        }));
+        }, 0.5);
 
-        let sequence = cc.sequence(actions);
-        this.node.runAction(sequence);
+        let playFunc;
+        playFunc = () => {
+            if (anis.length > 0) {
+                let ani = anis[0];
+                anis.splice(0, 1);
+
+                if (ani.dealy > 0) {
+                    GameLogicModel.scheduleOnce(() => {
+                        if (ani.aniFunc) {
+                            ani.aniFunc();
+                        }
+                        playFunc();
+                    }, this, ani.dealy);
+                }
+                else {
+                    if (ani.aniFunc) {
+                        ani.aniFunc();
+                    }
+                    playFunc();
+                }
+            }
+        };
+
+        playFunc();//开始动画
     }
 
     showBonusScore() {
@@ -105,5 +125,9 @@ export default class PlayerResult extends cc.Component {
 
     playScoreSound() {
         AudioModel.playSound("sound/score");
+    }
+
+    onDestroy() {
+        GameLogicModel.unscheduleAll(this);
     }
 }

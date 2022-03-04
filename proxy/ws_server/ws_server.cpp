@@ -63,11 +63,26 @@ void AsioWSServer::ShutDown()
         return;
     }
 
-    StopIOService();
-
     UnInitSocket();
 
-    ClearConnectSessionMap();
+	//清空连接
+	{
+		decltype(session_map_) tmp;
+		{
+			std::lock_guard<std::mutex> lock(session_map_mtx_);
+			tmp = session_map_;
+		}
+		{
+			for (auto& it : tmp)
+			{
+				CloseConnection(it.first);
+			}
+		}
+
+		ClearConnectSessionMap();
+	}
+
+    StopIOService();
 }
 
 //void AsioWSServer::SetSocketStatusCallback(SocketStatusCallback callback)
@@ -141,7 +156,24 @@ bool AsioWSServer::InitSocket()
 
 bool AsioWSServer::UnInitSocket()
 {
-    socket_->close();
+    try
+    {
+        socket_->close();
+    }
+	catch (boost::system::system_error& error)
+	{
+
+	}
+
+	try
+	{
+		acceptor_->close();
+	}
+	catch (boost::system::system_error& error)
+	{
+
+	}
+
     return true;
 }
 
@@ -159,7 +191,7 @@ bool AsioWSServer::StartIOService()
 
 bool AsioWSServer::StopIOService()
 {
-    io_service_.stop();//停止服务
+    //io_service_.stop();//停止服务
     for (auto& th : io_threads_)
     {
         th.join();//等待IO线程结束
@@ -215,11 +247,18 @@ void AsioWSServer::OnAccept(const boost::system::error_code& error, boost::asio:
         else
         {
             LOG_ERROR("OnAccept error, not have enough sessionid!");
-            socket.close();
+            try
+            {
+                socket.close();
+            }
+			catch (boost::system::system_error& error)
+			{
+
+			}
         }
         DoAccept();//继续监听连接
     }
-    else
+    else if(error != boost::asio::error::operation_aborted)
     {
         LOG_ERROR("OnAccept error, error(%d)", error);
     }
@@ -318,6 +357,7 @@ bool AsioWSServer::CheckIOState(ConSessionPtr session, const boost::system::erro
 {
     if (error)
     {
+        LOG_DEBUG("AsioWSServer::CheckIOState socket io error(%d)", error);
         if (error == boost::asio::error::operation_aborted)
         {
             return false;
@@ -329,7 +369,6 @@ bool AsioWSServer::CheckIOState(ConSessionPtr session, const boost::system::erro
         {
             LOG_DEBUG("AsioWSServer::CheckIOState socket close by client, sessionid:%d", *session->session_id_);
         }
-        LOG_DEBUG("AsioWSServer::CheckIOState socket io error(%d)", error);
         CloseConnectSession(session);
 
         return false;
@@ -348,9 +387,13 @@ void AsioWSServer::CloseConnectSession(ConSessionPtr session, bool dispatch_even
     }
 
     session->status_ = SocketStatus::CLOSED;
-    if (session->socket_.is_open())
+    try
     {
         session->socket_.close(websocket::close_reason());
+    }
+    catch (boost::system::system_error& error)
+    {
+        LOG_ERROR("AsioWSServer::CloseConnectSession %s", error.what());
     }
     RemoveConnectSession(session);
 

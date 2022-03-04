@@ -160,4 +160,8 @@ export default class GameResult extends cc.Component {
             gameController.onGameResultShowFinished();
         }, this, 3);
     }
+
+    onDestroy() {
+        GameLogicModel.unscheduleAll(this);
+    }
 }

@@ -7,6 +7,8 @@
 #include "work_def.h"
 #include "work_req.h"
 
+#include "boost/asio/deadline_timer.hpp"
+
 using namespace basereq;
 
 class AsioSockServer;
@@ -49,8 +51,8 @@ public:
 
 	void SendNotify(ContextHeadPtr context_head, google::protobuf::uint32 request_id);
 
-    void CloseConnection(const ContextHead& context_head);
-    void CloseConnection(SessionID id);
+    void CloseConnection(const ContextHead& context_head, bool dispatch_event = true);
+    void CloseConnection(SessionID id, bool dispatch_event = true);
 
 protected:
     virtual void OnRequest(ContextHeadPtr context_head, RequestPtr request);//客户端请求
@@ -67,6 +69,7 @@ private:
 
     //心跳处理
     void StartPluseDetection();
+    void StopPluseDetection();
     void DetectPluse();
     void OnConnectPluse(ContextHeadPtr context_head, RequestPtr request);
     void UpdateSessionPluse(SessionID id, time_t tm);
@@ -81,6 +84,7 @@ private:
 
     std::mutex pluse_mutex_;
     std::unordered_map<SessionID, time_t> pluse_map_;//<session,time>
+    boost::asio::deadline_timer pluse_timer_;//心跳定时器
 };
 
 inline void WorkServer::PostWork(WorkContent work)
@@ -106,9 +110,9 @@ inline void WorkServer::PutRequestToServer(const ContextHead& context_head, cons
     PutRequestToServer(std::make_shared<ContextHead>(context_head), std::make_shared<Request>(request));
 }
 
-inline void WorkServer::CloseConnection(const ContextHead& context_head)
+inline void WorkServer::CloseConnection(const ContextHead& context_head, bool dispatch_event)
 {
-    CloseConnection(context_head.session);
+    CloseConnection(context_head.session, dispatch_event);
 }
 
 inline void WorkServer::UpdateSessionPluse(SessionID id, time_t tm)

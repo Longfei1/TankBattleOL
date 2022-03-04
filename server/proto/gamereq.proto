@@ -7,18 +7,33 @@ message LoginIn
 {
     uint32 userid = 1;
     uint64 timestamp = 2;
+    uint32 syncframe = 3;
+}
+
+message PlayerInfo
+{
+    uint32 playerno = 1;
+    uint32 userid = 2;
+    bool ready = 3;
+}
+
+message LoginInRsp 
+{
+    uint32 userid = 1;
+    uint64 timestamp = 2;
+    uint32 roomid = 3;
+    uint32 roomstatus = 4;//房间状态
+    uint32 menuindex = 5;
+    uint32 gamemode = 6;//游戏模式
+    uint32 randomseed = 7;//随机种子
+    repeated PlayerInfo players = 8;
+    repeated GameFrameNtf framerecord = 9;//游戏帧记录
 }
 
 //错误信息
 message ErrorInfo
 {
     string description = 1;
-}
-
-//登出请求
-message LoginOut
-{
-	uint32 userid = 1;
 }
 
 //用户信息

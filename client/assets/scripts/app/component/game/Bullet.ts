@@ -10,6 +10,7 @@ import { GameStruct } from "../../define/GameStruct";
 import Big from "../../../packages/bigjs/Big";
 import GameUnitComponent from "./GameUnitComponent";
 import HomeBase from "./HomeBase";
+import GameLogicModel from "../../model/GameLogicModel";
 
 const { ccclass, property } = cc._decorator;
 
@@ -401,6 +402,11 @@ export default class Bullet extends GameUnitComponent {
                     AudioModel.playSound("sound/hit2");
                 }
             }
+            else {
+                if (this._hitedGroup === GameDef.GROUP_NAME_TANK && this._hitedValue < 10) {
+                    AudioModel.playSound("sound/hit2");
+                }
+            }
 
             this.syncLogicPos();
             gameController.playBulletBlastAni(this.node.getPosition());
@@ -412,6 +418,11 @@ export default class Bullet extends GameUnitComponent {
     }
 
     update(dt) {
+        if (GameLogicModel._netGameDxxw) {
+            this.node.setPosition(GameDataModel.bigPosToVec2(this._logicPos));
+            return;
+        }
+        
         let dstPos = this._logicPos;
         if (this._moveDirection === GameDef.DIRECTION_UP || this._moveDirection === GameDef.DIRECTION_DOWN) {
             this.node.x = dstPos.x.toNumber();
@@ -466,12 +477,16 @@ export default class Bullet extends GameUnitComponent {
             return;
         }
 
+        let canMove = false;
         if (other.node.group === GameDef.GROUP_NAME_TANK) {
             let com = other.node.getComponent(BattleTank);
             if (this._shooterID !== com.id) {
                 if (!com._hited || (com._hitedGroup === GameDef.GROUP_NAME_BULLET && com._hitedValue === this.id)) {
                     this.onHited(other.node.group, com.id);
                 }
+            }
+            else {
+                canMove = true;
             }
         }
         else if (other.node.group === GameDef.GROUP_NAME_BULLET) {
@@ -487,6 +502,8 @@ export default class Bullet extends GameUnitComponent {
             }
         }
 
-        this._logicUpdate = false;
+        if (!canMove) {
+            this._logicUpdate = false;
+        }
     }
 }

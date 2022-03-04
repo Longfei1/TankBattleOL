@@ -32,7 +32,7 @@ public:
     //void SetSocketMsgCallback(SocketMsgCallback callback);//设置消息回调
 
     void SendData(SessionID id, const Byte* senddata, std::size_t size);//发送数据包，多线程安全
-    void CloseConnection(SessionID id);//关闭连接
+    void CloseConnection(SessionID id, bool dispatch_close_event = true);//关闭连接
 private:
     bool InitSocket();
     bool UnInitSocket();

@@ -15,18 +15,25 @@ class AudioModel extends BaseModel{
     }
 
     playSound(srcPath: string, loop = false): GameStruct.AudioInfo {
-        let info: GameStruct.AudioInfo = {audioID: null};
+        let info: GameStruct.AudioInfo = {audioID: null, stop: false};
         cc.loader.loadRes(srcPath, (error, clip) => {
             if (!error) {
-                info.audioID = cc.audioEngine.playEffect(clip, loop);
+                if (!info.stop) {
+                    info.audioID = cc.audioEngine.playEffect(clip, loop);
+                }
             }
         });
         return info;
     }
 
     stopSound(info: GameStruct.AudioInfo) {
-        if (info != null && info.audioID != null) {
-            cc.audioEngine.stopEffect(info.audioID);
+        if (info) {
+            if (info.audioID == null) {
+                info.stop = true;
+            }
+            else {
+                cc.audioEngine.stopEffect(info.audioID);
+            }
         }
     }
 }

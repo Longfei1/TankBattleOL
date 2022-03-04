@@ -30,6 +30,16 @@ void GameServer::ShutDown()
 {
     WorkServer::ShutDown();
 
+	//清理room
+	{
+		std::lock_guard<std::mutex> lock(rooms_mtx_);
+		for (auto& r : rooms_)
+		{
+			r.second->ResetRoom();
+		}
+		rooms_.clear();
+	}
+
     StopGameFrameService();
 }
 
@@ -77,11 +87,14 @@ void GameServer::OnRequest(ContextHeadPtr context_head, RequestPtr request)
 		OnMenuBack(context_head, request);
         break;
 	case GR_GAME_MAP_EDIT_FINISHED:
-
+		OnGameMapEditFinished(context_head, request);
 		break;
     case GR_GAME_FRAME:
         OnGameFrame(context_head, request);
         break;
+	case GR_GAME_END:
+		OnGameEnd(context_head, request);
+		break;
     default:
         WorkServer::OnRequest(context_head, request);
         break;
@@ -101,6 +114,40 @@ void GameServer::OnSocketValidated(ContextHeadPtr context_head, RequestPtr reque
 void GameServer::OnSocketClose(ContextHeadPtr context_head, RequestPtr request)
 {
     WorkServer::OnSocketClose(context_head, request);
+
+	auto userid = GetUser(context_head->session);
+	auto room = GetUserRoom(userid);
+	if (room)
+	{
+		std::lock_guard<std::mutex> lock(room->mtx_);
+
+		if (room->GetRoomStatus() == ROOM_STATUS_GAME && room->GetSupportDxxw())
+		{
+			//所有玩家都断线，暂停逻辑帧运算和发送
+			bool online = false;
+			for (int i = 0; i < TOTAL_PLAYER; i++)
+			{
+				auto player = room->GetPlayerInfoByNO(i);
+				SessionID session;
+				if (player && player->user_id != userid && GetUserSession(player->user_id, session))
+				{
+					online = true;
+					break;
+				}
+			}
+
+			if (!online)
+			{
+				room->SetGameFramePause(true);
+			}
+		}
+		else
+		{
+			//不在游戏状态或不支持断线续玩的话，断开连接就离开房间
+			auto my_player = room->GetPlayerInfoByID(userid);
+			LeaveRoom(room, my_player->number, nullptr, nullptr);
+		}
+	}
 
     RemoveUser(context_head->session);//移除用户关联
 }
@@ -133,11 +180,14 @@ void GameServer::OnUserLogin(ContextHeadPtr context_head, RequestPtr request)
 
     request->set_request(UR_OPERATE_SUCCESS);
 
+	gamereq::LoginInRsp login_rsp;
+	login_rsp.set_userid(login.userid());
+
     auto logonUid = GetUser(context_head->session);
     SessionID logonSession;
     if (logonUid > 0 && login.userid() != logonUid)//连接已有绑定id
     {
-        login.set_userid(logonUid);
+		login_rsp.set_userid(logonUid);
     }
     else if (login.userid() <= 0 || startup_time_ != login.timestamp())//id无效时，重新生成id下发
     {
@@ -145,7 +195,7 @@ void GameServer::OnUserLogin(ContextHeadPtr context_head, RequestPtr request)
         uint id;
         if (GenerateUserID(id))
         {
-            login.set_userid(id);
+			login_rsp.set_userid(id);
         }
         else
         {
@@ -160,12 +210,62 @@ void GameServer::OnUserLogin(ContextHeadPtr context_head, RequestPtr request)
         return;
 	}
 
-    login.set_timestamp(startup_time_);
+	login_rsp.set_timestamp(startup_time_);
 
-    //更新关联
-    AddUser(context_head->session, login.userid());//session-userid关联
+	//更新关联
+	AddUser(context_head->session, login_rsp.userid());//session-userid关联
 
-    SendResponse(context_head, request, login);
+	auto room = GetUserRoom(login_rsp.userid());
+	if (room)
+	{
+		std::lock_guard<std::mutex> lock(room->mtx_);
+
+		auto status = room->GetRoomStatus();
+		login_rsp.set_roomid(room->GetRoomID());
+		login_rsp.set_roomstatus(status);
+		login_rsp.set_menuindex(room->GetMenuIndex());
+
+		for (int i = 0; i < TOTAL_PLAYER; i++)
+		{
+			auto p = login_rsp.add_players();
+			auto player = room->GetPlayerInfoByNO(i);
+			p->set_playerno(i);
+			if (player)
+			{
+				p->set_userid(player->user_id);
+				p->set_ready(player->ready);
+			}
+		}
+
+		if (status == ROOM_STATUS_GAME)
+		{
+			login_rsp.set_gamemode(room->GetGameMode());
+			login_rsp.set_randomseed(room->GetRandomSeed());
+
+			auto& ope_record = room->GetFrameOpeRecord();
+			for (uint i = login.syncframe(); i < ope_record.size(); i++)
+			{
+				auto frame = login_rsp.add_framerecord();
+				frame->set_frame(i);
+				for (int j = 0; j < ope_record[i].size(); j++)
+				{
+					if (ope_record[i][j] != UINT_MAX)
+					{
+						auto userope = frame->add_useropes();
+						userope->set_playerno(j);
+						userope->set_opecode(ope_record[i][j]);
+					}
+				}
+			}
+
+			room->SetGameFramePause(false);
+		}
+
+		SendResponse(context_head, request, login_rsp);//在房间互斥量范围内发送响应，避免出去房间会在发响应前发送帧消息。
+		return;
+	}
+
+    SendResponse(context_head, request, login_rsp);
 }
 
 void GameServer::OnCreateRoom(ContextHeadPtr context_head, RequestPtr request)
@@ -347,86 +447,18 @@ void GameServer::OnLeaveRoom(ContextHeadPtr context_head, RequestPtr request)
 		return;
     }
 
-	uint remove_roomid = 0;
 	{
 		std::lock_guard<std::mutex> lock(room->mtx_);
 
-		auto my_playerno = info.playerno();
-		auto my_player = room->GetPlayerInfoByNO(my_playerno);
+		auto my_player = room->GetPlayerInfoByNO(info.playerno());
 		if (!my_player || my_player->user_id != userid)
 		{
 			SendFailedResponse(context_head, request, "离开失败，房间位置信息不一致！");
 			return;
 		}
 
-		if (my_playerno == 0)//自己是房主
-		{
-			//查找其他玩家位置
-			bool have_other = false;
-			uint other_no = UINT_MAX;
-			for (uint i = 1; i < TOTAL_PLAYER; i++)
-			{
-				if (room->GetPlayerInfoByNO(i))
-				{
-					other_no = i;
-					have_other = true;
-					break;
-				}
-			}
-
-			if (have_other)//存在其他玩家
-			{
-				auto other_player = room->GetPlayerInfoByNO(other_no);
-				auto other_playerid = other_player->user_id;
-
-				//更换房主（房主固定为0号位）
-				other_player->number = 0;
-				other_player->ready = false;
-				room->SetPlayer(*other_player);
-				room->RemovePlayer(other_no);
-
-				SendResponse(context_head, request, info);
-				room->NotifyRoomPlayer(GR_LEAVE_ROOM, info, userid);//通知其他玩家，房主离开
-
-				//新房主信息
-				gamereq::RoomPlayerInfo host_change_info;
-				host_change_info.set_roomid(room->GetRoomID());
-				host_change_info.set_playerno(other_no);
-				host_change_info.set_userid(other_playerid);
-				room->NotifyRoomPlayer(GR_ROOM_HOST_CHANGE, host_change_info, userid);
-			}
-			else
-			{
-				//删除房间
-				remove_roomid = room->GetRoomID();
-
-				SendResponse(context_head, request, info);
-			}
-		}
-		else
-		{
-			room->RemovePlayer(my_playerno);
-
-			auto host = room->GetPlayerInfoByNO(0);
-			if (host) {
-				host->ready = false;
-			}
-
-			SendResponse(context_head, request, info);
-
-			room->NotifyRoomPlayer(GR_LEAVE_ROOM, info, userid);//通知有人离开
-		}
-
-		room->SetRoomStatus(ROOM_STATUS_READY);
-		room->SetGameMode(0);
-		room->StopGameFrameTimer();
+		LeaveRoom(room, info.playerno(), context_head, request);
 	}
-
-    if (remove_roomid > 0)//前面互斥量作用域内不能移除房间，如果这样，lock_guard指向的互斥量可能被提前释放。
-    {
-		room->ResetRoom();
-        RemoveRoom(remove_roomid);
-    }
 }
 
 void GameServer::OnRoomReady(ContextHeadPtr context_head, RequestPtr request)
@@ -730,7 +762,13 @@ void GameServer::OnMenuChoose(ContextHeadPtr context_head, RequestPtr request)
 			auto where = ret.mutable_where();
 			*where = info.where();
 
-			room->StartGameFrameTimer(time(nullptr));
+			auto t = time(nullptr);
+			room->SetRandomSeed(t);
+			ret.set_randomseed(t);
+
+			room->SetSupportDxxw(true);
+
+			room->StartGameFrameTimer(t);
 			room->NotifyRoomPlayer(GR_GAME_START, ret);
 		}
 		break;
@@ -743,7 +781,13 @@ void GameServer::OnMenuChoose(ContextHeadPtr context_head, RequestPtr request)
 			auto where = ret.mutable_where();
 			*where = info.where();
 
-			room->StartGameFrameTimer(time(nullptr));
+			auto t = time(nullptr);
+			room->SetRandomSeed(t);
+			ret.set_randomseed(t);
+
+			room->SetSupportDxxw(false);
+
+			room->StartGameFrameTimer(t);
 			room->NotifyRoomPlayer(GR_GAME_START, ret);
 		}
 		break;
@@ -816,6 +860,70 @@ void GameServer::OnMenuBack(ContextHeadPtr context_head, RequestPtr request)
 	room->NotifyRoomPlayer(GR_MENU_BACK, info, userid);
 }
 
+void GameServer::OnGameMapEditFinished(ContextHeadPtr context_head, RequestPtr request)
+{
+	gamereq::RoomPlayerInfo info;
+
+	if (!request->data().Is<gamereq::RoomPlayerInfo>())
+	{
+		return;
+	}
+
+	request->data().UnpackTo(&info);
+
+	auto userid = info.userid();
+	if (GetUser(context_head->session) != userid)
+	{
+		return;
+	}
+
+	request->set_request(UR_OPERATE_SUCCESS);
+
+	auto room = GetRoom(info.roomid());
+	if (!room)
+	{
+		SendFailedResponse(context_head, request, "开始游戏失败，房间不存在！");
+		return;
+	}
+
+	std::lock_guard<std::mutex> lock(room->mtx_);
+
+	auto player = room->GetPlayerInfoByNO(info.playerno());
+	if (!player || player->user_id != userid)
+	{
+		SendFailedResponse(context_head, request, "开始游戏失败，房间位置信息不一致！");
+		return;
+	}
+
+	if (info.playerno() != 0)
+	{
+		SendFailedResponse(context_head, request, "开始游戏失败，你不是房主！");
+		return;
+	}
+
+	if (room->GetRoomStatus() != ROOM_STATUS_GAME || room->GetGameMode() != GAME_MODE_MAP_EDIT)
+	{
+		SendFailedResponse(context_head, request, "开始游戏失败，游戏状态不一致！");
+		return;
+	}
+
+	//开始游戏
+	room->StopGameFrameTimer();
+	room->SetGameMode(GAME_MODE_COMMON);
+
+	gamereq::GameStartRsp ret;
+	ret.set_mode(GAME_MODE_COMMON);
+	auto where = ret.mutable_where();
+	*where = info;
+
+	auto t = time(nullptr);
+	room->SetRandomSeed(t);
+	ret.set_randomseed(t);
+
+	room->StartGameFrameTimer(t);
+	room->NotifyRoomPlayer(GR_GAME_START, ret);
+}
+
 void GameServer::OnGameFrame(ContextHeadPtr context_head, RequestPtr request)
 {
     gamereq::GameFrameReq req;
@@ -847,11 +955,84 @@ void GameServer::OnGameFrame(ContextHeadPtr context_head, RequestPtr request)
 		return;
 	}
 
-	//if (room->GetFrameNO() == req.frame())//上传操作的帧序号与服务器的一致
+	if (room->GetRoomStatus() != ROOM_STATUS_GAME)
+	{
+		return;
+	}
+
+	if (room->GetFrameNO() >= req.frame())//上传操作的帧序号小于服务器的
 	{
 		room->SetPlayerOpeCode(req.userope().playerno(), req.userope().opecode());//更新操作码
 	}
     //暂时设计为不回应结果
+}
+
+void GameServer::OnGameEnd(ContextHeadPtr context_head, RequestPtr request)
+{
+	gamereq::RoomPlayerInfo info;
+
+	if (!request->data().Is<gamereq::RoomPlayerInfo>())
+	{
+		return;
+	}
+
+	request->data().UnpackTo(&info);
+
+	auto userid = info.userid();
+	if (GetUser(context_head->session) != userid)
+	{
+		return;
+	}
+
+	request->set_request(UR_OPERATE_SUCCESS);
+
+	auto room = GetRoom(info.roomid());
+	if (!room)
+	{
+		SendFailedResponse(context_head, request, "结束游戏失败，房间不存在！");
+		return;
+	}
+
+	std::lock_guard<std::mutex> lock(room->mtx_);
+
+	auto player = room->GetPlayerInfoByNO(info.playerno());
+	if (!player || player->user_id != userid)
+	{
+		SendFailedResponse(context_head, request, "结束游戏失败，房间位置信息不一致！");
+		return;
+	}
+
+	if (room->GetRoomStatus() == ROOM_STATUS_GAME)
+	{
+		//重置准备状态
+		for (int i = 0; i < TOTAL_PLAYER; i++)
+		{
+			auto p = room->GetPlayerInfoByNO(i);
+			if (p)
+			{
+				p->ready = false;
+			}
+		}
+
+		//回到房间准备阶段
+		room->SetRoomStatus(ROOM_STATUS_READY);
+		room->SetGameMode(0);
+		room->SetMenuIndex(0);
+		room->StopGameFrameTimer();
+
+		room->NotifyRoomPlayer(GR_GAME_END, info);
+
+		//处理离线
+		for (int i = 0; i < TOTAL_PLAYER; i++)
+		{
+			auto p = room->GetPlayerInfoByNO(i);
+			SessionID session;
+			if (p && p->user_id != userid && !GetUserSession(p->user_id, session))//玩家离线
+			{
+				LeaveRoom(room, p->number, nullptr, nullptr);
+			}
+		}
+	}
 }
 
 bool GameServer::GetUserSession(uint user_id, SessionID& session)
@@ -886,11 +1067,116 @@ bool GameServer::StartGameFrameService()
 bool GameServer::StopGameFrameService()
 {
     frame_work_ = nullptr;
-    frame_service_.stop();//停止服务
+    //frame_service_.stop();//停止服务
     for (auto& th : frame_threads_)
     {
         th.join();//等待线程结束
     }
     frame_threads_.clear();
     return true;
+}
+
+//离开房间处理（不要加锁）
+void GameServer::LeaveRoom(RoomPtr room, uint playerno, ContextHeadPtr context_head, RequestPtr request)
+{
+	bool remove_room = false;
+
+	auto player = room->GetPlayerInfoByNO(playerno);
+	gamereq::RoomPlayerInfo info;
+	info.set_playerno(playerno);
+	info.set_userid(player->user_id);
+	info.set_roomid(room->GetRoomID());
+
+	if (playerno == 0)//房主
+	{
+		//查找其他玩家位置
+		bool have_other = false;
+		uint other_no = UINT_MAX;
+		for (uint i = 1; i < TOTAL_PLAYER; i++)
+		{
+			if (room->GetPlayerInfoByNO(i))
+			{
+				other_no = i;
+				have_other = true;
+				break;
+			}
+		}
+
+		if (have_other)//存在其他玩家
+		{
+			auto other_player = room->GetPlayerInfoByNO(other_no);
+			auto other_playerid = other_player->user_id;
+
+			//更换房主（房主固定为0号位）
+			other_player->number = 0;
+			other_player->ready = false;
+			room->SetPlayer(*other_player);
+			room->RemovePlayer(other_no);
+
+			if (context_head && request)
+			{
+				SendResponse(context_head, request, info);
+			}
+			room->NotifyRoomPlayer(GR_LEAVE_ROOM, info, info.userid());//通知其他玩家，房主离开
+
+			//新房主信息
+			gamereq::RoomPlayerInfo host_change_info;
+			host_change_info.set_roomid(room->GetRoomID());
+			host_change_info.set_playerno(other_no);
+			host_change_info.set_userid(other_playerid);
+			room->NotifyRoomPlayer(GR_ROOM_HOST_CHANGE, host_change_info, info.userid());
+		}
+		else
+		{
+			remove_room = true;
+
+			//删除房间
+			if (context_head && request)
+			{
+				SendResponse(context_head, request, info);
+			}
+		}
+	}
+	else
+	{
+		room->RemovePlayer(playerno);
+
+		auto host = room->GetPlayerInfoByNO(0);
+		if (host) {
+			host->ready = false;
+		}
+
+		if (context_head && request)
+		{
+			SendResponse(context_head, request, info);
+		}
+
+		room->NotifyRoomPlayer(GR_LEAVE_ROOM, info, info.userid());//通知有人离开
+	}
+
+	//所有玩家都断线，解散房间
+	bool online = false;
+	for (int i = 0; i < TOTAL_PLAYER; i++)
+	{
+		auto p = room->GetPlayerInfoByNO(i);
+		SessionID session;
+		if (p && GetUserSession(p->user_id, session))
+		{
+			online = true;
+			break;
+		}
+	}
+
+	if (remove_room || !online)
+	{
+		RemoveRoom(room->GetRoomID());
+		room->ResetRoom();
+	}
+	else
+	{
+		room->SetRoomStatus(ROOM_STATUS_READY);
+		room->SetGameMode(0);
+		room->SetMenuIndex(0);
+		room->StopGameFrameTimer();
+	}
 }

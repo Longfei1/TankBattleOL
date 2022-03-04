@@ -43,7 +43,7 @@ export default class AnimationManager extends cc.Component {
     }
 
     onDestroy() {
-        
+        GameLogicModel.unscheduleAll(this);
     }
 
     initMembers() {

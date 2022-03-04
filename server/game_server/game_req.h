@@ -14,6 +14,7 @@
 #define	GR_GAME_START						     10011 //游戏开始
 #define GR_GAME_MAP_EDIT_FINISHED				 10012 //地图编辑完成
 #define GR_PLAYER_INFO						     10013 //玩家信息
+#define GR_GAME_END							     10014 //游戏结束
 
 //游戏帧相关
 #define GR_GAME_FRAME                            11000 //下发游戏关键帧

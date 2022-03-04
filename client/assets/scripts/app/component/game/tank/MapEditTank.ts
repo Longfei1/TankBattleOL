@@ -53,10 +53,6 @@ export default class MapEditTank extends BaseTank {
         this.showEditAni();
     }
 
-    onDestroy() {
-        super.onDestroy();
-    }
-
     showEditAni() {
         this.node.getComponent(cc.Animation).play();
     }

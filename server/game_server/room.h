@@ -12,7 +12,6 @@
 
 #include "player.h"
 
-
 class GameServer;
 class Room : public std::enable_shared_from_this<Room>
 {
@@ -41,6 +40,7 @@ public:
 	void StartGameFrameTimer();
 	void StopGameFrameTimer();
     void StartGameFrameTimer(time_t t);
+    void SetGameFramePause(bool pause);
 
     //属性
 	uint GetRoomID();
@@ -52,6 +52,12 @@ public:
 	uint GetMenuIndex();
 	void SetGameMode(uint mode);
 	uint GetGameMode();
+    void SetRandomSeed(uint seed);
+    uint GetRandomSeed();
+    void SetSupportDxxw(bool support);
+    bool GetSupportDxxw();
+
+    const std::vector<OpeArray>& GetFrameOpeRecord();
 
 	template <typename T>
     void NotifyRoomPlayer(google::protobuf::uint32 request_id, const T& proto_data, uint exclude_userid = 0);
@@ -80,12 +86,15 @@ private:
     boost::asio::deadline_timer frame_timer_;
     time_t frame_start_time_;
     bool frame_running_;
+    bool frame_pause_;
 
     uint frame_no_;//帧编号
+    uint random_seed_;//随机种子
 
     uint status_;//房间状态
     uint menu_index_;//菜单值
     uint game_mode_;//游戏模式
+    bool support_dxxw_;//支持断线续玩
 private:
     static std::mutex id_generator_mtx_;
     static myutils::IDGenerator<uint> id_generator_;
@@ -210,5 +219,31 @@ inline void Room::StartGameFrameTimer(time_t t)
 {
     frame_start_time_ = t;
     frame_running_ = true;
+    frame_pause_ = false;
     StartGameFrameTimer();
+}
+
+inline void Room::SetRandomSeed(uint seed)
+{
+    random_seed_ = seed;
+}
+
+inline uint Room::GetRandomSeed()
+{
+    return random_seed_;
+}
+
+inline void Room::SetSupportDxxw(bool support)
+{
+    support_dxxw_ = support;
+}
+
+inline bool Room::GetSupportDxxw()
+{
+    return support_dxxw_;
+}
+
+inline const std::vector<Room::OpeArray>& Room::GetFrameOpeRecord()
+{
+    return frame_ope_record_;
 }

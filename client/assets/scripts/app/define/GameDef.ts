@@ -47,10 +47,10 @@ export namespace GameDef {
 
     //时效
     export const BORN_INVINCIBLE_TIME           = 2; //出生无敌时间
-    export const PROP_SHOW_TIME                 = 15; //道具显示时间
+    export const PROP_SHOW_TIME                 = 25; //道具显示时间
     export const PROP_SHIELD_INVINCIBLE_TIME    = 15; //护盾无敌时间
     export const PROP_CLOCK_TIME                = 12; //定时道具持续时长
-    export const PROP_SPADE_TIME                = 15; //铲子道具持续时长
+    export const PROP_SPADE_TIME                = 20; //铲子道具持续时长
     export const PROP_SPADE_EFFECT_DISAPPEAR_TIME = 5;  //铲子道具消失倒计时
     export const TANK_SHOOT_COOLTIME            = 0.2; //坦克射击冷却时间
 
