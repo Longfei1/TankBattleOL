@@ -74,7 +74,8 @@ export namespace GameDef {
     export const GAME_TOTAL_PLAYER              = 2; //游戏人数
 
     //游戏元素层级
-    export const ZINDEX_BATTLE_TANK             = 500;
+    export const ZINDEX_PLAYER_TANK             = 510;
+    export const ZINDEX_ENEMY_TANK              = 500;
     export const ZINDEX_HOMEBASE                = cc.macro.MAX_ZINDEX;
     export const ZINDEX_MAP_EDIT_TANK           = cc.macro.MAX_ZINDEX;
     export const ZINDEX_BULLET                  = 500;

@@ -65,13 +65,6 @@ export default class BattleTank extends BaseTank {
         return this._tankID; 
     }
 
-
-    onLoad() {
-        super.onLoad();
-
-        this.node.zIndex = GameDef.ZINDEX_BATTLE_TANK;
-    }
-
     reset() {
         super.reset();
 

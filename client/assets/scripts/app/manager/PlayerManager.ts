@@ -121,7 +121,7 @@ export default class PlayerManager extends cc.Component {
     createPlayer(id: number, attr: GameStruct.TankAttributes, bornPos: GameStruct.RcInfo) {
         let playerInfo = GameDataModel.getPlayerInfo(id);
         let player = this._playerPool.getNode();
-        this.panelGame.addChild(player, 10 - id);
+        this.panelGame.addChild(player, GameDef.ZINDEX_PLAYER_TANK);
         let playerCom = player.getComponent(PlayerTank);
         playerCom.reset();
         playerCom.id = id;

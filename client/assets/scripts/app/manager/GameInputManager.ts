@@ -1,3 +1,4 @@
+import { gameController } from "../component/game/Game";
 import { EventDef } from "../define/EventDef";
 import { GameDef } from "../define/GameDef";
 import { GameStruct } from "../define/GameStruct";
@@ -31,6 +32,9 @@ export default class GameInputManager extends cc.Component {
     }
 
     initListener() {
+        gameController.node.on(EventDef.EV_GAME_STARTED, this.evGameStarted, this);
+        gameController.node.on(EventDef.EV_GAME_ENDED, this.evGameEnded, this);
+
         GameInputModel.addKeyDownOnceListener(this.onKeyDown, this.onKeyUp, this);
         GameInputModel.addInputHierarchy(false, this);
 
@@ -204,5 +208,13 @@ export default class GameInputManager extends cc.Component {
         GameDataModel._localOpeCode[1] = this.getPlayerOpeCode(1);
 
         this.resetKeyInfoRecord();//清除这一帧单次操作记录
+    }
+
+    evGameStarted() {
+        this.resetKeyInfo();//清空操作
+    }
+
+    evGameEnded() {
+        this.resetKeyInfo();//清空操作
     }
 }

@@ -153,7 +153,7 @@ export default class EnemyManager extends cc.Component {
 
     createEnemyTank(name: string, pos: GameStruct.RcInfo, bRed = false) {
         let tank = this._enemyPool.getNode();
-        this.panelGame.addChild(tank);
+        this.panelGame.addChild(tank, GameDef.ZINDEX_ENEMY_TANK);
         let com = tank.getComponent(EnemyTank);
         let tankData = GameConfigModel.tankData;
         com.reset();

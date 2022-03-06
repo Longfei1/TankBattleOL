@@ -496,6 +496,12 @@ void GameServer::OnRoomReady(ContextHeadPtr context_head, RequestPtr request)
 		return;
 	}
 
+	if (room->GetRoomStatus() != ROOM_STATUS_READY)
+	{
+		SendFailedResponse(context_head, request, "准备失败，当前不是准备阶段！");
+		return;
+	}
+
 	if (info.playerno() == 0)
 	{
 		SendFailedResponse(context_head, request, "准备失败，房主不需要准备！");
@@ -550,6 +556,12 @@ void GameServer::OnRoomUnReady(ContextHeadPtr context_head, RequestPtr request)
 		return;
 	}
 
+	if (room->GetRoomStatus() != ROOM_STATUS_READY)
+	{
+		SendFailedResponse(context_head, request, "取消准备失败，当前不是准备阶段！");
+		return;
+	}
+
 	if (info.playerno() == 0)
 	{
 		SendFailedResponse(context_head, request, "取消准备失败，房主不需要准备！");
@@ -601,6 +613,12 @@ void GameServer::OnRoomStart(ContextHeadPtr context_head, RequestPtr request)
 	if (!player || player->user_id != userid)
 	{
 		SendFailedResponse(context_head, request, "开始游戏失败，房间位置信息不一致！");
+		return;
+	}
+
+	if (room->GetRoomStatus() != ROOM_STATUS_READY)
+	{
+		SendFailedResponse(context_head, request, "开始游戏失败，当前不是准备阶段！");
 		return;
 	}
 
@@ -681,6 +699,12 @@ void GameServer::OnMenuSwitch(ContextHeadPtr context_head, RequestPtr request)
 		return;
 	}
 
+	if (room->GetRoomStatus() != ROOM_STATUS_START)
+	{
+		SendFailedResponse(context_head, request, "菜单选项切换失败，当前不是开始阶段！");
+		return;
+	}
+
 	if (info.where().playerno() != 0)
 	{
 		SendFailedResponse(context_head, request, "菜单选项切换失败，你不是房主，不能选择菜单！");
@@ -732,6 +756,12 @@ void GameServer::OnMenuChoose(ContextHeadPtr context_head, RequestPtr request)
 	if (!player || player->user_id != userid)
 	{
 		SendFailedResponse(context_head, request, "菜单选择失败，房间位置信息不一致！");
+		return;
+	}
+
+	if (room->GetRoomStatus() != ROOM_STATUS_START)
+	{
+		SendFailedResponse(context_head, request, "菜单选择失败，当前不是开始阶段！");
 		return;
 	}
 
@@ -828,6 +858,12 @@ void GameServer::OnMenuBack(ContextHeadPtr context_head, RequestPtr request)
 	if (!player || player->user_id != userid)
 	{
 		SendFailedResponse(context_head, request, "菜单返回失败，房间位置信息不一致！");
+		return;
+	}
+
+	if (room->GetRoomStatus() != ROOM_STATUS_START)
+	{
+		SendFailedResponse(context_head, request, "菜单返回失败，当前不是开始阶段！");
 		return;
 	}
 
