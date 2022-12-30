@@ -1,0 +1,1 @@
+nohup ./proxy.out > proxy.log 2>&1 &
