@@ -8,10 +8,10 @@ set(CMAKE_CXX_STANDARD 11)
 include_directories(
     ./
     ../
-    /usr/program/boost_1_74_0/include 
+    $ENV{BOOST_INCLUDE_PATH}
 )
 link_directories(
-    /usr/program/boost_1_74_0/lib 
+    $ENV{BOOST_LIB_PATH}
 )
 
 aux_source_directory(. SRC_PROJECT)

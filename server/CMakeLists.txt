@@ -8,12 +8,12 @@ set(CMAKE_CXX_STANDARD 11)
 include_directories(
     ./
     ../
-    /usr/program/boost_1_74_0/include 
-    /usr/program/protobuf-3.14.0/include
+    $ENV{BOOST_INCLUDE_PATH}
+    $ENV{PROTOBUF_INCLUDE_PATH}
 )
 link_directories(
-    /usr/program/boost_1_74_0/lib 
-    /usr/program/protobuf/lib
+    $ENV{BOOST_LIB_PATH}
+    $ENV{PROTOBUF_LIB_PATH}
 )
 
 aux_source_directory(. SRC_PROJECT)
