@@ -2,5 +2,5 @@ version: '3'
 services:
     webserver:
         image: registry-vpc.cn-chengdu.aliyuncs.com/longfei1/tankbattle-client
-    ports:
-        - "8080:8080"
+        ports:
+            - "8080:8080"
