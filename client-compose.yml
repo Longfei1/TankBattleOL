@@ -1,0 +1,4 @@
+version: '3'
+services:
+    webserver:
+        image: registry-vpc.cn-chengdu.aliyuncs.com/longfei1/tankbattle-client

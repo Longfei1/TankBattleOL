@@ -1,0 +1,17 @@
+version: '3'
+services:
+    gameserver:
+        image: registry-vpc.cn-chengdu.aliyuncs.com/longfei1/tankbattle-server
+        working_dir: /data/service/server/build
+        volumes:
+            - /data:/data
+        command:
+            - ./server.out
+
+    gameproxy:
+        image: registry-vpc.cn-chengdu.aliyuncs.com/longfei1/tankbattle-server
+        working_dir: /data/service/proxy/build
+        volumes:
+            - /data:/data
+        command:
+            - ./proxy.out
