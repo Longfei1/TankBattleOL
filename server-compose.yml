@@ -3,8 +3,6 @@ services:
     gameserver:
         image: registry-vpc.cn-chengdu.aliyuncs.com/longfei1/tankbattle-server
         working_dir: /data/service/server/build
-        volumes:
-            - /data:/data
         ports:
             - "8888:8888"
             - "9000:9000"
@@ -14,8 +12,6 @@ services:
     gameproxy:
         image: registry-vpc.cn-chengdu.aliyuncs.com/longfei1/tankbattle-server
         working_dir: /data/service/proxy/build
-        volumes:
-            - /data:/data
         ports:
             - "8889:8889"
             - "9001:9001"
