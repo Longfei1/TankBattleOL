@@ -22,4 +22,4 @@ WORKDIR /data/service
 
 COPY --from=build /service.tar.gz .
 
-RUN tar -xzf ~/service.tar.gz && rm -f ~/service.tar.gz 
+RUN tar -xzf service.tar.gz && rm -f service.tar.gz 
