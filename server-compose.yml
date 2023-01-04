@@ -5,6 +5,9 @@ services:
         working_dir: /data/service/server/build
         volumes:
             - /data:/data
+        ports:
+            - "8888:8888"
+            - "9000:9000"
         command:
             - ./server.out
 
@@ -13,5 +16,8 @@ services:
         working_dir: /data/service/proxy/build
         volumes:
             - /data:/data
+        ports:
+            - "8889:8889"
+            - "9001:9001"
         command:
             - ./proxy.out
