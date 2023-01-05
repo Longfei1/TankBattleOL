@@ -6,6 +6,8 @@ services:
         ports:
             - "8888:8888"
             - "9000:9000"
+        stdin_open: true
+        tty: true
         command:
             - ./server.out
 
@@ -15,5 +17,7 @@ services:
         ports:
             - "8889:8889"
             - "9001:9001"
+        stdin_open: true
+        tty: true
         command:
             - ./proxy.out

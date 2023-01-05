@@ -14,7 +14,7 @@ RUN source ~/.bashrc \
     && tar -czf /service.tar.gz server/build proxy/build
 
 
-FROM centos:7
+FROM registry-vpc.cn-chengdu.aliyuncs.com/longfei1/server-runtime
 
 LABEL author="longfei"
 
