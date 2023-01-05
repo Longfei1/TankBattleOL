@@ -11,7 +11,7 @@ int main(int argc, char* argv[])
     proxy_port = 9001;
 #endif
 
-    ProxyServer server("127.0.0.1", server_port, proxy_port, 1);//服务器为单核，io线程一个就行
+    ProxyServer server("47.109.56.202", server_port, proxy_port, 1);//服务器为单核，io线程一个就行
 
     if (server.Initialize())
     {
